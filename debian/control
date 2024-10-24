@@ -1,0 +1,17 @@
+Source: treeland-protocols
+Priority: optional
+Maintainer: rewine <luhongxu@deepin.org>
+Build-Depends: cmake (>= 3.4~),
+               debhelper-compat (= 13),
+Standards-Version: 4.6.0
+Section: dde
+Homepage: https://github.com/linuxdeepin/treeland-protocols
+#Vcs-Browser: https://salsa.debian.org/debian/treeland
+#Vcs-Git: https://salsa.debian.org/debian/treeland.git
+Rules-Requires-Root: no
+
+Package: treeland-protocols
+Section: dde
+Architecture: all
+Depends: ${misc:Depends},
+Description: wayland protocols of treeland.
