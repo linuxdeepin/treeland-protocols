@@ -8,7 +8,7 @@ add_subdirectory(cmake)
 
 set(XML
   xml/treeland-capture-unstable-v1.xml
-  xml/treeland-output-management.xml
+  xml/treeland-output-manager-v1.xml
   xml/treeland-virtual-output-manager-v1.xml
   xml/treeland-dde-shell-v1.xml
   xml/treeland-personalization-manager-v1.xml
