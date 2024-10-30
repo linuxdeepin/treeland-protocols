@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.25.0)
 
 project(TreelandProtocols VERSION 0.0.1)
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_AUTOMOC ON)
+
 include(GNUInstallDirs)
 
 add_subdirectory(cmake)

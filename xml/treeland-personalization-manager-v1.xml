@@ -50,6 +50,12 @@
             </description>
             <arg name="id" type="new_id" interface="treeland_personalization_cursor_context_v1" />
         </request>
+        <request name="get_font_context">
+            <description summary="custom treeland and window global font context">
+                custom treeland and window global font context
+            </description>
+            <arg name="id" type="new_id" interface="treeland_personalization_font_context_v1" />
+        </request>
         <request name="get_appearance_context">
             <description summary="custom treeland window global settings context">
                 custom user treeland window appearance global
@@ -244,21 +250,15 @@
             </description>
         </request>
     </interface>
-    <interface name="treeland_personalization_appearance_context_v1" version="1">
-        <description summary="treeland window global appearance settings">
-            This interface allows set treeland window global appearance settings.
+    <interface name="treeland_personalization_font_context_v1" version="1">
+        <description summary="treeland window global font settings">
+            This interface allows set treeland window global font settings.
 
             Warning! The protocol described in this file is currently in the testing
             phase. Backward compatible changes may be added together with the
             corresponding interface version bump. Backward incompatible changes can
             only be done by creating a new major version of the extension.
         </description>
-        <event name="round_corner_radius">
-            <description summary="round corner radius event">
-                Send this signal after setting the round corner radius.
-            </description>
-            <arg name="radius" type="int" summary="round corner radius" />
-        </event>
         <event name="font">
             <description summary="font event">
                 Send this signal after setting the system font.
@@ -271,23 +271,22 @@
             </description>
             <arg name="font_name" type="string" summary="monospace font name" />
         </event>
-        <event name="cursor_theme">
-            <description summary="cursor theme event">
-                Send this signal after setting the system cursor theme.
+        <event name="font_size">
+            <description summary="font size">
+                Send this signal after setting the system font size.
             </description>
-            <arg name="theme_name" type="string" summary="cursor theme name" />
+            <arg name="font_size" type="uint" summary="font size" />
         </event>
-        <event name="icon_theme">
-            <description summary="icon theme event">
-                Send this signal after setting the system icon theme.
+        <request name="set_font_size">
+            <description summary="set system font size">
+                Set the system font size
             </description>
-            <arg name="theme_name" type="string" summary="icon theme name" />
-        </event>
-        <request name="set_round_corner_radius">
-            <description summary="set window round corner radius">
-                Set window round corner radius
+            <arg name="size" type="uint" summary="font size" />
+        </request>
+        <request name="get_font_size">
+            <description summary="get system font size">
+                Get the system font size
             </description>
-            <arg name="radius" type="int" />
         </request>
         <request name="set_font">
             <description summary="set system font">
@@ -295,47 +294,151 @@
             </description>
             <arg name="font_name" type="string" summary="font name" />
         </request>
+        <request name="get_font">
+            <description summary="get system font">
+                Get the system font
+            </description>
+        </request>
         <request name="set_monospace_font">
             <description summary="set system monospace font">
                 Set the system monospace font
             </description>
             <arg name="font_name" type="string" summary="monospace font name" />
         </request>
-        <request name="set_cursor_theme">
-            <description summary="set system cursor theme">
-                Set the system cursor theme
+        <request name="get_monospace_font">
+            <description summary="get system monospace font">
+                Get the system monospace font
             </description>
-            <arg name="theme_name" type="string" summary="cursor theme name" />
         </request>
-        <request name="set_icon_theme">
-            <description summary="set system icon theme">
-                Set the system icon theme
+        <request name="destroy" type="destructor">
+            <description summary="destroy the context object">
+                Destroy the context object.
+            </description>
+        </request>
+    </interface>
+    <interface name="treeland_personalization_appearance_context_v1" version="1">
+        <description summary="treeland window global appearance settings">
+            This interface allows set treeland window global appearance settings.
+
+            Warning! The protocol described in this file is currently in the testing
+            phase. Backward compatible changes may be added together with the
+            corresponding interface version bump. Backward incompatible changes can
+            only be done by creating a new major version of the extension.
+        </description>
+        <enum name="theme_type">
+            <description summary="window theme type" />
+            <entry name="auto" value="1" summary="window auto theme" />
+            <entry name="light" value="2" summary="window light theme" />
+            <entry name="dark" value="4" summary="window dark theme" />
+        </enum>
+        <enum name="error">
+            <entry name="invalid_round_corner_radius" value="0" summary="Wrong round corner radius" />
+            <entry name="invalid_icon_theme" value="1" summary="Wrong icon theme" />
+            <entry name="invalid_active_color" value="2" summary="Wrong active color" />
+            <entry name="invalid_window_opacity" value="4" summary="Wrong window opacity" />
+            <entry name="invalid_window_theme_type" value="8" summary="Wrong theme type" />
+            <entry name="invalid_window_titlebar_height" value="16" summary="Wrong window titlebar height" />
+        </enum>
+        <event name="round_corner_radius">
+            <description summary="round corner radius event">
+                Send this signal after setting the round corner radius.
+            </description>
+            <arg name="radius" type="int" summary="round corner radius" />
+        </event>
+        <event name="icon_theme">
+            <description summary="icon theme event">
+                Send this signal after setting the system icon theme.
             </description>
             <arg name="theme_name" type="string" summary="icon theme name" />
+        </event>
+        <event name="active_color">
+            <description summary="active color">
+                Send this signal after setting the system active color
+            </description>
+            <arg name="active_color" type="string" summary="active color" />
+        </event>
+        <event name="window_opacity">
+            <description summary="window opacity">
+                Send this signal after setting the system active color
+            </description>
+            <arg name="opacity" type="uint" summary="window opacity" />
+        </event>
+        <event name="window_theme_type">
+            <description summary="window theme">
+                Send this signal after setting the system theme
+            </description>
+            <arg name="type" type="uint" enum="theme_type" summary="window theme type" />
+        </event>
+        <event name="window_titlebar_height">
+            <description summary="window titlebar height">
+                Send this signal after setting the window titlebar height
+            </description>
+            <arg name="height" type="uint" summary="window titlebar height" />
+        </event>
+        <request name="set_round_corner_radius">
+            <description summary="set window round corner radius">
+                Set window round corner radius
+            </description>
+            <arg name="radius" type="int" />
         </request>
         <request name="get_round_corner_radius">
             <description summary="get window round corner radius">
                 Get window round corner radius
             </description>
         </request>
-        <request name="get_font">
-            <description summary="get system font">
-                Get the system font
+        <request name="set_icon_theme">
+            <description summary="set system icon theme">
+                Set the system icon theme
             </description>
-        </request>
-        <request name="get_monospace_font">
-            <description summary="get system monospace font">
-                Get the system monospace font
-            </description>
-        </request>
-        <request name="get_cursor_theme">
-            <description summary="get system cursor theme">
-                Get the system cursor theme
-            </description>
+            <arg name="theme" type="string" summary="icon theme" />
         </request>
         <request name="get_icon_theme">
             <description summary="get system icon theme">
                 Get the system icon theme
+            </description>
+        </request>
+        <request name="set_active_color">
+            <description summary="set system active color">
+                Set the system active color
+            </description>
+            <arg name="color" type="string" summary="rgb" />
+        </request>
+        <request name="get_active_color">
+            <description summary="get system active color">
+                Get the system active color
+            </description>
+        </request>
+        <request name="set_window_opacity">
+            <description summary="set window window opacity">
+                Set the window window opacity
+            </description>
+            <arg name="opacity" type="uint" summary="opacity" />
+        </request>
+        <request name="get_window_opacity">
+            <description summary="get window window opacity">
+                Get the window window opacity
+            </description>
+        </request>
+        <request name="set_window_theme_type">
+            <description summary="set window theme type">
+                Set the window theme.
+            </description>
+            <arg name="type" type="uint" enum="theme_type" summary="window theme type" />
+        </request>
+        <request name="get_window_theme_type">
+            <description summary="get window theme type">
+                Get the window theme type
+            </description>
+        </request>
+        <request name="set_window_titlebar_height">
+            <description summary="set window titlebar height">
+                Set the window titlebar height
+            </description>
+            <arg name="height" type="uint" summary="window titlebar height" />
+        </request>
+        <request name="get_window_titlebar_height">
+            <description summary="get window titlebar height">
+                Get the window titlebar height
             </description>
         </request>
         <request name="destroy" type="destructor">
