@@ -36,6 +36,14 @@
             <arg name="id" type="new_id" interface="treeland_dde_active_v1"/>
             <arg name="seat" type="object" interface="wl_seat" summary="seat associated with the dde_active"/>
         </request>
+
+        <request name="get_treeland_multitaskview" since="1">
+            <description summary="create a new multitaskview context">
+                Create a new multitaskview context for toggle.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_multitaskview_v1"/>
+        </request>
+
     </interface>
 
     <interface name="treeland_window_overlap_checker" version="1">
@@ -221,5 +229,22 @@
         <event name="drop" since="1">
             <description summary="sent when the compositor drop operation"/>
         </event>
+    </interface>
+
+    <interface name="treeland_multitaskview_v1" version="1">
+        <description summary="multitaskview context interface">
+            An interface used to control multitaskview.
+        </description>
+
+        <request name="destroy" type="destructor" since="1">
+            <description summary="destroy the treeland_multitaskview_v1 object">
+            </description>
+        </request>
+
+        <request name="toggle" since="1">
+            <description summary="toggle multitaskview">
+                Show or hide the multitaskview.
+            </description>
+        </request>
     </interface>
 </protocol>
