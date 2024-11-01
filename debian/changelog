@@ -1,3 +1,9 @@
+treeland-protocols (0.4.1) unstable; urgency=medium
+
+  * update appearance
+
+ -- Dingyuan Zhang <zhangdingyuan@uniontech.com>  Fri, 01 Nov 2024 11:07:40 +0800
+
 treeland-protocols (0.4) unstable; urgency=medium
 
   * Initial release
