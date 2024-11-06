@@ -44,6 +44,13 @@
             <arg name="id" type="new_id" interface="treeland_multitaskview_v1"/>
         </request>
 
+        <request name="get_treeland_window_picker" since="1">
+            <description summary="create a new window picker">
+                Create a new window picker to pick window.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_window_picker_v1"/>
+        </request>
+
     </interface>
 
     <interface name="treeland_window_overlap_checker" version="1">
@@ -246,5 +253,30 @@
                 Show or hide the multitaskview.
             </description>
         </request>
+    </interface>
+
+    <interface name="treeland_window_picker_v1" version="1">
+        <description summary="window picker interface">
+            An interface used to pick window and return credentials.
+        </description>
+
+        <request name="destroy" type="destructor" since="1">
+            <description summary="destroy the treeland_window_picker_v1 object">
+            </description>
+        </request>
+
+        <request name="pick" since="1">
+            <description summary="pick a window">
+                Pick a window to get information.
+            </description>
+            <arg name="hint" type="string" summary="Hint of pick process"/>
+        </request>
+
+        <event name="window" since="1">
+            <description summary="window picked">
+                Picked window information.
+            </description>
+            <arg name="pid" type="int" summary="Pid of picked window"/>
+        </event>
     </interface>
 </protocol>
