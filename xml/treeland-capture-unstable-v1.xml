@@ -29,6 +29,17 @@
       </description>
     </request>
 
+    <request name="frame_done">
+      <description summary="Indicates current frame is done.">
+        This is the ACK to the current "ready" event. The next "frame" event will be sent only when current
+        "ready" event is acknowledged. The timestamp should be the same as the one sent in "ready" event.
+        If the frame has the "transient" flag, all objects sent before become invalid after this event.
+      </description>
+      <arg name="tv_sec_hi" type="uint"/>
+      <arg name="tv_sec_lo" type="uint"/>
+      <arg name="tv_usec" type="uint"/>
+    </request>
+
     <event name="frame">
       <description summary="supply the client with information about the frame">
           Main event supplying the client with information about the frame. If the capture didn't fail, this event is always
@@ -70,7 +81,7 @@
     </event>
 
     <event name="cancel">
-      <description summary="indicates the frame is no longer valid">
+      <description summary="Notifies current frame is no longer valid.">
         If the capture failed or if the frame is no longer valid after the "frame" event has been emitted, this
         event will be used to inform the client to scrap the frame.
       </description>
