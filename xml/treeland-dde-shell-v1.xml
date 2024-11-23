@@ -51,6 +51,13 @@
             <arg name="id" type="new_id" interface="treeland_window_picker_v1"/>
         </request>
 
+        <request name="get_treeland_lockscreen" since="1">
+            <description summary="create a new lockscreen context">
+                Create a new lockscreen context for toggle.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_lockscreen_v1"/>
+        </request>
+
     </interface>
 
     <interface name="treeland_window_overlap_checker" version="1">
@@ -278,5 +285,34 @@
             </description>
             <arg name="pid" type="int" summary="Pid of picked window"/>
         </event>
+    </interface>
+
+    <interface name="treeland_lockscreen_v1" version="1">
+        <description summary="lockscreen interface">
+            An interface used to operate lockscreen.
+        </description>
+
+        <request name="destroy" type="destructor" since="1">
+            <description summary="destroy the treeland_lockscreen_v1 object">
+            </description>
+        </request>
+
+        <request name="lock" since="1">
+            <description summary="lock screen">
+                Lock the screen.
+            </description>
+        </request>
+
+        <request name="shutdown" since="1">
+            <description summary="show shutdown">
+                Show shutdown.
+            </description>
+        </request>
+
+        <request name="switch_user" since="1">
+            <description summary="switch user">
+                Switch user.
+            </description>
+        </request>
     </interface>
 </protocol>
