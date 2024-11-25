@@ -162,7 +162,9 @@
         <description summary="source failure reason">
         </description>
         <entry name="selector_busy" value="1" summary="selector is occupied by other context"/>
-        <entry name="other" value="2" summary="other failure"/>
+        <entry name="user_cancel" value="2" summary="User cancel this context from compositor"/>
+        <entry name="source_destroyed" value="3" summary="Source has been destroyed"/>
+        <entry name="other" value="4" summary="other failure"/>
     </enum>
 
     <request name="select_source">
