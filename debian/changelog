@@ -1,3 +1,9 @@
+treeland-protocols (0.4.4) unstable; urgency=medium
+
+  * bump version to 0.4.4
+
+ -- Groveer <guoyao@uniontech.com>  Tue, 26 Nov 2024 19:49:21 +0800
+
 treeland-protocols (0.4.3) unstable; urgency=medium
 
   * bump version to 0.4.3
