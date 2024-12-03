@@ -208,6 +208,15 @@
             </description>
             <arg name="skip" type="uint" summary="Boolean value that sets whether to skip the mutitask view."/>
         </request>
+
+        <request name="set_accept_keyboard_focus" since="1">
+            <description summary="control whether the surface accepts keyboard focus">
+                Setting this will determine whether the surface can receive keyboard focus.
+                When set to 0, the surface will not receive keyboard focus even when clicked or activated.
+                When set to 1 (default), the surface will receive keyboard focus normally.
+            </description>
+            <arg name="accept" type="uint" summary="Boolean value that sets whether to accept keyboard focus"/>
+        </request>
     </interface>
 
     <interface name="treeland_dde_active_v1" version="1">
