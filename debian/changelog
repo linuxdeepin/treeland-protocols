@@ -1,3 +1,9 @@
+treeland-protocols (0.4.5) unstable; urgency=medium
+
+  * bump version to 0.4.5
+
+ -- rewine <luhongxu@deepib.org>  Fri, 06 Dec 2024 15:05:05 +0800
+
 treeland-protocols (0.4.4) unstable; urgency=medium
 
   * bump version to 0.4.4
