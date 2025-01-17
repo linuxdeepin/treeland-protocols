@@ -24,4 +24,4 @@ $ cmake --build .
 
 ## 许可证
 
-Treeland遵循Apache-2.0, LGPL-3.0-only, GPL-2.0-only, GPL-3.0-only许可证发布。
+Treeland遵循 MIT 许可证发布。

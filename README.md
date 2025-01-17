@@ -24,4 +24,4 @@ $ cmake --build .
 
 ## License
 
-**treeland-protocols** is licensed under Apache-2.0 OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only.
+**treeland-protocols** is licensed under MIT.

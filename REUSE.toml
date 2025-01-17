@@ -27,7 +27,7 @@ SPDX-FileCopyrightText = "None"
 SPDX-License-Identifier = "CC0-1.0"
 
 [[annotations]]
-path = ["REUSE.toml", "**.json", "**.service", "**.txt", "**.ini", "**.sh", "**.html", ".gitignore", ".gitmodules", "INSTALL.md", "**.desktop", "**.css", "**.ttf", "**.conf", "**.xml", ".release.json"]
+path = ["REUSE.toml", "**.json", "**.service", "**.txt", "**.ini", "**.sh", "**.html", ".gitignore", ".gitmodules", "INSTALL.md", "**.desktop", "**.css", "**.ttf", "**.conf", ".release.json"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "UnionTech Software Technology Co., Ltd."
 SPDX-License-Identifier = "CC0-1.0"
