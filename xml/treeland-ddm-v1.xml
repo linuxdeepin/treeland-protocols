@@ -36,6 +36,18 @@
                 screen, but not to close the current seats.
             </description>
         </request>
+        <request name="enable_render">
+            <description summary="start treeland rendering">
+                Enable treeland rendering. This is primarily called after
+                disable_render to resume treeland.
+            </description>
+        </request>
+        <request name="disable_render">
+            <description summary="stop treeland rendering">
+                Disable treeland rendering. This will prevent treeland from
+                output to DRM device.
+            </description>
+        </request>
         <!-- Events -->
         <event name="switch_to_vt">
             <description summary="switch to virtual terminal">
