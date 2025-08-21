@@ -1,3 +1,9 @@
+treeland-protocols (0.5.0) unstable; urgency=medium
+
+  * feat: add treeland-ddm communication protocol
+
+ -- rewine <luhongxu@uniontech.com>  Thu, 21 Aug 2025 11:39:06 +0800
+
 treeland-protocols (0.4.5) unstable; urgency=medium
 
   * bump version to 0.4.5
