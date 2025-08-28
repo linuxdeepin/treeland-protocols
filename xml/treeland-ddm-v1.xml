@@ -47,6 +47,7 @@
                 Disable treeland rendering. This will prevent treeland from
                 output to DRM device.
             </description>
+            <arg name="callback" type="new_id" interface="wl_callback"/>
         </request>
         <!-- Events -->
         <event name="switch_to_vt">
