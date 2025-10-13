@@ -23,6 +23,8 @@ set(XML
   xml/treeland-window-management-v1.xml
   xml/treeland-ddm-v1.xml
   xml/treeland-screensaver-v1.xml
+  xml/treeland-prelaunch-splash-v1.xml
+  xml/treeland-app-id-resolver-v1.xml
 )
 
 install(FILES ${XML} DESTINATION ${CMAKE_INSTALL_DATADIR}/treeland-protocols)
