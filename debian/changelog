@@ -1,3 +1,9 @@
+treeland-protocols (0.5.0-1splashscreen0) unstable; urgency=medium
+
+  * feat: add new Wayland protocols for app launching
+
+ -- rewine <luhongxu@uniontech.com>  Wed, 15 Oct 2025 14:14:17 +0800
+
 treeland-protocols (0.5.0) unstable; urgency=medium
 
   * feat: add treeland-ddm communication protocol
