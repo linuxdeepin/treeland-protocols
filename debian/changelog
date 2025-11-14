@@ -1,3 +1,10 @@
+treeland-protocols (0.5.1) unstable; urgency=medium
+
+  * feat: support setting brightness and color temperature in treeland-
+    output-manager protocol
+
+ -- rewine <luhongxu@uniontech.com>  Fri, 14 Nov 2025 11:27:09 +0800
+
 treeland-protocols (0.5.0) unstable; urgency=medium
 
   * feat: add treeland-ddm communication protocol
