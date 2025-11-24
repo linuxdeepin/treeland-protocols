@@ -15,8 +15,20 @@
       <description summary="destroy the manager"/>
     </request>
     <request name="get_resolver">
-      <description summary="create/bind a resolver object"/>
+      <description summary="create/bind a resolver object">
+        Create or bind a resolver object. Only one resolver may be registered
+        per session. Treeland is a multi-user compositor; different user
+        sessions may each register their own resolver. If a resolver is
+        already bound in the same session, the compositor will report an
+        error on the manager and will NOT create a new resolver object for
+        this request.
+        Callers MUST provide a non-empty `sandboxEngineName` string which
+        identifies the sandboxing/container engine or security context for
+        which the resolver will perform identification. This value is used
+        by the compositor for deterministic matching and policy decisions.
+      </description>
       <arg name="id" type="new_id" interface="treeland_app_id_resolver_v1"/>
+      <arg name="sandboxEngineName" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
     </request>
   </interface>
 
@@ -40,4 +52,9 @@
       <description summary="destroy resolver"/>
     </request>
   </interface>
+  <enum name="error">
+    <entry name="resolver_already_exists" value="1"
+      summary="A resolver is already registered in this session with the manager" />
+  </enum>
 </protocol>
+
