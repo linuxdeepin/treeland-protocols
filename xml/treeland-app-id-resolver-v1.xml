@@ -22,14 +22,13 @@
         already bound in the same session, the compositor will report an
         error on the manager and will NOT create a new resolver object for
         this request.
-        Callers MUST provide a non-empty `sandboxEngineName` string which
-        identifies the sandboxing/container engine or security context for
-        which the resolver will perform identification. This value is used
-        by the compositor for deterministic matching and policy decisions.
       </description>
       <arg name="id" type="new_id" interface="treeland_app_id_resolver_v1"/>
-      <arg name="sandboxEngineName" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
     </request>
+    <enum name="error">
+      <entry name="resolver_already_exists" value="1"
+        summary="A resolver is already registered in this session with the manager" />
+    </enum>
   </interface>
 
   <interface name="treeland_app_id_resolver_v1" version="1">
@@ -44,17 +43,19 @@
       <arg name="pidfd" type="fd" summary="pidfd referencing the target process"/>
     </event>
     <request name="respond">
-      <description summary="respond with app id (empty on failure)"/>
+      <description summary="respond with app id and sandboxEngineName (empty app_id on failure)">
+        Respond to an identify_request. The sandboxEngineName must be provided and
+        matches the context in which the process is running (container, sandbox, etc).
+        If resolution fails, respond with an empty app_id.
+      </description>
       <arg name="request_id" type="uint"/>
       <arg name="app_id" type="string"/>
+      <arg name="sandboxEngineName" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
     </request>
     <request name="destroy" type="destructor">
       <description summary="destroy resolver"/>
     </request>
   </interface>
-  <enum name="error">
-    <entry name="resolver_already_exists" value="1"
-      summary="A resolver is already registered in this session with the manager" />
-  </enum>
+  
 </protocol>
 

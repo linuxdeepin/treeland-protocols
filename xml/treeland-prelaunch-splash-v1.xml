@@ -25,20 +25,20 @@
       <description summary="create a new splash screen">
         Creates a new prelaunch splash screen.
 
-        Callers MUST provide a non-empty `sandboxEngineName` string which
-        identifies the sandboxing/container.
-
         The `app_id` is a string that identifies the application. The compositor
         will use this ID together with `sandboxEngineName` to match the splash
         screen with the actual application window when it appears. This
         matching mechanism should also work for XWayland windows.
 
+        Callers MUST provide a non-empty `sandboxEngineName` string which
+        identifies the sandboxing/container.
+
         If there is already an active (not-yet-completed) splash for the same
         `sandboxEngineName` and `app_id`, the compositor will silently ignore
         this request (no new splash will be created and no error is raised).
       </description>
-      <arg name="sandboxEngineName" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
       <arg name="app_id" type="string" summary="the application ID"/>
+      <arg name="sandboxEngineName" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
     </request>
   </interface>
 

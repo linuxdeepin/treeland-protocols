@@ -16,7 +16,7 @@
             <arg name="output" type="string" allow-null="false" />
         </request>
 
-        <event name="primary_output">
+        <event name="primary_output" since="1">
             <description summary="Provide the current primary output's name">
                 Specifies which output is the primary one identified by their name.
             </description>
@@ -29,7 +29,7 @@
             <arg name="output" type="object" interface="wl_output"/>
         </request>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor" since="2">
             <description summary="Destroy the primary output notifier." />
         </request>
     </interface>
