@@ -9,7 +9,7 @@
         <description summary="manager for app id resolver">
             Create a resolver object. Typically exactly one privileged helper
             (a Wayland client with DBus access) binds this interface and serves
-            identify requests coming from the compositor.
+            identification requests coming from the compositor.
         </description>
         <request name="destroy" type="destructor">
             <description summary="destroy the manager"/>
