@@ -33,13 +33,13 @@
                 Acquire the shortcut manager for the current client.
 
                 This request must be sent before any bind/unbind request can be performed.
-                
+
                 Only one client hold exclusive control of the shortcut manager at a time,
                 for a given session.
                 If the shortcut manager is already acquired by another client, an protocol error
             </description>
         </request>
-        
+
         <request name="bind_key" since="1">
             <description summary="bind a key sequence to a compositor action">
                 Bind a key sequence to a compositor action.
@@ -155,7 +155,7 @@
         <event name="activated" since="1">
             <description summary="a shortcut has been activated">
                 This event is emitted when a binding registered with action `notify` is activated.
-                
+
                 If the binding is activated due to auto-repeat, the repeat argument will be non-zero.
             </description>
             <arg name="name" type="string" summary="binding id of the activated shortcut"/>
@@ -186,7 +186,7 @@
             <entry name="up" value="3"/>
             <entry name="right" value="4"/>
         </enum>
-        
+
         <enum name="action" since="1">
             <description summary="compositor actions">
                 Compositor actions that can be assigned to a shortcut.
@@ -206,14 +206,18 @@
             <entry name="move_window" value="13"/>
             <entry name="close_window" value="14"/>
             <entry name="show_window_menu" value="15"/>
-            <entry name="toggle_multitask_view" value="16"/>
-            <entry name="toggle_fps_display" value="17"/>
-            <entry name="lockscreen" value="18"/>
-            <entry name="shutdown_menu" value="19"/>
-            <entry name="quit" value="20"/>
-            <entry name="taskswitch_next" value="21"/>
-            <entry name="taskswitch_prev" value="22"/>
-            <entry name="taskswitch_quick_advance" value="23"/>
+            <entry name="open_multitask_view" value="16"/>
+            <entry name="close_multitask_view" value="17"/>
+            <entry name="toggle_multitask_view" value="18"/>
+            <entry name="toggle_fps_display" value="19"/>
+            <entry name="lockscreen" value="20"/>
+            <entry name="shutdown_menu" value="21"/>
+            <entry name="quit" value="22"/>
+            <entry name="taskswitch_enter" value="23"/>
+            <entry name="taskswitch_next" value="24"/>
+            <entry name="taskswitch_prev" value="25"/>
+            <entry name="taskswitch_sameapp_next" value="26"/>
+            <entry name="taskswitch_sameapp_prev" value="27"/>
         </enum>
 
         <enum name="keybind_mode" since="1">
@@ -232,7 +236,7 @@
             <entry name="name_conflict" value="1"/>
             <entry name="duplicate_binding" value="2"/>
             <entry name="invalid_argument" value="3"/>
-            <entry name="internal_error" value="3"/>
+            <entry name="internal_error" value="4"/>
         </enum>
 
         <enum name="error" since="1">
