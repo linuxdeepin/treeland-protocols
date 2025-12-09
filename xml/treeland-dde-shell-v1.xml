@@ -17,7 +17,7 @@
             <arg name="id" type="new_id" interface="treeland_window_overlap_checker" />
         </request>
 
-        <request name="get_shell_surface" since="1">
+        <request name="get_shell_surface">
             <description summary="create a shell surface from a surface">
                 Create a shell surface for an existing wl_surface.
 
@@ -29,7 +29,7 @@
             <arg name="surface" type="object" interface="wl_surface"/>
         </request>
 
-        <request name="get_treeland_dde_active" since="1">
+        <request name="get_treeland_dde_active">
             <description summary="create a new dde active">
                 Create a new dde active for a given seat.
             </description>
@@ -37,21 +37,21 @@
             <arg name="seat" type="object" interface="wl_seat" summary="seat associated with the dde_active"/>
         </request>
 
-        <request name="get_treeland_multitaskview" since="1">
+        <request name="get_treeland_multitaskview">
             <description summary="create a new multitaskview context">
                 Create a new multitaskview context for toggle.
             </description>
             <arg name="id" type="new_id" interface="treeland_multitaskview_v1"/>
         </request>
 
-        <request name="get_treeland_window_picker" since="1">
+        <request name="get_treeland_window_picker">
             <description summary="create a new window picker">
                 Create a new window picker to pick window.
             </description>
             <arg name="id" type="new_id" interface="treeland_window_picker_v1"/>
         </request>
 
-        <request name="get_treeland_lockscreen" since="1">
+        <request name="get_treeland_lockscreen">
             <description summary="create a new lockscreen context">
                 Create a new lockscreen context for toggle.
             </description>
@@ -134,7 +134,7 @@
             destroying the wl_surface object.
         </description>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor">
             <description summary="destroy the treeland_dde_shell_surface_v1 object">
                 The treeland_dde_shell_surface_v1 interface is removed from the
                 wl_surface object that was turned into a shell surface with the
@@ -144,7 +144,7 @@
             </description>
         </request>
 
-        <request name="set_surface_position" since="1">
+        <request name="set_surface_position">
             <description summary="change the shell surface position">
                 Move the surface to new coordinates.
 
@@ -165,17 +165,17 @@
                 Multiple surfaces can share a single role, and ordering within a single
                 role is undefined.
             </description>
-            <entry name="overlay" value="1" since="1"/>
+            <entry name="overlay" value="1"/>
         </enum>
 
-        <request name="set_role" since="1">
+        <request name="set_role">
             <description summary="assign a role to this surface">
                 Assign a role to a shell surface.
             </description>
             <arg name="role" type="uint" enum="treeland_dde_shell_surface_v1.role"/>
         </request>
 
-        <request name="set_auto_placement" since="1">
+        <request name="set_auto_placement">
             <description summary="Place the surface at the bottom of the cursor area">
                 Set the vertical alignment of the surface within the cursor width.
 
@@ -188,28 +188,28 @@
             <arg name="y_offset" type="uint" summary="y position is relative to the cursor bottom"/>
         </request>
 
-        <request name="set_skip_switcher" since="1">
+        <request name="set_skip_switcher">
             <description summary="make the window not appear in a switcher">
                 Setting this bit will indicate that the window prefers not to be listed in a switcher.
             </description>
             <arg name="skip" type="uint" summary="Boolean value that sets whether to skip the window switcher."/>
         </request>
 
-        <request name="set_skip_dock_preview" since="1">
+        <request name="set_skip_dock_preview">
             <description summary="make the window not appear in a dock preview">
                 Setting this bit will indicate that the window prefers not to be listed in a dock preview.
             </description>
             <arg name="skip" type="uint" summary="Boolean value that sets whether to skip the dock preview."/>
         </request>
 
-        <request name="set_skip_muti_task_view" since="1">
+        <request name="set_skip_muti_task_view">
             <description summary="make the window not appear in a mutitask view">
                 Setting this bit will indicate that the window prefers not to be listed in a mutitask view.
             </description>
             <arg name="skip" type="uint" summary="Boolean value that sets whether to skip the mutitask view."/>
         </request>
 
-        <request name="set_accept_keyboard_focus" since="1">
+        <request name="set_accept_keyboard_focus">
             <description summary="control whether the surface accepts keyboard focus">
                 Setting this will determine whether the surface can receive keyboard focus.
                 When set to 0, the surface will not receive keyboard focus even when clicked or activated.
@@ -224,32 +224,32 @@
             An interface used to monitor special events.
         </description>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor">
             <description summary="destroy the treeland_dde_active_v1 object">
             </description>
         </request>
 
         <enum name="reason">
             <description summary="event reason"/>
-            <entry name="mouse" value="0" since="1"/>
-            <entry name="wheel" value="1" since="1"/>
+            <entry name="mouse" value="0"/>
+            <entry name="wheel" value="1"/>
         </enum>
 
-        <event name="active_in" since="1">
+        <event name="active_in">
             <description summary="activeIn event"/>
         <arg name="reason" type="uint" enum="treeland_dde_active_v1.reason"/>
         </event>
 
-        <event name="active_out" since="1">
+        <event name="active_out">
             <description summary="activeOut event"/>
         <arg name="reason" type="uint" enum="treeland_dde_active_v1.reason"/>
         </event>
 
-        <event name="start_drag" since="1">
+        <event name="start_drag">
             <description summary="sent when the compositor starts a drag operation"/>
         </event>
 
-        <event name="drop" since="1">
+        <event name="drop">
             <description summary="sent when the compositor drop operation"/>
         </event>
     </interface>
@@ -259,12 +259,12 @@
             An interface used to control multitaskview.
         </description>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor">
             <description summary="destroy the treeland_multitaskview_v1 object">
             </description>
         </request>
 
-        <request name="toggle" since="1">
+        <request name="toggle">
             <description summary="toggle multitaskview">
                 Show or hide the multitaskview.
             </description>
@@ -276,19 +276,19 @@
             An interface used to pick window and return credentials.
         </description>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor">
             <description summary="destroy the treeland_window_picker_v1 object">
             </description>
         </request>
 
-        <request name="pick" since="1">
+        <request name="pick">
             <description summary="pick a window">
                 Pick a window to get information.
             </description>
             <arg name="hint" type="string" summary="Hint of pick process"/>
         </request>
 
-        <event name="window" since="1">
+        <event name="window">
             <description summary="window picked">
                 Picked window information.
             </description>
@@ -301,24 +301,24 @@
             An interface used to operate lockscreen.
         </description>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor">
             <description summary="destroy the treeland_lockscreen_v1 object">
             </description>
         </request>
 
-        <request name="lock" since="1">
+        <request name="lock">
             <description summary="lock screen">
                 Lock the screen.
             </description>
         </request>
 
-        <request name="shutdown" since="1">
+        <request name="shutdown">
             <description summary="show shutdown">
                 Show shutdown.
             </description>
         </request>
 
-        <request name="switch_user" since="1">
+        <request name="switch_user">
             <description summary="switch user">
                 Switch user.
             </description>

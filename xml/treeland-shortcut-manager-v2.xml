@@ -21,14 +21,14 @@
             only be done by creating a new major version of the extension.
         </description>
 
-        <request name="destroy" type="destructor" since="1">
+        <request name="destroy" type="destructor">
             <description summary="destroy the shortcut manager">
                 Destroy the shortcut manager.
                 Existing shortcuts created through this interface remain valid.
             </description>
         </request>
 
-        <request name="acquire" since="1">
+        <request name="acquire">
             <description summary="acquire the shortcut manager">
                 Acquire the shortcut manager for the current client.
 
@@ -40,7 +40,7 @@
             </description>
         </request>
 
-        <request name="bind_key" since="1">
+        <request name="bind_key">
             <description summary="bind a key sequence to a compositor action">
                 Bind a key sequence to a compositor action.
 
@@ -73,7 +73,7 @@
             <arg name="action" type="uint" enum="action" summary="compositor action to be executed"/>
         </request>
 
-        <request name="bind_swipe_gesture" since="1">
+        <request name="bind_swipe_gesture">
             <description summary="bind a swipe gesture to a compositor action">
                 Bind a swipe gesture to a compositor action.
 
@@ -99,7 +99,7 @@
             <arg name="action" type="uint" enum="action" summary="compositor action to be executed"/>
         </request>
 
-        <request name="bind_hold_gesture" since="1">
+        <request name="bind_hold_gesture">
             <description summary="bind a hold gesture to a compositor action">
                 Bind a hold gesture to a compositor action.
 
@@ -121,7 +121,7 @@
             <arg name="action" type="uint" enum="action" summary="compositor action to be executed"/>
         </request>
 
-        <request name="commit" since="1">
+        <request name="commit">
             <description summary="commit the pending bindings">
                 Commit the pending bindings.
 
@@ -142,7 +142,7 @@
             </description>
         </request>
 
-        <request name="unbind" since="1">
+        <request name="unbind">
             <description summary="remove an existing binding">
                 Remove an existing binding.
 
@@ -152,7 +152,7 @@
             <arg name="name" type="string" summary="unique name of the binding to be removed"/>
         </request>
 
-        <event name="activated" since="1">
+        <event name="activated">
             <description summary="a shortcut has been activated">
                 This event is emitted when a binding registered with action `notify` is activated.
 
@@ -162,14 +162,14 @@
             <arg name="repeat" type="uint" summary="indicates whether the shortcut activation is due to auto-repeat"/>
         </event>
 
-        <event name="commit_success" since="1">
+        <event name="commit_success">
             <description summary="the last commit was successful">
                 This event is emitted in response to a commit request,
                 indicating that the commit was successful.
             </description>
         </event>
 
-        <event name="commit_failure" since="1">
+        <event name="commit_failure">
             <description summary="the last commit has failed">
                 This event is emitted in response to a commit request,
                 indicating that the commit has failed.
@@ -180,14 +180,14 @@
             <arg name="error" type="uint" enum="bind_error" summary="error code indicating the reason of the failure"/>
         </event>
 
-        <enum name="direction" since="1">
+        <enum name="direction">
             <entry name="down" value="1"/>
             <entry name="left" value="2"/>
             <entry name="up" value="3"/>
             <entry name="right" value="4"/>
         </enum>
 
-        <enum name="action" since="1">
+        <enum name="action">
             <description summary="compositor actions">
                 Compositor actions that can be assigned to a shortcut.
             </description>
@@ -220,7 +220,7 @@
             <entry name="taskswitch_sameapp_prev" value="27"/>
         </enum>
 
-        <enum name="keybind_mode" since="1">
+        <enum name="keybind_mode">
             <description summary="keybinding modes">
                 Keybinding modes.
             </description>
@@ -229,7 +229,7 @@
             <entry name="key_press_repeat" value="3"/>
         </enum>
 
-        <enum name="bind_error" since="1">
+        <enum name="bind_error">
             <description summary="binding error codes">
                 Error codes indicating the reason of a binding failure.
             </description>
@@ -239,7 +239,7 @@
             <entry name="internal_error" value="4"/>
         </enum>
 
-        <enum name="error" since="1">
+        <enum name="error">
             <entry name="occupied" value="1"/>
             <entry name="not_acquired" value="2"/>
             <entry name="invalid_commit" value="3"/>
