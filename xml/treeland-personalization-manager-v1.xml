@@ -176,7 +176,7 @@
             <description summary="set window background blend mode">
                 Set window background blend mode
             </description>
-            <arg name="mode" type="int" enum="window_blend_mode" />
+            <arg name="mode" type="int" enum="blend_mode" />
         </request>
         <request name="set_round_corner_radius">
             <description summary="set window round corner radius">
