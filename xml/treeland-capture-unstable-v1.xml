@@ -29,8 +29,9 @@
 
     <request name="start">
       <description summary="start session">
-          Start session and keeps sending frame.
+          Start session and keeps sending frame with the given buffer.
       </description>
+      <arg name="buffer" type="object" interface="wl_buffer" allow-null="true" summary="buffer to receive frame data, null for export dmabuf"/>
     </request>
 
     <request name="frame_done">
@@ -45,9 +46,15 @@
     </request>
 
     <event name="frame">
+        <description summary="notify the client a new frame">
+        Notify the client that a new frame is coming, client should copy or import dmabuf.
+        </description>
+    </event>
+
+    <event name="dmabuf_frame">
       <description summary="supply the client with information about the frame">
-          Main event supplying the client with information about the frame. If the capture didn't fail, this event is always
-          emitted first before any other events.
+          Main event supplying the client with information about the dmabuf frame.
+          If the capture didn't fail, this event is directly after the frame event.
           When mask is provided, x and y should be offset relative to mask surface origin. Otherwise offset_x and offset_y should always
           be zero.
       </description>
@@ -63,7 +70,7 @@
       <arg name="num_objects" type="uint"/>
     </event>
 
-    <event name="object">
+    <event name="dmabuf_object">
       <description summary="supply the client with object fd">
       </description>
       <arg name="index" type="uint"/>
@@ -91,7 +98,6 @@
       </description>
       <arg name="reason" type="uint" enum="treeland_capture_session_v1.cancel_reason"/>
     </event>
-
   </interface>
 
   <interface name="treeland_capture_frame_v1" version="1">
@@ -103,22 +109,6 @@
     <enum name="flags" bitfield="true">
       <entry name="y_inverted" value="0x1" summary="contents are y-inverted"/>
     </enum>
-
-    <event name="buffer">
-      <description summary="inform client to prepare buffer">
-        Inform client to prepare buffer.
-      </description>
-      <arg name="format" type="uint" enum="wl_shm.format"/>
-      <arg name="width" type="uint"/>
-      <arg name="height" type="uint"/>
-      <arg name="stride" type="uint"/>
-    </event>
-
-    <event name="buffer_done">
-      <description summary="all buffer formats have done">
-        Inform client that all buffer formats supported are emitted.
-      </description>
-    </event>
 
     <request name="copy">
       <description summary="copy capture contents">
@@ -132,7 +122,7 @@
         Provides flags about the frame. This event is sent once before the
         "ready" event.
       </description>
-      <arg name="flags" type="uint" enum="treeland_capture_once_context_v1.flags" summary="frame flags"/>
+      <arg name="flags" type="uint" enum="treeland_capture_frame_v1.flags" summary="frame flags"/>
     </event>
 
     <event name="ready">
@@ -194,24 +184,71 @@
       <arg name="source_type" type="uint" enum="source_type" summary="final capture source type"/>
     </event>
 
+    <event name="source_shm_buffer">
+        <description summary="notify client the supported shm buffer format">
+        This event notify the client what kind of shm buffer is supported. It may be sent several times after "capture"
+        or "create_session". If client receives dmabuf notification, it should use dmabuf instead.
+        </description>
+        <arg name="format" type="uint" enum="wl_shm.format" summary="shm buffer format"/>
+        <arg name="width" type="uint" summary="shm buffer width"/>
+        <arg name="height" type="uint" summary="shm buffer height"/>
+        <arg name="stride" type="uint" summary="shm buffer stride"/>
+    </event>
+
+    <event name="source_dmabuf">
+        <description summary="notify client the supported dmabuf format">
+        This event notify the client what kind of dmabuf is supported. It may be sent several times after "capture"
+        or "create_session". If client receives the notification, it should use dmabuf instead of shm buffer.
+        </description>
+        <arg name="format" type="uint" summary="fourcc pixel format"/>
+        <arg name="width" type="uint" summary="dmabuf width"/>
+        <arg name="height" type="uint" summary="dmabuf height"/>
+    </event>
+
+    <event name="source_export_dmabuf">
+        <description summary="notify client that compositor supports export dmabuf">
+          This event notifies the client that compositor supports exporting dmabuf. It should be sent just once
+          after "capture" or "create_session". Client should prefer export dmabuf over dmabuf or shm buffer.
+        </description>
+    </event>
+
+    <event name="source_buffer_done">
+        <description summary="notify client that all supported buffer formats are sent">
+          This event indicates an end of source_shm_buffer, source_dmabuf and source_export_dmabuf event
+          sequence.
+        </description>
+    </event>
+
     <event name="source_failed">
         <description summary="notify client that source selection is failed">
-          There could a lot of reasons but the most common one is that selector is busy
+          There could a lot of reasons but the most common one is that selector is busy indicated by "selector_busy".
+          Note that this event will still be sent after "source_ready" event. This is typically caused by destroying
+          source like user closes the captured window. Client will receive a "source_destroyed" failure then, it 
+          should destroy the session and frame created from current source and re-select source by "select_source"
+          request. A user_cancel failure is caused by user canceling the selection before acknowledgement. It is up
+          to the client to determine whether destroies the session or re-select source.
         </description>
-        <arg name="reason" type="uint" enum="source_failure"/>
+        <arg name="reason" type="uint" enum="treeland_capture_context_v1.source_failure"/>
     </event>
 
     <request name="capture">
         <description summary="capture one frame">
           This event can be called just once. A second call might result in a protocol error cause
-          we just provide transient
+          we just provide transient capture for security reason. Invoking capture means that source
+          selected is acknowledged by client and will not change. Thus, source buffer information will
+          follows this request to inform the client about what kind of buffers are supported.
         </description>
         <arg name="frame" type="new_id" interface="treeland_capture_frame_v1"/>
     </request>
 
     <request name="create_session">
         <description summary="create a persistent session for capturing">
-          Often used by a screen recorder.
+          This event can be called just once. A second call might result in a protocol error. This is often 
+          used by a screen recorder. Create a session receiving continuous frames. Invoking create_session
+          means that source selected is acknowledged by the client and will not change. Thus, source buffer information
+          will follows this request to inform the client about what kind of buffers are supported. Frozen clients 
+          unfreeze after selection is acknowledged. Although capture is allowed to be invoked after create_session,
+          the image may not as expected.
         </description>
         <arg name="session" type="new_id" interface="treeland_capture_session_v1"/>
     </request>
