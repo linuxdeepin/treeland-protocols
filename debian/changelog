@@ -1,3 +1,18 @@
+treeland-protocols (0.5.2) unstable; urgency=medium
+
+  * fix: enum reference in set_blend_mode request
+  * chore: remove since="1" attributes from protocols
+  * feat: add optional icon buffer parameter to splash screen
+  * fix: fix protocol specification errors and warnings
+  * feat: enhance Wayland protocol with sandbox support
+  * feat: add new Wayland protocols for app launching
+  * fix: correct duplicate enum value in shortcut management protocol &
+    add missing actions
+  * feat: enhancements to treeland-shortcut-manager-v1 protocol
+  * feat: Add treeland-screensaver-v1 protocol
+
+ -- zhangkun <zhangkun2@uniontech.com>  Thu, 18 Dec 2025 17:32:46 +0800
+
 treeland-protocols (0.5.1) unstable; urgency=medium
 
   * feat: support setting brightness and color temperature in treeland-
