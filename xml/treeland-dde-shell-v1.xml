@@ -58,6 +58,24 @@
             <arg name="id" type="new_id" interface="treeland_lockscreen_v1"/>
         </request>
 
+        <request name="move_xwayland_surface">
+            <description summary="Move a XWayland surface to a position relative to a wl_surface">
+                Move the top-left point of a XWayland surface
+                specified with Window ID, to a position that has
+                (dx, dy) offset from the top-left point of a wl_surface
+
+                Once the server finished process it send "done" to the
+                callback. The callback data 0 means no error occured,
+                1 means something went wrong and the move cannot be
+                done.
+            </description>
+            <arg name="callback" type="new_id" interface="wl_callback"/>
+            <arg name="wid" type="uint"/>
+            <arg name="anchor" type="object" interface="wl_surface"/>
+            <arg name="dx" type="fixed"/>
+            <arg name="dy" type="fixed"/>
+        </request>
+
     </interface>
 
     <interface name="treeland_window_overlap_checker" version="1">
