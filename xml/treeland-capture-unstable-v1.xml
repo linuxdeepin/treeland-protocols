@@ -132,7 +132,7 @@
         Provides flags about the frame. This event is sent once before the
         "ready" event.
       </description>
-      <arg name="flags" type="uint" enum="treeland_capture_once_context_v1.flags" summary="frame flags"/>
+      <arg name="flags" type="uint" enum="treeland_capture_frame_v1.flags" summary="frame flags"/>
     </event>
 
     <event name="ready">
