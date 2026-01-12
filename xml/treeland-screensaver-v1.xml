@@ -3,12 +3,12 @@
     Simple idle inhibit protocol,
     Used to implement org.freedesktop.ScreenSaver D-Bus interface.
 -->
-<protocol name="treeland_screensaver">
+<protocol name="treeland_screensaver_v1">
     <copyright><![CDATA[
     SPDX-FileCopyrightText: 2025 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
-    <interface name="treeland_screensaver" version="1">
+    <interface name="treeland_screensaver_v1" version="1">
         <description summary="Simple idle inhibit protocol">
             This object implements a simple idle inhibit protocol.
 
