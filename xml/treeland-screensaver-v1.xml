@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Simple idle inhibit protocol,
-    Used to implement org.freedesktop.ScreenSaver D-Bus interface.
--->
 <protocol name="treeland_screensaver_v1">
     <copyright><![CDATA[
     SPDX-FileCopyrightText: 2025 UnionTech Software Technology Co., Ltd.
@@ -10,7 +6,8 @@
     ]]></copyright>
     <interface name="treeland_screensaver_v1" version="1">
         <description summary="Simple idle inhibit protocol">
-            This object implements a simple idle inhibit protocol.
+            This object implements a simple idle inhibit protocol used
+            to implement org.freedesktop.ScreenSaver D-Bus interface.
 
             Call inhibit to prevent treeland from entering idle state.
             Call uninhibit or disconnect from the global to release
@@ -30,7 +27,6 @@
             bump. Backward incompatible changes can only be done by
             creating a new major version of the extension.
         </description>
-        <!-- Requests -->
         <request name="inhibit">
             <description summary="Inhibit idleness">
                 Inhibit idleness with given application_name and reason_for_inhibit.
@@ -43,7 +39,6 @@
                 Uninhibit idleness previously inhibited by inhibit request.
             </description>
         </request>
-        <!-- Errors -->
         <enum name="error">
             <entry name="not_yet_inhibited" value="0" summary="Trying to uninhibit but no active inhibit existed" />
             <entry name="already_inhibited" value="1" summary="Trying to inhibit with an active inhibit existed" />
