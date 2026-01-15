@@ -1,3 +1,11 @@
+treeland-protocols (0.5.3) unstable; urgency=medium
+
+  * fix: replace XML comments with <description> tags
+  * fix: align protocol and interface names with filenames
+  * fix: correct nonexistent enum reference in protocol
+
+ -- rewine <luhongxu@uniontech.com>  Thu, 15 Jan 2026 10:43:54 +0800
+
 treeland-protocols (0.5.2) unstable; urgency=medium
 
   * fix: enum reference in set_blend_mode request
