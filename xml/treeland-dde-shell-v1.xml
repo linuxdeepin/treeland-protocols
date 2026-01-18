@@ -58,7 +58,7 @@
             <arg name="id" type="new_id" interface="treeland_lockscreen_v1"/>
         </request>
 
-        <request name="move_xwayland_surface">
+        <request name="set_xwindow_position_relative">
             <description summary="Move a XWayland surface to a position relative to a wl_surface">
                 Move the top-left point of a XWayland surface
                 specified with Window ID, to a position that has
