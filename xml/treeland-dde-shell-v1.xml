@@ -235,6 +235,35 @@
             </description>
             <arg name="accept" type="uint" summary="Boolean value that sets whether to accept keyboard focus"/>
         </request>
+
+        <enum name="resize_edge">
+            <description summary="edge values for resizing">
+                These values are used to indicate which edge of a surface
+                is being dragged in a resize operation.
+            </description>
+            <entry name="none" value="0"/>
+            <entry name="top" value="1"/>
+            <entry name="bottom" value="2"/>
+            <entry name="left" value="4"/>
+            <entry name="top_left" value="5"/>
+            <entry name="bottom_left" value="6"/>
+            <entry name="right" value="8"/>
+            <entry name="top_right" value="9"/>
+            <entry name="bottom_right" value="10"/>
+        </enum>
+
+        <request name="resize" since="1">
+            <description summary="start an interactive resize">
+                Start a resize operation on a given edge or corner.
+
+                The compositor will respond by initiating an interactive resize of
+                the surface. The client should update its content and size based
+                on the resize operation.
+            </description>
+            <arg name="seat" type="object" interface="wl_seat" summary="the seat whose pointer is used"/>
+            <arg name="serial" type="uint" summary="serial of the implicit grab on the pointer"/>
+            <arg name="edges" type="uint" enum="resize_edge" summary="which edge or corner is being dragged"/>
+        </request>
     </interface>
 
     <interface name="treeland_dde_active_v1" version="1">
