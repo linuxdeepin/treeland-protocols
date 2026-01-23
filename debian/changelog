@@ -1,3 +1,12 @@
+treeland-protocols (0.5.4) unstable; urgency=medium
+
+  * chore: rename move_xwayland_surface to set_position_relative
+  * feat: add treeland_wallpaper_v1 protocol for per-output wallpapers
+  * feat: expose a method to move XWayland window position relative to
+    wl_surface
+
+ -- zhangkun <zhangkun2@uniontech.com>  Fri, 23 Jan 2026 15:26:10 +0800
+
 treeland-protocols (0.5.3) unstable; urgency=medium
 
   * fix: replace XML comments with <description> tags
