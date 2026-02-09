@@ -6,7 +6,7 @@
     SPDX-License-Identifier: MIT
     ]]></copyright>
 
-    <interface name="treeland_prelaunch_splash_manager_v1" version="1">
+    <interface name="treeland_prelaunch_splash_manager_v1" version="2">
         <description summary="prelaunch splash screen manager">
             This interface is a manager for creating prelaunch splash screens.
             A prelaunch splash screen is a placeholder surface that is shown
@@ -40,6 +40,20 @@
             <arg name="app_id" type="string" summary="the application ID"/>
             <arg name="sandbox_engine_name" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
             <arg name="icon_buffer" type="object" interface="wl_buffer" allow-null="true" summary="optional icon image as wl_buffer (e.g. wl_shm)"/>
+        </request>
+
+        <request name="close_splash" since="2">
+            <description summary="close an existing splash screen">
+                Closes an existing prelaunch splash screen for the given application.
+
+                This should be used when the application exits or crashes before
+                its main window is mapped, so the compositor can dismiss the splash.
+
+                Callers MUST provide the same non-empty `sandbox_engine_name` used
+                when creating the splash.
+            </description>
+            <arg name="app_id" type="string" summary="the application ID"/>
+            <arg name="sandbox_engine_name" type="string" summary="the sandbox engine / security context name (required, non-empty)"/>
         </request>
     </interface>
 </protocol>
