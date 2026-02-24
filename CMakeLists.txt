@@ -21,7 +21,7 @@ set(XML
   xml/treeland-shortcut-manager-v1.xml
   xml/treeland-shortcut-manager-v2.xml
   xml/treeland-window-management-v1.xml
-  xml/treeland-ddm-v1.xml
+  xml/treeland-ddm-v2.xml
   xml/treeland-screensaver-v1.xml
   xml/treeland-prelaunch-splash-v1.xml
   xml/treeland-prelaunch-splash-v2.xml

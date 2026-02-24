@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_ddm_v2">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2025-2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+    <interface name="treeland_ddm_v2" version="2">
+        <description summary="core global for treeland - ddm connection">
+            This is the treeland - ddm private communication protocol.
+
+            This object is primarily used to establish connection between
+            treeland and ddm.
+
+            Warning! The protocol described in this file is currently in the testing
+            phase. Backward compatible changes may be added together with the
+            corresponding interface version bump. Backward incompatible changes can
+            only be done by creating a new major version of the extension.
+        </description>
+
+        <!-- Enums -->
+
+        <enum name="capabilities" bitfield="true">
+            <description summary="capabilities of what ddm can perform on this machine">
+                Capabilities of what ddm can perform on this machine. Treeland
+                can adjust its behavior based on it.
+
+                See the capabilities request for how it is used.
+            </description>
+            <entry name="none" value="0"/>
+            <entry name="poweroff" value="1"/>
+            <entry name="reboot" value="2"/>
+            <entry name="suspend" value="4"/>
+            <entry name="hibernate" value="8"/>
+            <entry name="hybrid_sleep" value="16"/>
+        </enum>
+
+        <enum name="session_type">
+            <description summary="desktop session types">
+                Desktop session types, X11 or Wayland.
+
+                See the login event for how it is used.
+            </description>
+            <entry name="x11" value="1"/>
+            <entry name="wayland" value="2"/>
+        </enum>
+
+        <enum name="auth_error">
+            <description summary="error codes for authentication failure">
+                Error codes for authentication failure.
+            </description>
+            <entry name="authentication_failed" value="1"/>
+            <entry name="invalid_user" value="2"/>
+            <entry name="invalid_session" value="3"/>
+            <entry name="existing_authentication_ongoing" value="4"/>
+            <entry name="internal_error" value="5"/>
+        </enum>
+
+        <!-- Requests: ddm => treeland -->
+
+        <!-- Sync -->
+        <request name="capabilities">
+            <description summary="capabilities of ddm">
+                ddm will send its power management capabilities to treeland
+                through this request. The argument is a bitfield of capabilities
+                that ddm can perform on. See the capabilities enum.
+
+                This is primarily used for treeland to adjust its behavior based
+                on what ddm can perform on this machine. For example, if ddm
+                doesn't have poweroff capability, treeland will hide poweroff
+                option in the UI.
+            </description>
+            <arg name="capabilities" type="uint" enum="capabilities"/>
+        </request>
+
+        <request name="user_logged_in">
+            <description summary="send treeland the user that have already logged in">
+                This is primarily used for crash-recovery of treeland.
+
+                At the time the connection established, ddm will send the users
+                and their corresponding XDG session ID that "have already logged
+                in" by sending this request multiple times.
+
+                Users that "have already logged in" are those who already have
+                active systemd-logind sessions, but dropped-off from the
+                previous-connected treeland, probably due to its crash.
+            </description>
+            <arg name="username" type="string"/>
+            <arg name="session_id" type="string"/>
+        </request>
+
+        <!-- Authentication -->
+        <request name="authentication_failed">
+            <description summary="notify treeland about authentication failure">
+                Notify treeland about authentication failure after
+                login or unlock.
+            </description>
+            <arg name="error" type="uint" enum="auth_error"/>
+        </request>
+
+        <!-- Greeter -->
+        <request name="switch_to_greeter">
+            <description summary="send treeland to greeter mode">
+                Send treeland to Greeter mode.
+            </description>
+        </request>
+        <request name="switch_to_user">
+            <description summary="call treeland to switch lockscreen user">
+                Set lockscreen user to username. Barely lockscreen when username
+                is "dde".
+            </description>
+            <arg name="username" type="string"/>
+        </request>
+
+        <!-- DRM Control -->
+        <request name="activate_session">
+            <description summary="activate wayland session">
+                Activate treeland session. This will make treeland try to take
+                control of screen.
+            </description>
+        </request>
+        <request name="deactivate_session">
+            <description summary="deactivate wayland session">
+                Deactivate treeland session. This will release control of the
+                screen, but not to close the current seats.
+            </description>
+        </request>
+        <request name="enable_render">
+            <description summary="start treeland rendering">
+                Enable treeland rendering. This is primarily called after
+                disable_render to resume treeland.
+            </description>
+        </request>
+        <request name="disable_render">
+            <description summary="stop treeland rendering">
+                Disable treeland rendering. This will prevent treeland from
+                output to DRM device.
+            </description>
+            <arg name="callback" type="new_id" interface="wl_callback"/>
+        </request>
+
+        <!-- Events: treeland => ddm -->
+
+        <!-- Session Management -->
+        <event name="login">
+            <description summary="log a user in">
+                Log a user in with username and secret. session_type is the
+                desktop session type that the user wants to log in to,
+                session_file is the .desktop file of the session.
+
+                Please listen to systemd-logind for whether the session is
+                exactly opened or not. Failed login attempt will be notified by
+                authentication_failed request.
+
+                Typically used when user click the login button on lockscreen.
+            </description>
+            <arg name="username" type="string"/>
+            <arg name="secret" type="string"/>
+            <arg name="session_type" type="uint" enum="session_type"/>
+            <arg name="session_file" type="string"/>
+        </event>
+
+        <event name="logout">
+            <description summary="logout session">
+                Logout the session.
+
+                session is identical to the value of XDG_SESSION_ID, or the
+                value of org.freedesktop.login1.Session.Id, or the value of a
+                string returned by sd_get_sessions().
+
+                Please listen to org.freedesktop.login1.Manager.SessionRemoved
+                signal for whether the session is exactly closed or not.
+
+                Typically used when user click the logout button in system menu.
+            </description>
+            <arg name="session" type="string"/>
+        </event>
+
+        <event name="lock">
+            <description summary="lock session">
+                Lock the session.
+
+                session is identical to the value of XDG_SESSION_ID, or the
+                value of org.freedesktop.login1.Session.Id, or the value of a
+                string returned by sd_get_sessions().
+
+                Please listen to org.freedesktop.login1.Session.Lock signal for
+                whether the session is exactly locked or not.
+
+                Typically used when user click the lock button in system menu.
+            </description>
+            <arg name="session" type="string"/>
+        </event>
+
+        <event name="unlock">
+            <description summary="unlock session">
+                Unlock the session with secret.
+
+                session is identical to the value of XDG_SESSION_ID, or the
+                value of org.freedesktop.login1.Session.Id, or the value of a
+                string returned by sd_get_sessions().
+
+                Please listen to org.freedesktop.login1.Session.Unlock signal
+                for whether the session is exactly unlocked or not. Failed
+                unlock attempt will be notified by authentication_failed
+                request.
+
+                Typically used when user click the unlock button on lockscreen.
+            </description>
+            <arg name="session" type="string"/>
+            <arg name="secret" type="string"/>
+        </event>
+
+        <!-- Power Management -->
+        <event name="poweroff">
+            <description summary="poweroff machine">
+                Poweroff the machine.
+
+                This is typically used when user click the poweroff button.
+            </description>
+        </event>
+        <event name="reboot">
+            <description summary="reboot machine">
+                Reboot the machine.
+
+                This is typically used when user click the reboot button.
+            </description>
+        </event>
+        <event name="suspend">
+            <description summary="suspend machine">
+                Suspend the machine.
+
+                This is typically used when user click the suspend button.
+            </description>
+        </event>
+        <event name="hibernate">
+            <description summary="hibernate machine">
+                Hibernate the machine.
+
+                This is typically used when user click the hibernate button.
+            </description>
+        </event>
+        <event name="hybrid_sleep">
+            <description summary="hybrid sleep machine">
+                Hybrid sleep the machine.
+
+                This is typically used when user click the hybrid sleep button.
+            </description>
+        </event>
+
+        <!-- DRM Control -->
+        <event name="switch_to_vt">
+            <description summary="switch to virtual terminal">
+                Call ddm to switch current virtual terminal to vtnr. ddm should
+                take care of the switch and call ioctl respectively.
+            </description>
+            <arg name="vtnr" type="int"/>
+        </event>
+    </interface>
+</protocol>
