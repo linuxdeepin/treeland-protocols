@@ -1,3 +1,9 @@
+treeland-protocols (0.5.5) unstable; urgency=medium
+
+  * feat: add prelaunch splash screen protocol v2
+
+ -- rewine <luhongxu@uniontech.com>  Sat, 28 Feb 2026 13:54:07 +0800
+
 treeland-protocols (0.5.4) unstable; urgency=medium
 
   * chore: rename move_xwayland_surface to set_position_relative
