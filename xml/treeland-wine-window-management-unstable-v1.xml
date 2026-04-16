@@ -38,10 +38,9 @@
 
     <interface name="treeland_wine_window_manager_v1" version="1">
         <description summary="global entry point for Wine window management">
-            A global singleton that lets a Wine client create per-toplevel
-            control objects.  The compositor should restrict binding to
-            trusted clients identified by app_id or an equivalent policy
-            mechanism.
+            Lets a Wine client create per-toplevel control objects.  The
+            compositor should restrict binding to trusted clients identified
+            by app_id or an equivalent policy mechanism.
 
             The client must destroy all child
             treeland_wine_window_control_v1 objects before destroying this
@@ -87,35 +86,24 @@
             coordinate space (the same space used by wl_output.geometry and
             xdg_output.logical_position).
 
-            Position and size requests are not applied immediately.  The
-            compositor processes them and reports the result in a
-            configure_geometry event followed by a done event.  The client
-            should treat the values in configure_geometry as authoritative
-            and update its internal state accordingly.
+            Position requests are not applied immediately.  The
+            compositor processes them and reports the result via
+            configure_position.  The client should treat the values in
+            configure_position as authoritative and update its internal
+            state accordingly.
 
             If the associated xdg_toplevel is destroyed, this object becomes
             inert.  All subsequent requests are ignored and no further events
             are emitted.  The client should destroy the inert object.
+
+            Window size is managed through the standard xdg_toplevel
+            configure / xdg_surface.ack_configure mechanism.  This interface
+            only controls screen position and stacking order.
         </description>
 
         <enum name="error">
-            <entry name="invalid_size" value="0"
-                summary="requested width or height is non-positive"/>
-            <entry name="invalid_sibling" value="1"
+            <entry name="invalid_sibling" value="0"
                 summary="sibling_id is non-zero for an op that does not accept a sibling"/>
-        </enum>
-
-        <enum name="swp_flags" bitfield="true">
-            <description summary="SetWindowPos flag mask">
-                Bitfield controlling which geometry fields set_geometry
-                should apply.  Unset bits cause the compositor to preserve
-                the current value.  Corresponds to SWP_NOMOVE and SWP_NOSIZE
-                in the Windows SetWindowPos API.
-            </description>
-            <entry name="nomove" value="1"
-                summary="ignore x and y; preserve current position"/>
-            <entry name="nosize" value="2"
-                summary="ignore width and height; preserve current size"/>
         </enum>
 
         <enum name="z_order_op">
@@ -155,30 +143,34 @@
             </description>
         </request>
 
-        <request name="set_geometry">
-            <description summary="request new position and/or size atomically">
-                Requests that the compositor change the window's position
-                and/or size.  The flags bitfield controls which fields to
-                apply, corresponding to the SWP_NOMOVE and SWP_NOSIZE flags
-                of the Windows SetWindowPos API.
+        <request name="set_position">
+            <description summary="request a new absolute screen position">
+                Requests that the compositor place this window at the
+                specified position in the compositor's global logical
+                coordinate space.
 
-                Width and height must be positive when the nosize flag is
-                not set; otherwise the compositor must raise an invalid_size
-                error.
+                The requested position must fall within the bounds of an
+                active screen.  If the compositor determines that
+                (x, y) is outside all screen regions, it rejects the
+                request and emits a configure_position event reporting the
+                current unchanged position.
 
-                The compositor may adjust the values based on policy and
-                reports the actual placement via configure_geometry followed
-                by done.
+                Even for valid positions the compositor does not guarantee
+                exact placement: it may adjust the position to respect
+                window management rules or layer-shell exclusive zones.
+                The client must treat the values in the resulting
+                configure_position event as authoritative and update its
+                internal state accordingly.
 
-                Corresponds to the position and size component of the
-                Windows SetWindowPos and MoveWindow APIs.
+                Window size changes must use the standard xdg_toplevel
+                configure / xdg_surface.ack_configure flow and are outside
+                the scope of this protocol.
+
+                Corresponds to the position component of the Windows
+                SetWindowPos and MoveWindow APIs.
             </description>
             <arg name="x" type="int" summary="desired x in global logical coordinates"/>
             <arg name="y" type="int" summary="desired y in global logical coordinates"/>
-            <arg name="width" type="int" summary="desired width in logical coordinates"/>
-            <arg name="height" type="int" summary="desired height in logical coordinates"/>
-            <arg name="flags" type="uint" enum="swp_flags"
-                summary="which geometry fields to apply"/>
         </request>
 
         <request name="set_z_order">
@@ -203,7 +195,10 @@
                 to hwnd_top within the appropriate tier.
 
                 The compositor reports the resulting stacking state via
-                configure_stacking followed by done.
+                configure_stacking.
+
+                Note: hwnd_top and hwnd_insert_after do not change tier
+                membership and therefore do not emit configure_stacking.
             </description>
             <arg name="op" type="uint" enum="z_order_op"
                 summary="Z-order operation"/>
@@ -229,26 +224,26 @@
             <arg name="id" type="uint" summary="non-zero session-scoped window identifier"/>
         </event>
 
-        <event name="configure_geometry">
-            <description summary="compositor reports actual window geometry">
+        <event name="configure_position">
+            <description summary="compositor reports actual window position">
                 Sent by the compositor to inform the client of the actual
-                window position and size in global logical coordinates.
+                window position in the compositor's global logical coordinate
+                space.
 
                 This event is emitted:
                 - immediately after window_id on initial creation,
-                - in response to set_geometry requests,
-                - when the user or compositor moves or resizes the window.
+                - in response to set_position requests,
+                - when the user or compositor moves the window.
 
-                The client should use these values to synchronize its
+                Window size is communicated via the standard xdg_toplevel
+                configure event and is not reported here.
+
+                The client should use these coordinates to synchronize its
                 internal window state (e.g. update the wineserver window
-                rectangles).
-
-                This event is always followed by a done event.
+                rectangles with the correct screen origin).
             </description>
             <arg name="x" type="int" summary="actual x in global logical coordinates"/>
             <arg name="y" type="int" summary="actual y in global logical coordinates"/>
-            <arg name="width" type="int" summary="actual width in logical coordinates"/>
-            <arg name="height" type="int" summary="actual height in logical coordinates"/>
         </event>
 
         <event name="configure_stacking">
@@ -257,7 +252,7 @@
                 currently in the topmost tier (WS_EX_TOPMOST equivalent).
 
                 This event is emitted:
-                - immediately after window_id and configure_geometry on
+                - immediately after window_id and configure_position on
                   initial creation, to report the current tier state,
                 - in response to set_z_order requests that change tier
                   membership (hwnd_topmost, hwnd_notopmost, hwnd_bottom),
@@ -265,25 +260,10 @@
 
                 Note: hwnd_top and hwnd_insert_after do not change tier
                 membership and therefore do not trigger this event.
-
-                This event is always followed by a done event.
             </description>
             <arg name="topmost" type="uint"
                 summary="non-zero if the toplevel is in the topmost tier"/>
         </event>
 
-        <event name="done">
-            <description summary="end of a configure sequence">
-                Marks the end of an atomic set of configure events.  The
-                client should apply all preceding configure_geometry and
-                configure_stacking values as one update after receiving
-                this event.
-
-                The serial is this protocol's own sequence counter and is
-                independent of the xdg_surface configure serial space.
-                Clients must not pass this serial to xdg_surface.ack_configure.
-            </description>
-            <arg name="serial" type="uint" summary="configure serial for this protocol"/>
-        </event>
     </interface>
 </protocol>
