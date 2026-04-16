@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_wine_window_state_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="window state query and control for Wine">
+        This protocol provides window state management capabilities required
+        by Wine (the Windows API compatibility layer) that are not available
+        through standard Wayland protocols.
+
+        Standard xdg-shell lacks:
+        - any way to read whether a toplevel is minimized,
+        - any way to programmatically unminimize a toplevel,
+        - any way to request activation without a valid xdg-activation token
+          originating from a prior user interaction,
+        - any way to request a visual attention hint (taskbar flash) without
+          stealing focus,
+        - any pointer grab mechanism for cross-window drag or menu tracking.
+
+        This protocol fills those gaps.  A client obtains a
+        treeland_wine_window_state_v1 object for each xdg_toplevel whose
+        state it needs to observe or control.  The compositor remains the
+        final authority: every request is advisory, and the compositor
+        reports the authoritative state through events.
+
+        The key words "must", "must not", "should", "should not", and "may"
+        in this document are to be interpreted as described in IETF RFC 2119.
+    </description>
+
+    <interface name="treeland_wine_window_state_manager_v1" version="1">
+        <description summary="global entry point for Wine window state control">
+            A global singleton that lets a Wine client create per-toplevel
+            state objects.  The compositor should restrict binding to
+            trusted clients identified by app_id or an equivalent policy
+            mechanism.
+
+            The client must destroy all child
+            treeland_wine_window_state_v1 objects before destroying this
+            object.
+        </description>
+
+        <enum name="error">
+            <entry name="toplevel_already_bound" value="0"
+                summary="a state object already exists for the given toplevel"/>
+            <entry name="defunct_toplevel" value="1"
+                summary="the xdg_toplevel has no associated role or has been destroyed"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroys this manager object.  The client must destroy every
+                treeland_wine_window_state_v1 created through this manager
+                before sending this request; otherwise the compositor must
+                raise an implementation-defined protocol error.
+            </description>
+        </request>
+
+        <request name="get_window_state">
+            <description summary="create a state object for an xdg_toplevel">
+                Creates a treeland_wine_window_state_v1 bound to the given
+                xdg_toplevel.  At most one state object may exist for each
+                toplevel; requesting a second one is a
+                toplevel_already_bound error.  If the xdg_toplevel has been
+                destroyed or has no configured role, the compositor must
+                raise a defunct_toplevel error.
+
+                Upon creation, the compositor immediately sends a full
+                state_changed event followed by a done event to report the
+                current state of the toplevel.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_wine_window_state_v1"/>
+            <arg name="toplevel" type="object" interface="xdg_toplevel"/>
+        </request>
+    </interface>
+
+    <interface name="treeland_wine_window_state_v1" version="1">
+        <description summary="per-toplevel state observation and control">
+            Observes and controls the lifecycle state for one xdg_toplevel
+            surface.
+
+            State flags are reported via the state_changed event.  Each
+            flag corresponds to a Windows window state that xdg-shell does
+            not expose to clients.
+
+            If the associated xdg_toplevel is destroyed, this object
+            becomes inert.  All subsequent requests are ignored and no
+            further events are emitted.  The client should destroy the
+            inert object.
+        </description>
+
+        <enum name="state" bitfield="true">
+            <description summary="window state flags">
+                Bitfield of window states that the compositor tracks for
+                this toplevel.  These supplement the states delivered by
+                xdg_toplevel.configure.  Keyboard focus (activated) is
+                excluded because it is already delivered by xdg_toplevel;
+                duplicating it here would create two conflicting sources of
+                truth.
+            </description>
+            <entry name="minimized" value="1"
+                summary="the toplevel is minimized (iconified)"/>
+            <entry name="attention" value="2"
+                summary="the toplevel is requesting user attention (taskbar flash active)"/>
+        </enum>
+
+        <enum name="activate_reason">
+            <description summary="reason for an activation request">
+                Provides semantic context for an activate request so the
+                compositor can apply appropriate focus-stealing prevention
+                policy.
+            </description>
+            <entry name="user_request" value="0"
+                summary="the user explicitly asked to activate this window (e.g. taskbar click)"/>
+            <entry name="programmatic" value="1"
+                summary="the application is activating itself (e.g. SetForegroundWindow without direct user gesture)"/>
+            <entry name="restore" value="2"
+                summary="the window is being restored from a minimized or hidden state"/>
+        </enum>
+
+        <enum name="grab_reason">
+            <description summary="reason for a pointer grab">
+                Indicates why the client needs to receive pointer events
+                outside its window bounds.  The compositor may apply
+                different policies depending on the reason.
+            </description>
+            <entry name="move_resize" value="0"
+                summary="interactive window move or resize in progress"/>
+            <entry name="menu" value="1"
+                summary="popup menu tracking in progress"/>
+        </enum>
+
+        <enum name="grab_end_reason">
+            <description summary="why a pointer grab ended">
+                Indicates the cause of a pointer_grab_ended event so the
+                Wine driver can update its internal SetCapture state
+                correctly.
+            </description>
+            <entry name="client_request" value="0"
+                summary="the client called release_pointer_grab"/>
+            <entry name="button_released" value="1"
+                summary="all pointer buttons were released; applies to move_resize grabs"/>
+            <entry name="compositor_revoked" value="2"
+                summary="the compositor revoked the grab due to policy or focus change"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy this state object">
+                Destroys the state object.  Any active pointer grab
+                associated with this object is released by the compositor;
+                however, no pointer_grab_ended event is emitted as part of
+                this destruction.  The client must not send
+                release_pointer_grab after calling destroy.  This does not
+                affect the associated xdg_toplevel.
+            </description>
+        </request>
+
+        <request name="unminimize">
+            <description summary="request that the toplevel be unminimized">
+                Requests that the compositor restore this toplevel from the
+                minimized state.
+
+                Standard xdg-shell provides xdg_toplevel.set_minimized but
+                no way to reverse it.  This request fills that gap.
+
+                If the toplevel is not currently minimized, this request has
+                no effect.  If the compositor honors the request, it emits a
+                state_changed event with the minimized flag cleared, followed
+                by a done event.
+
+                This corresponds to the Wine/Windows ShowWindow(SW_RESTORE)
+                call on a minimized window.
+            </description>
+        </request>
+
+        <request name="activate">
+            <description summary="request that the toplevel be activated">
+                Requests that the compositor give keyboard focus to this
+                toplevel and raise it in the stacking order.
+
+                serial is a client-assigned value that is echoed back in
+                any activate_denied event for this request, allowing the
+                client to correlate denials when multiple activations are
+                in flight.
+
+                The reason argument informs the compositor about the context
+                of the activation.  Compositors should generally honor
+                user_request and restore activations, and may choose to
+                deny or convert programmatic activations into attention
+                requests based on focus-stealing prevention policy.
+
+                If the compositor denies the request, it emits an
+                activate_denied event carrying the same serial, and may
+                set the attention flag via state_changed.
+
+                Corresponds to the Wine/Windows SetForegroundWindow API.
+                Under X11, Wine sends a _NET_ACTIVE_WINDOW client message
+                with source indication; this request serves the same role
+                under Wayland.
+            </description>
+            <arg name="serial" type="uint"
+                summary="client-assigned serial for correlating with activate_denied"/>
+            <arg name="reason" type="uint" enum="activate_reason"
+                summary="why the client is requesting activation"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                summary="the seat on which to activate"/>
+        </request>
+
+        <request name="set_attention">
+            <description summary="request a user attention hint (taskbar flash)">
+                Asks the compositor to display a visual hint that this
+                toplevel needs user attention, typically by flashing or
+                highlighting its entry in the taskbar.  This must not
+                steal keyboard focus.
+
+                count specifies how many times to flash.  0 means flash
+                indefinitely until the window is activated, corresponding
+                to FLASHW_TIMER in the Windows FlashWindowEx API.
+
+                timeout_ms specifies the interval between flashes in
+                milliseconds.  0 uses the compositor default blink rate,
+                corresponding to the system cursor blink rate in Windows.
+
+                Sending this request replaces any currently active
+                attention hint.  To stop flashing, use clear_attention.
+
+                Corresponds to FlashWindowEx with FLASHW_ALL | FLASHW_TRAY.
+                Under X11, Wine sets _NET_WM_STATE_DEMANDS_ATTENTION;
+                this request serves the same role under Wayland.
+            </description>
+            <arg name="count" type="uint"
+                summary="number of flashes; 0 for indefinite"/>
+            <arg name="timeout_ms" type="uint"
+                summary="flash interval in milliseconds; 0 for compositor default"/>
+        </request>
+
+        <request name="clear_attention">
+            <description summary="cancel a user attention hint">
+                Cancels any active attention hint set via set_attention.
+                If no hint is active, this request has no effect.
+
+                The compositor emits a state_changed event with the
+                attention flag cleared, followed by done.
+
+                Corresponds to FlashWindowEx with FLASHW_STOP.
+            </description>
+        </request>
+
+        <request name="set_pointer_grab">
+            <description summary="grab pointer events outside the window">
+                Requests that the compositor redirect all pointer events to
+                this toplevel's surface, even when the pointer is outside
+                the surface bounds.  This is required for interactive
+                window move/resize and popup menu tracking, where the
+                pointer may leave the window area while a button is held.
+
+                The reason argument indicates why the grab is needed.  The
+                compositor may use this to scope the grab appropriately —
+                for example, automatically releasing the grab when all
+                pointer buttons are released for a move_resize grab.
+
+                If a grab is already active, sending this request replaces
+                it with a new grab using the specified reason.  To release
+                a grab, use the release_pointer_grab request instead.
+
+                This corresponds to the X11 XGrabPointer call that Wine
+                uses in its SetCapture implementation for GUI_INMOVESIZE
+                and GUI_INMENUMODE scenarios.
+
+                The compositor must send a pointer_grab_ended event when
+                the grab terminates, whether by client request, button
+                release, or compositor policy.
+            </description>
+            <arg name="seat" type="object" interface="wl_seat"
+                summary="the seat whose pointer should be grabbed"/>
+            <arg name="reason" type="uint" enum="grab_reason"
+                summary="why the grab is needed"/>
+        </request>
+
+        <request name="release_pointer_grab">
+            <description summary="release a previously set pointer grab">
+                Explicitly releases any active pointer grab set via
+                set_pointer_grab for the given seat.  If no grab is active
+                on that seat, this request has no effect.
+
+                The compositor sends a pointer_grab_ended event after
+                processing this request.
+            </description>
+            <arg name="seat" type="object" interface="wl_seat"
+                summary="the seat whose pointer grab should be released"/>
+        </request>
+
+        <event name="state_changed">
+            <description summary="window state flags have changed">
+                Emitted whenever the state flags of the toplevel change.
+
+                This event is sent:
+                - immediately after the treeland_wine_window_state_v1 is
+                  created, to report current state,
+                - when the user or compositor minimizes or restores the
+                  window,
+                - when an attention hint is set or cleared.
+
+                The state argument is a bitfield of treeland_wine_window_state_v1.state
+                values.  Flags not present in the bitfield are considered
+                unset.
+
+                This event is always followed by a done event.  The client
+                should not act on individual state_changed events but wait
+                for done to apply the complete set atomically.
+            </description>
+            <arg name="state" type="uint" enum="state"
+                summary="current state bitfield"/>
+        </event>
+
+        <event name="activate_denied">
+            <description summary="activation request was denied">
+                Emitted when the compositor denies an activate request.
+                The serial matches the serial field of the activate request
+                that was denied.
+
+                The compositor may have set the attention flag via
+                state_changed instead.  The client must not retry the
+                activation automatically.
+
+                This event is always followed by a done event.
+            </description>
+            <arg name="serial" type="uint"
+                summary="serial from the corresponding activate request"/>
+        </event>
+
+        <event name="pointer_grab_ended">
+            <description summary="pointer grab has been released">
+                Emitted when a pointer grab established via set_pointer_grab
+                is released.  The seat argument identifies which seat's grab
+                ended, matching the seat argument that was passed to
+                set_pointer_grab.  The reason argument indicates why the
+                grab ended; the Wine driver uses this to update SetCapture
+                state:
+                - client_request: client called release_pointer_grab,
+                - button_released: all buttons released (move_resize grabs),
+                - compositor_revoked: policy or focus change.
+
+                After this event the client must not assume pointer events
+                from the named seat are still being redirected.
+            </description>
+            <arg name="seat" type="object" interface="wl_seat"
+                summary="the seat whose pointer grab ended"/>
+            <arg name="reason" type="uint" enum="grab_end_reason"
+                summary="why the grab ended"/>
+        </event>
+
+        <event name="done">
+            <description summary="end of an event sequence">
+                Marks the end of an atomic set of state events.  The client
+                should apply all preceding state_changed and activate_denied
+                values accumulated since the last done event as one atomic
+                update after receiving this event.
+
+                A single done event may follow multiple state_changed or
+                activate_denied events.  The client must not act on any
+                individual event in the sequence before done is received.
+            </description>
+        </event>
+    </interface>
+</protocol>
