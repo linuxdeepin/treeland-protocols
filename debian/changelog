@@ -1,3 +1,10 @@
+treeland-protocols (0.5.6) unstable; urgency=medium
+
+  * chore: treeland-protocol-templated Treeland Wayland protocol
+    authoring skill
+
+ -- zhangkun <zhangkun2@uniontech.com>  Thu, 23 Apr 2026 21:46:52 +0800
+
 treeland-protocols (0.5.5) unstable; urgency=medium
 
   * feat: add prelaunch splash screen protocol v2
