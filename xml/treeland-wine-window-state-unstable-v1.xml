@@ -117,23 +117,6 @@
                 summary="the window is being restored from a minimized or hidden state"/>
         </enum>
 
-        <!-- grab_end_reason enum and pointer grab requests are temporarily
-             omitted pending security review of the grab mechanism.
-        <enum name="grab_end_reason">
-            <description summary="why a pointer grab ended">
-                Indicates the cause of a pointer_grab_ended event so the
-                Wine driver can update its internal SetCapture state
-                correctly.
-            </description>
-            <entry name="client_request" value="0"
-                summary="the client called release_pointer_grab"/>
-            <entry name="button_released" value="1"
-                summary="all pointer buttons were released"/>
-            <entry name="compositor_revoked" value="2"
-                summary="the compositor revoked the grab due to policy or focus change"/>
-        </enum>
-        -->
-
         <request name="destroy" type="destructor">
             <description summary="destroy this state object">
                 Destroys the state object.  This does not affect the
@@ -251,46 +234,6 @@
             </description>
         </request>
 
-        <!-- set_pointer_grab and release_pointer_grab are temporarily omitted
-             pending security review. The scope of this grab is broad and
-             requires additional compositor policy definition before exposing.
-        <request name="set_pointer_grab">
-            <description summary="grab pointer events outside the window">
-                Requests that the compositor redirect all pointer events to
-                this toplevel's surface, even when the pointer is outside
-                the surface bounds.  This is required for popup menu
-                tracking, where the pointer may leave the menu window area
-                while a button is held.
-
-                If a grab is already active, sending this request replaces
-                it.  To release a grab, use the release_pointer_grab
-                request instead.
-
-                This corresponds to the X11 XGrabPointer call that Wine
-                uses in its SetCapture implementation for GUI_INMENUMODE.
-
-                The compositor must send a pointer_grab_ended event when
-                the grab terminates, whether by client request, button
-                release, or compositor policy.
-            </description>
-            <arg name="seat" type="object" interface="wl_seat"
-                summary="the seat whose pointer should be grabbed"/>
-        </request>
-
-        <request name="release_pointer_grab">
-            <description summary="release a previously set pointer grab">
-                Explicitly releases any active pointer grab set via
-                set_pointer_grab for the given seat.  If no grab is active
-                on that seat, this request has no effect.
-
-                The compositor sends a pointer_grab_ended event after
-                processing this request.
-            </description>
-            <arg name="seat" type="object" interface="wl_seat"
-                summary="the seat whose pointer grab should be released"/>
-        </request>
-        -->
-
         <event name="state_changed">
             <description summary="window state flags have changed">
                 Emitted whenever the state flags of the toplevel change.
@@ -323,29 +266,6 @@
             <arg name="serial" type="uint"
                 summary="serial from the corresponding activate request"/>
         </event>
-
-        <!-- pointer_grab_ended event omitted together with set_pointer_grab.
-        <event name="pointer_grab_ended">
-            <description summary="pointer grab has been released">
-                Emitted when a pointer grab established via set_pointer_grab
-                is released.  The seat argument identifies which seat's grab
-                ended, matching the seat argument that was passed to
-                set_pointer_grab.  The reason argument indicates why the
-                grab ended; the Wine driver uses this to update SetCapture
-                state:
-                - client_request: client called release_pointer_grab,
-                - button_released: all pointer buttons released,
-                - compositor_revoked: policy or focus change.
-
-                After this event the client must not assume pointer events
-                from the named seat are still being redirected.
-            </description>
-            <arg name="seat" type="object" interface="wl_seat"
-                summary="the seat whose pointer grab ended"/>
-            <arg name="reason" type="uint" enum="grab_end_reason"
-                summary="why the grab ended"/>
-        </event>
-        -->
 
     </interface>
 </protocol>
