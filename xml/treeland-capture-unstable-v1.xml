@@ -95,14 +95,23 @@
   </interface>
 
   <interface name="treeland_capture_frame_v1" version="1">
+
+    <enum name="flags" bitfield="true">
+      <entry name="y_inverted" value="0x1" summary="contents are y-inverted"/>
+    </enum>
+
     <request name="destroy" type="destructor">
       <description summary="delete this object, used or not">
         Destroys the context. This request can be sent at any time by the client.
       </description>
     </request>
-    <enum name="flags" bitfield="true">
-      <entry name="y_inverted" value="0x1" summary="contents are y-inverted"/>
-    </enum>
+
+    <request name="copy">
+      <description summary="copy capture contents">
+        Copy capture contents to provided buffer
+      </description>
+      <arg name="buffer" type="object" interface="wl_buffer"/>
+    </request>
 
     <event name="buffer">
       <description summary="inform client to prepare buffer">
@@ -119,13 +128,6 @@
         Inform client that all buffer formats supported are emitted.
       </description>
     </event>
-
-    <request name="copy">
-      <description summary="copy capture contents">
-        Copy capture contents to provided buffer
-      </description>
-      <arg name="buffer" type="object" interface="wl_buffer"/>
-    </request>
 
     <event name="flags">
       <description summary="frame flags">
@@ -146,15 +148,10 @@
         Inform that frame copy fails.
       </description>
     </event>
+
   </interface>
 
   <interface name="treeland_capture_context_v1" version="1">
-
-    <request name="destroy" type="destructor">
-      <description summary="delete this object, used or not">
-        Destroys the context. This request can be sent at any time by the client.
-      </description>
-    </request>
 
     <enum name="source_type" bitfield="true">
       <entry name="output" value="0x1" summary="output source type"/>
@@ -171,6 +168,12 @@
         <entry name="other" value="4" summary="other failure"/>
     </enum>
 
+    <request name="destroy" type="destructor">
+      <description summary="delete this object, used or not">
+        Destroys the context. This request can be sent at any time by the client.
+      </description>
+    </request>
+
     <request name="select_source">
         <description summary="select source interactively">
           Selector is provided by compositor. Client can provide source hint to hint compositor
@@ -180,6 +183,21 @@
         <arg name="freeze" type="uint" summary="freeze compositing or not"/>
         <arg name="with_cursor" type="uint" summary="whether source content contains cursor or not"/>
         <arg name="mask" type="object" interface="wl_surface" allow-null="true" summary="this mask is guaranteed to be at the top most"/>
+    </request>
+
+    <request name="capture">
+        <description summary="capture one frame">
+          This event can be called just once. A second call might result in a protocol error cause
+          we just provide transient
+        </description>
+        <arg name="frame" type="new_id" interface="treeland_capture_frame_v1"/>
+    </request>
+
+    <request name="create_session">
+        <description summary="create a persistent session for capturing">
+          Often used by a screen recorder.
+        </description>
+        <arg name="session" type="new_id" interface="treeland_capture_session_v1"/>
     </request>
 
     <event name="source_ready">
@@ -201,20 +219,6 @@
         <arg name="reason" type="uint" enum="source_failure"/>
     </event>
 
-    <request name="capture">
-        <description summary="capture one frame">
-          This event can be called just once. A second call might result in a protocol error cause
-          we just provide transient
-        </description>
-        <arg name="frame" type="new_id" interface="treeland_capture_frame_v1"/>
-    </request>
-
-    <request name="create_session">
-        <description summary="create a persistent session for capturing">
-          Often used by a screen recorder.
-        </description>
-        <arg name="session" type="new_id" interface="treeland_capture_session_v1"/>
-    </request>
   </interface>
 
   <interface name="treeland_capture_manager_v1" version="1">
@@ -230,5 +234,6 @@
         </description>
         <arg name="context" type="new_id" interface="treeland_capture_context_v1"/>
     </request>
+
   </interface>
 </protocol>
