@@ -4,7 +4,7 @@
     SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
-    <interface name="treeland_personalization_manager_v1" version="1">
+    <interface name="treeland_personalization_manager_v1" version="2">
         <description summary="personalization manager">
             This interface allows a client to customized display effects.
 
@@ -43,6 +43,9 @@
                 custom user treeland window appearance global
             </description>
             <arg name="id" type="new_id" interface="treeland_personalization_appearance_context_v1" />
+        </request>
+         <request name="destroy" type="destructor" since="2">
+            <description summary="destroy treeland_personalization_manager_v1 object" />
         </request>
     </interface>
     <interface name="treeland_personalization_wallpaper_context_v1" version="1">
