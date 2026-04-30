@@ -30,7 +30,8 @@
         unique and valid only within that set.  The compositor must enforce
         this boundary: a sibling_id supplied to set_z_order that refers to a
         control object from a different manager binding must be treated as if
-        no matching sibling exists (i.e., fall back to hwnd_top behavior).
+        no matching sibling exists, causing hwnd_insert_after to have no
+        effect.
 
         The key words "must", "must not", "should", "should not", and "may"
         in this document are to be interpreted as described in IETF RFC 2119.
@@ -187,8 +188,8 @@
                 the window_id event on that control.  The compositor places
                 this surface directly below the identified sibling in
                 Z-order.  If sibling_id is 0 or does not identify a live
-                surface in the same session, the compositor must treat the
-                request as hwnd_top.
+                surface in the same session, the compositor must ignore the
+                request and leave the current Z-order unchanged.
 
                 hwnd_insert_after must not mix tiers: if the sibling is in
                 a different tier from this surface, the compositor must clamp
@@ -209,7 +210,7 @@
         <event name="window_id">
             <description summary="compositor-assigned session-scoped identifier">
                 Emitted by the compositor immediately after this control
-                object is created, before any configure_geometry or
+                object is created, before any configure_position or
                 configure_stacking event.
 
                 The id is a non-zero uint32 that uniquely identifies this
