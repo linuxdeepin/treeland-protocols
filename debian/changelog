@@ -1,3 +1,16 @@
+treeland-protocols (0.5.6) unstable; urgency=medium
+
+  * fix(xml): fix wine window management stacking docs
+  * chore: prettify treeland-capture protocol
+  * chore: remove commented pointer grab protocol sections
+  * refactor: update window management protocol XMLs
+  * treeland-protocols: add Wine Wayland split protocols
+  * feat: add destructor methods and reorganize protocol
+  * chore: treeland-protocol-templated Treeland Wayland protocol
+    authoring skill
+
+ -- rewine <luhongxu@deepin.org>  Sat, 09 May 2026 09:55:30 +0800
+
 treeland-protocols (0.5.5) unstable; urgency=medium
 
   * feat: add prelaunch splash screen protocol v2
