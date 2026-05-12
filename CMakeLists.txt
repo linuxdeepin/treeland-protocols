@@ -32,6 +32,7 @@ set(XML
   xml/treeland-wine-window-state-unstable-v1.xml
   xml/treeland-input-manager-unstable-v1.xml
   xml/treeland-keyboard-state-notify-unstable-v1.xml
+  xml/treeland-remote-subsurface-unstable-v1.xml
 )
 
 install(FILES ${XML} DESTINATION ${CMAKE_INSTALL_DATADIR}/treeland-protocols)
