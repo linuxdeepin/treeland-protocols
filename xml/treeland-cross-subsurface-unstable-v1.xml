@@ -38,6 +38,11 @@
         unless explicitly noted in this document.
 
         The compositor should restrict binding to trusted clients.
+
+        The key words "must", "must not", "required", "shall",
+        "shall not", "should", "should not", "recommended", "may",
+        and "optional" in this document are to be interpreted as
+        described in RFC 2119.
     </description>
 
     <!-- ================================================================ -->
@@ -81,7 +86,8 @@
                 object.
 
                 The surface must not have been previously exported
-                through this manager.  A surface may carry both an
+                through this manager.  Violating this rule results in a
+                bad_surface error.  A surface may carry both an
                 xdg_toplevel (or any other) role and an export; the
                 export only marks it as addressable by ID.
 
@@ -103,13 +109,15 @@
                 parent_id.
 
                 The surface must not already carry a wl_subsurface
-                role or a treeland_remote_subsurface_v1 role.
+                role or a treeland_remote_subsurface_v1 role.  Violating
+                this rule results in a bad_surface error.
 
                 The parent_id must be a valid surface_id from a live
-                treeland_exported_surface_v1 object.  The compositor
-                should reject parent_id values that refer to surfaces
-                belonging to untrusted clients, according to its
-                access-control policy.
+                treeland_exported_surface_v1 object.  Providing an
+                unknown or already-destroyed parent_id results in a
+                bad_parent_id error.  The compositor should also reject
+                parent_id values that refer to surfaces belonging to
+                untrusted clients, according to its access-control policy.
 
                 Upon success the compositor emits subsurface_id
                 followed by parent_geometry.  The initial mode is
@@ -372,11 +380,14 @@
 
         <event name="parent_destroyed">
             <description summary="the parent surface has been destroyed">
-                The parent surface (or its export) has been
-                destroyed.  This treeland_remote_subsurface_v1
-                object is now inert: all subsequent requests are
-                ignored and no further events will be emitted.
-                The client should destroy this object.
+                Emitted when the parent's treeland_exported_surface_v1
+                is destroyed (via its destroy request) or when the
+                underlying wl_surface of the parent is destroyed.
+
+                After this event this treeland_remote_subsurface_v1
+                object is inert: all subsequent requests are ignored
+                and no further events will be emitted.  The client
+                should destroy this object.
             </description>
         </event>
 
