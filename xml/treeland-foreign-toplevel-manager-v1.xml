@@ -4,7 +4,7 @@
     SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
-    <interface name="treeland_foreign_toplevel_manager_v1" version="1">
+    <interface name="treeland_foreign_toplevel_manager_v1" version="2">
         <description summary="foreign toplevel manager">
             This interface allows a client to get toplevel some info.
 
@@ -47,7 +47,7 @@
             <arg name="id" type="new_id" interface="treeland_dock_preview_context_v1" />
         </request>
     </interface>
-    <interface name="treeland_foreign_toplevel_handle_v1" version="1">
+    <interface name="treeland_foreign_toplevel_handle_v1" version="2">
         <description summary="An opened toplevel">
             A treeland_foreign_toplevel_handle_v1 object represents an opened toplevel window. Each
             app may have multiple opened toplevels.
@@ -152,6 +152,7 @@
             <entry name="minimized" value="1" summary="the toplevel is minimized" />
             <entry name="activated" value="2" summary="the toplevel is active" />
             <entry name="fullscreen" value="3" summary="the toplevel is fullscreen" />
+            <entry name="attention" value="4" summary="the toplevel is demanding attention" since="2" />
         </enum>
 
         <event name="state">
