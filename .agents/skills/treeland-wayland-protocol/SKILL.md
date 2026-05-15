@@ -54,6 +54,7 @@ This skill is not for compositor/server implementation details. It only covers t
 - Avoid XML comments for protocol semantics. Put normative and behavioral information in `<description>` blocks. If a short comment is needed for maintenance, keep it non-semantic.
 - Use `since` only for backward-compatible additions inside the same major version. Do not write `since="1"`.
 - If an existing interface gains a new request or event, increment that interface's `version`, append the new member at the end of the existing request or event section, and mark the new member with the matching `since="N"`.
+- If an interface version is raised, review any nearby interface that creates it with `new_id`, returns it from a request, or exposes it from an event; if that dependency changes the observable contract for clients, raise the exposing interface `version` as well.
 - For a breaking change, keep the old XML file, add a new `-vN+1` file, rename the protocol and interfaces to the new major suffix, reset interface `version` to `1`, and remove carried-over `since` attributes.
 - Prefer precise `summary` text and concrete descriptions over placeholders.
 - Event descriptions should explain event meaning and the compositor-side trigger timing for emission.
