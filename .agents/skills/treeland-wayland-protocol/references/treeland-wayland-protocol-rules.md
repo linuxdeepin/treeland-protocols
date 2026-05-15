@@ -25,6 +25,7 @@ Backward-compatible extension:
 - add `since="N"` on each new request, event, enum entry, or arg introduced in version `N`
 - never write `since="1"`
 - append newly added requests or events after the existing ones instead of reordering old members
+- if an upgraded interface is exposed by another interface via `new_id`, a request return object, or an event object, review that exposing interface and raise its `version` too when clients need the higher version to observe or use the new contract
 
 Backward-incompatible extension:
 - create a new file with the next major version
@@ -153,6 +154,7 @@ Match the year range used by neighboring files when editing an existing protocol
 Before considering the XML finished, check:
 - file name, protocol name, and interface suffixes all agree
 - interface `version` matches the highest supported additive version
+- interfaces that create or expose upgraded interfaces were reviewed for required version bumps
 - new additions in an existing interface have `since`
 - no member is annotated with `since="1"`
 - newly added requests and events were appended without reordering older members
