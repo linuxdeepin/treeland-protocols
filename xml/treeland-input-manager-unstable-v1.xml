@@ -1,0 +1,898 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_input_manager_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="configure input devices managed by treeland">
+        This protocol allows a privileged client to discover seat capabilities
+        and configure compositor-managed mouse, touchpad, and keyboard devices.
+
+        A treeland_input_manager_v1 object is a global manager. It creates
+        settings objects that represent configuration state for existing input
+        devices; those settings objects are not the device objects themselves.
+
+        Mouse and touchpad settings are split into common pointer settings and
+        device-specific settings. The lifetime of a settings object is
+        independent from the wl_seat object used to identify the
+        target at creation time.
+    </description>
+
+    <interface name="treeland_input_manager_v1" version="1">
+        <description summary="global input device manager">
+            The treeland_input_manager_v1 interface is a global object used to
+            create per-device settings objects for input devices exposed by the
+            compositor.
+
+            The compositor advertises device capability changes with the
+            capability_available and capability_unavailable events.
+
+            For each target device or seat-level settings scope, the compositor
+            may allow at most one live settings object of a given interface
+            created from one manager object. Creating a second settings object
+            for the same target and interface is a protocol error.
+
+            virtual-pointer and virtual-keyboard are not included in the list.
+        </description>
+
+        <enum name="device_type" bitfield="true">
+            <entry name="mouse" value="1"
+                   summary="pointer device with mouse-like capabilities"/>
+            <entry name="touchpad" value="2"
+                   summary="touchpad device"/>
+            <entry name="keyboard" value="4"
+                    summary="keyboard input device, such as a standard keyboard"/>
+        </enum>
+
+        <enum name="state">
+            <entry name="disabled" value="0" summary="disabled state"/>
+            <entry name="enabled" value="1" summary="enabled state"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the input manager">
+                Destroy this treeland_input_manager_v1 object.
+
+                Destroying the manager while child settings objects created from
+                it are still alive is illegal and results in the protocol error.
+            </description>
+        </request>
+
+        <request name="get_pointer_settings">
+            <description summary="create a pointer settings object">
+                Create a treeland_pointer_settings_v1 object for the specified
+                seat.
+
+                The created object manages common pointer settings for the
+                specified seat. These settings apply to pointer devices on that
+                seat where the compositor supports the corresponding setting.
+
+                If the seat does not identify a valid target, or if it does not
+                currently expose mouse or touchpad capability, the compositor
+                raises the protocol error.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_pointer_settings_v1"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                 summary="seat whose pointer settings are being managed"/>
+        </request>
+
+        <request name="get_mouse_settings">
+            <description summary="create a mouse-specific settings object">
+                Create a treeland_mouse_settings_v1 object for the specified
+                seat.
+
+                The created object manages mouse-specific settings that are not
+                part of treeland_pointer_settings_v1.
+
+                The seat must currently expose mouse capability. If the seat
+                does not identify a valid mouse-capable target, the compositor
+                raises the protocol error.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_mouse_settings_v1"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                 summary="seat whose mouse-specific settings are being managed"/>
+        </request>
+
+        <request name="get_touchpad_settings">
+            <description summary="create a touchpad-specific settings object">
+                Create a treeland_touchpad_settings_v1 object for the specified
+                seat.
+
+                The created object manages touchpad-specific settings that are
+                not part of treeland_pointer_settings_v1.
+
+                The seat must currently expose touchpad capability. If the seat
+                does not identify a valid touchpad-capable target, the
+                compositor raises the protocol error.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_touchpad_settings_v1"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                 summary="seat whose touchpad-specific settings are being managed"/>
+        </request>
+
+        <request name="get_keyboard_settings">
+            <description summary="create a keyboard settings object">
+                Create a treeland_keyboard_settings_v1 object for the specified
+                seat.
+
+                The seat must currently expose keyboard capability. If the seat
+                does not identify a valid keyboard-capable target, the
+                compositor raises the protocol error.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_keyboard_settings_v1"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                 summary="seat whose keyboard-specific settings are being managed"/>
+        </request>
+
+        <event name="capability_available">
+            <description summary="report an available device capability">
+                This event is emitted when the compositor detects that a seat
+                now exposes the specified device capability.
+
+                The compositor sends this event immediately after the
+                treeland_input_manager_v1 object is created to report
+                capabilities currently available on a seat.
+
+                The compositor may also send this event later when input
+                devices are hot-plugged and a seat gains the specified
+                capability.
+
+                A client may create a treeland_mouse_settings_v1 object for a
+                given seat only if the compositor has advertised device_type
+                mouse capability for that seat. Likewise, a client may create a
+                treeland_touchpad_settings_v1 or treeland_keyboard_settings_v1 
+                object for a given seat only if the compositor has advertised
+                device_type touchpad or keyboard capability for that seat.
+
+                If a seat has either mouse capability or touchpad capability, a
+                client may create a treeland_pointer_settings_v1 object for that
+                seat.
+
+                treeland_pointer_settings_v1 creating just one is enough.
+            </description>
+            <arg name="type" type="uint" enum="device_type"
+                 summary="type of the device capability"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                 summary="seat associated with the capability"/>
+        </event>
+
+        <event name="capability_unavailable">
+            <description summary="report an unavailable device capability">
+                This event is emitted when the compositor detects that a seat no
+                longer exposes the specified device capability.
+
+                The compositor may also send this event later when input
+                devices are hot-unplugged and a seat loses the specified
+                capability.
+
+                If type includes mouse capability, the client must destroy any
+                treeland_mouse_settings_v1 objects targeting the seat.
+
+                If type includes touchpad capability, the client must destroy
+                any treeland_touchpad_settings_v1 objects targeting the seat.
+
+                if a seat only had mouse (or only touchpad) capability, losing
+                that single capability, the client must destroy
+                treeland_pointer_settings_v1 objects targeting the seat.
+
+                If type includes keyboard capability, the client must destroy any
+                treeland_keyboard_settings_v1 objects targeting the seat.
+            </description>
+            <arg name="type" type="uint" enum="device_type"
+                 summary="type of the device capability"/>
+            <arg name="seat" type="object" interface="wl_seat"
+                 summary="seat associated with the capability"/>
+        </event>
+    </interface>
+
+    <interface name="treeland_pointer_settings_v1" version="1">
+        <description summary="common pointer settings object">
+            The treeland_pointer_settings_v1 interface represents pending common
+            pointer settings for a target seat.
+
+            Requests on this object update pending state. The compositor
+            applies the accumulated settings when the client sends apply.
+            Destroying the object before apply discards any pending state that
+            has not yet been applied.
+
+            The compositor sends pointer state events after object creation to
+            report the current effective pointer settings for the seat. It may
+            later send additional state batches when those effective settings
+            change for compositor-defined reasons. A done event terminates each
+            event batch.
+        </description>
+
+        <enum name="handed_mode">
+            <entry name="right" value="0" summary="right-handed mode"/>
+            <entry name="left" value="1" summary="left-handed mode"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the pointer settings object">
+                Destroy this treeland_pointer_settings_v1 object.
+
+                Destroying the object discards any pending state that has not
+                yet been applied.
+            </description>
+        </request>
+
+        <request name="set_scroll_factor">
+            <description summary="set the scroll delta scaling factor">
+                Set a scaling factor applied to scroll axis deltas generated
+                by wheel and other continuous scrolling input sources.
+
+                The compositor multiplies scroll axis values by the specified
+                factor before forwarding them to clients. This affects
+                continuous scroll deltas only and does not modify discrete
+                scroll step events.
+
+                This request updates only the pending state associated with
+                this object. The change takes effect after the next apply
+                request.
+
+                Sending this request or the corresponding apply request does
+                not by itself cause a scroll_factor event to be emitted.
+
+                deltas = factor * _deltas
+            </description>
+
+            <arg name="factor"
+                type="fixed"
+                summary="scaling factor applied to scroll axis deltas"/>
+        </request>
+
+        <request name="set_double_click_interval">
+            <description summary="set the double-click interval">
+                Set the double-click interval, in milliseconds. The change
+                takes effect on the next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a double_click_interval event to be
+                emitted.
+            </description>
+            <arg name="interval" type="uint"
+                 summary="desired double-click interval in milliseconds"/>
+        </request>
+
+        <request name="set_handed_mode">
+            <description summary="set the handedness mode">
+                Set whether primary and secondary buttons use left-handed or
+                right-handed ordering. The change takes effect on the next
+                apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a handed_mode event to be emitted.
+            </description>
+            <arg name="mode" type="uint" enum="handed_mode"
+                 summary="desired handedness mode"/>
+        </request>
+
+        <request name="apply">
+            <description summary="apply pending pointer changes">
+                Ask the compositor to apply the pending pointer settings
+                carried by this object.
+            </description>
+        </request>
+
+        <event name="scroll_factor">
+            <description summary="report the current scroll factor">
+                This event reports the current scroll factor used for wheel and
+                similar scroll input.
+
+                The compositor sends this event immediately after the
+                treeland_pointer_settings_v1 object is created as part of the
+                initial pointer state batch.
+
+                Changes requested through set_scroll_factor do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="factor" type="fixed" summary="current scroll factor"/>
+        </event>
+
+        <event name="double_click_interval">
+            <description summary="report the current double-click interval">
+                This event reports the current double-click interval, in
+                milliseconds.
+
+                The compositor sends this event immediately after the
+                treeland_pointer_settings_v1 object is created as part of the
+                initial pointer state batch.
+
+                Changes requested through set_double_click_interval do not cause
+                this event to be emitted automatically.
+            </description>
+            <arg name="interval" type="uint"
+                 summary="current double-click interval in milliseconds"/>
+        </event>
+
+        <event name="handed_mode">
+            <description summary="report the current handedness mode">
+                This event reports whether left-handed or right-handed button
+                ordering is currently used.
+
+                The compositor sends this event immediately after the
+                treeland_pointer_settings_v1 object is created as part of the
+                initial pointer state batch.
+
+                Changes requested through set_handed_mode do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="mode" type="uint" enum="handed_mode"
+                 summary="current handedness mode"/>
+        </event>
+
+        <event name="failed">
+            <description summary="apply failed">
+                This event indicates that the compositor failed to apply one or
+                more pending pointer settings carried by this object.
+
+                This event does not destroy the object. The client may continue
+                using the object and send further requests.
+            </description>
+        </event>
+
+        <event name="done">
+            <description summary="end of a pointer state batch">
+                This event is sent once when all pointer state events in the
+                current batch have been sent.
+
+                The compositor must always end a batch of pointer state events
+                with this event, regardless of whether it sends the initial
+                state or a later update.
+            </description>
+        </event>
+    </interface>
+
+    <interface name="treeland_mouse_settings_v1" version="1">
+        <description summary="mouse-specific settings object">
+            The treeland_mouse_settings_v1 interface represents pending
+            mouse-specific settings for the all mouse associated with the target
+            seat.
+
+            Requests on this object update pending state. The compositor
+            applies the accumulated settings when the client sends apply.
+            Destroying the object before apply discards any pending state that
+            has not yet been applied.
+
+            The compositor sends mouse-specific state events after object
+            creation to report the current effective settings for the target
+            mouse. It may later send additional state batches when those
+            effective settings change for compositor-defined reasons. A done
+            event terminates each event batch.
+        </description>
+
+        <enum name="acceleration_profile" bitfield="true">
+            <description summary="pointer acceleration profiles">
+                Pointer acceleration profiles. The semantics correspond to
+                libinput acceleration profiles.
+            </description>
+            <entry name="none" value="0"
+                   summary="device does not have a configurable acceleration profile"/>
+            <entry name="flat" value="1"
+                   summary="use a flat acceleration profile"/>
+            <entry name="adaptive" value="2"
+                   summary="use an adaptive acceleration profile"/>
+            <entry name="custom" value="4"
+                   summary="use a custom acceleration profile"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the mouse settings object">
+                Destroy this treeland_mouse_settings_v1 object.
+
+                Destroying the object discards any pending state that has not
+                yet been applied.
+            </description>
+        </request>
+
+        <request name="set_accel_speed">
+            <description summary="set the mouse acceleration speed">
+                Set the mouse acceleration speed. The change takes effect on the
+                next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause an accel_speed event to be emitted.
+            </description>
+            <arg name="accel_speed" type="fixed"
+                 summary="desired mouse acceleration speed"/>
+        </request>
+
+        <request name="set_acceleration_profile">
+            <description summary="set the acceleration profile">
+                Set the acceleration profile. The change takes effect on the
+                next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause an acceleration_profile event to be
+                emitted.
+            </description>
+            <arg name="profile" type="uint" enum="treeland_mouse_settings_v1.acceleration_profile"
+                 summary="desired acceleration profile"/>
+        </request>
+
+        <request name="set_natural_scroll">
+            <description summary="enable or disable natural scrolling">
+                Enable or disable natural scrolling. The change takes effect on
+                the next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a natural_scroll event to be emitted.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="desired natural scrolling state"/>
+        </request>
+
+        <request name="apply">
+            <description summary="apply pending mouse-specific changes">
+                Ask the compositor to apply the pending mouse-specific settings
+                carried by this object.
+            </description>
+        </request>
+
+        <event name="accel_speed">
+            <description summary="report the current mouse acceleration speed">
+                This event reports the current mouse acceleration speed.
+
+                The compositor sends this event immediately after the
+                treeland_mouse_settings_v1 object is created as part of the
+                initial mouse state batch.
+
+                Changes requested through set_accel_speed do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="accel_speed" type="fixed"
+                 summary="current pointer acceleration speed"/>
+        </event>
+
+        <event name="acceleration_profile">
+            <description summary="report the current acceleration profile">
+                This event reports the current acceleration profile used for the
+                target mouse.
+
+                The compositor sends this event immediately after the
+                treeland_mouse_settings_v1 object is created as part of the
+                initial mouse-specific state batch.
+
+                Changes requested through set_acceleration_profile do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="profile" type="uint" enum="treeland_mouse_settings_v1.acceleration_profile"
+                 summary="current acceleration profile"/>
+        </event>
+
+        <event name="natural_scroll">
+            <description summary="report natural scrolling state">
+                This event reports whether natural scrolling is enabled.
+
+                The compositor sends this event immediately after the
+                treeland_mouse_settings_v1 object is created as part of the
+                initial pointer state batch.
+
+                Changes requested through set_natural_scroll do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="current natural scrolling state"/>
+        </event>
+
+        <event name="failed">
+            <description summary="apply failed">
+                This event indicates that the compositor failed to apply one or
+                more pending mouse-specific settings carried by this object.
+
+                This event does not destroy the object. The client may continue
+                using the object and send further requests.
+            </description>
+        </event>
+
+        <event name="done">
+            <description summary="end of a mouse-specific state batch">
+                This event is sent once when all mouse-specific state events in
+                the current batch have been sent.
+
+                The compositor must always end a batch of mouse-specific state
+                events with this event, regardless of whether it sends the
+                initial state or a later update.
+            </description>
+        </event>
+    </interface>
+
+    <interface name="treeland_touchpad_settings_v1" version="1">
+        <description summary="touchpad-specific settings object">
+            The treeland_touchpad_settings_v1 interface represents pending
+            touchpad-specific settings for all touchpads associated with the
+            target seat.
+
+            Requests on this object update pending state. The compositor
+            applies the accumulated settings when the client sends apply.
+            Destroying the object before apply discards any pending state that
+            has not yet been applied.
+
+            The compositor sends touchpad-specific state events after object
+            creation to report the current effective settings for the target
+            seat. It may later send additional state batches when those
+            effective settings change for compositor-defined reasons. A done
+            event terminates each event batch.
+        </description>
+
+        <enum name="feature" bitfield="true">
+            <entry name="disable_while_typing" value="1"
+                   summary="at least one touchpad supports disable-while-typing"/>
+            <entry name="tap_to_click" value="2"
+                   summary="at least one touchpad supports tap-to-click"/>
+        </enum>
+
+        <enum name="send_events_mode" bitfield="true">
+            <description summary="touchpad event delivery mode">
+                Modes controlling whether the target touchpad should send events
+                and whether those events depend on the presence of an external
+                pointer device on the same seat.
+            </description>
+            <entry name="enabled" value="0"
+                   summary="send events from this touchpad normally"/>
+            <entry name="disabled" value="1"
+                   summary="do not send events through this touchpad."/>
+            <entry name="disabled_on_external_mouse" value="2"
+                   summary="if an external pointer device is plugged in, do not send events from this touchpad; may be available on built-in touchpads"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the touchpad settings object">
+                Destroy this treeland_touchpad_settings_v1 object.
+
+                Destroying the object discards any pending state that has not
+                yet been applied.
+            </description>
+        </request>
+
+        <request name="set_accel_speed">
+            <description summary="set the touchpad acceleration speed">
+                Set the touchpad acceleration speed. The change takes effect on the
+                next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause an accel_speed event to be emitted.
+            </description>
+            <arg name="accel_speed" type="fixed"
+                 summary="desired touchpad acceleration speed"/>
+        </request>
+
+        <request name="set_send_events_mode">
+            <description summary="set the touchpad event delivery mode">
+                Set how events from the target touchpad are delivered. The
+                change takes effect on the next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a send_events_mode event to be
+                emitted.
+            </description>
+            <arg name="mode" type="uint" enum="treeland_touchpad_settings_v1.send_events_mode"
+                 summary="desired touchpad event delivery mode"/>
+        </request>
+
+        <request name="set_disable_while_typing">
+            <description summary="set disable-while-typing">
+                Enable or disable temporarily disabling the seat's touchpads
+                while the user is typing. The change takes effect on the next
+                apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a disable_while_typing event to be
+                emitted.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="desired disable-while-typing state"/>
+        </request>
+
+        <request name="set_tap_to_click">
+            <description summary="set tap-to-click">
+                Enable or disable tap-to-click for all touchpads associated
+                with the target seat. The change takes effect on the next apply
+                request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a tap_to_click event to be emitted.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="desired tap-to-click state"/>
+        </request>
+
+        <request name="set_natural_scroll">
+            <description summary="enable or disable natural scrolling">
+                Enable or disable natural scrolling. The change takes effect on
+                the next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a natural_scroll event to be emitted.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="desired natural scrolling state"/>
+        </request>
+
+        <request name="apply">
+            <description summary="apply pending touchpad-specific changes">
+                Ask the compositor to apply the pending touchpad-specific
+                settings carried by this object.
+            </description>
+        </request>
+
+        <event name="feature">
+            <description summary="report supported touchpad features">
+                This event reports which optional touchpad features are
+                supported by at least one touchpad associated with the target
+                seat.
+
+                The compositor sends this event immediately after the
+                treeland_touchpad_settings_v1 object is created as part of the
+                initial touchpad-specific state batch.
+
+                The compositor may also send this event again when touchpad
+                devices are added to or removed from the target seat and the
+                set of supported features changes.
+            </description>
+            <arg name="feature" type="uint" enum="feature"
+                 summary="supported touchpad features"/>
+        </event>
+
+        <event name="accel_speed">
+            <description summary="report the current touchpad acceleration speed">
+                This event reports the current touchpad acceleration speed.
+
+                The compositor sends this event immediately after the
+                treeland_touchpad_settings_v1 object is created as part of the
+                initial touchpad state batch.
+
+                Changes requested through set_accel_speed do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="accel_speed" type="fixed"
+                 summary="current pointer acceleration speed"/>
+        </event>
+
+        <event name="send_events_mode">
+            <description summary="report the current touchpad event delivery mode">
+                This event reports the current touchpad event delivery mode used
+                for the target touchpad.
+
+                The compositor sends this event immediately after the
+                treeland_touchpad_settings_v1 object is created as part of the
+                initial touchpad-specific state batch.
+
+                Changes requested through set_send_events_mode do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="mode" type="uint" enum="treeland_touchpad_settings_v1.send_events_mode"
+                 summary="current touchpad event delivery mode"/>
+        </event>
+
+        <event name="disable_while_typing">
+            <description summary="report disable-while-typing state">
+                This event reports whether touchpads associated with the target
+                seat are temporarily disabled while the user is typing.
+
+                The compositor sends this event immediately after the
+                treeland_touchpad_settings_v1 object is created as part of the
+                initial touchpad-specific state batch.
+
+                Changes requested through set_disable_while_typing do not cause
+                this event to be emitted automatically.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="current disable-while-typing state"/>
+        </event>
+
+        <event name="tap_to_click">
+            <description summary="report tap-to-click state">
+                This event reports whether tap-to-click is enabled for
+                touchpads associated with the target seat.
+
+                The compositor sends this event immediately after the
+                treeland_touchpad_settings_v1 object is created as part of the
+                initial touchpad-specific state batch.
+
+                Changes requested through set_tap_to_click do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="current tap-to-click state"/>
+        </event>
+
+        <event name="natural_scroll">
+            <description summary="report natural scrolling state">
+                This event reports whether natural scrolling is enabled.
+
+                The compositor sends this event immediately after the
+                treeland_touchpad_settings_v1 object is created as part of the
+                initial pointer state batch.
+
+                Changes requested through set_natural_scroll do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="current natural scrolling state"/>
+        </event>
+
+        <event name="failed">
+            <description summary="apply failed">
+                This event indicates that the compositor failed to apply one or
+                more pending touchpad-specific settings carried by this object.
+
+                This event does not destroy the object. The client may continue
+                using the object and send further requests.
+            </description>
+        </event>
+
+        <event name="done">
+            <description summary="end of a touchpad-specific state batch">
+                This event is sent once when all touchpad-specific state events
+                in the current batch have been sent.
+
+                The compositor must always end a batch of touchpad-specific
+                state events with this event, regardless of whether it sends
+                the initial state or a later update.
+            </description>
+        </event>
+    </interface>
+
+    <interface name="treeland_keyboard_settings_v1" version="1">
+        <description summary="keyboard settings object">
+            The treeland_keyboard_settings_v1 interface represents pending
+            settings for all keyboard associated with the target seat.
+
+            Requests on this object update pending keyboard state. The
+            compositor applies the accumulated settings when the client sends
+            apply.
+
+            The compositor sends keyboard-specific state events after object
+            creation to report the current effective settings for the target
+            seat. It may later send additional state batches when those
+            effective settings change for compositor-defined reasons. A done
+            event terminates each event batch.
+        </description>
+
+        <enum name="toggle_state">
+            <entry name="off" value="0" summary="off state"/>
+            <entry name="on" value="1" summary="on state"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the keyboard settings object">
+                Destroy this treeland_keyboard_settings_v1 object.
+
+                Destroying the object discards any pending state that has not
+                yet been applied.
+            </description>
+        </request>
+
+        <request name="set_repeat">
+            <description summary="set keyboard repeat rate and delay">
+                Set the keyboard repeat rate and delay to apply on the next
+                apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a repeat event to be emitted.
+            </description>
+            <arg name="rate" type="int"
+                 summary="repeat rate in characters per second"/>
+            <arg name="delay" type="int"
+                 summary="delay in milliseconds before repeating starts"/>
+        </request>
+
+        <request name="set_num_lock">
+            <description summary="set num lock state">
+                Set the num lock state to apply on the next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a num_lock event to be emitted.
+            </description>
+            <arg name="state" type="uint" enum="treeland_keyboard_settings_v1.toggle_state"
+                 summary="desired num lock state"/>
+        </request>
+
+        <request name="set_caps_lock_osd">
+            <description summary="set caps lock OSD visibility">
+                Enable or disable compositor-managed caps lock OSD feedback.
+                The change takes effect on the next apply request.
+
+                This request updates only the pending state tracked by this
+                object. Sending this request, or the following apply request,
+                does not by itself cause a caps_lock_osd event to be emitted.
+
+                At present, the compositor does not implement functional caps
+                lock OSD behavior for this setting. The value is only recorded
+                as configuration state.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="desired caps lock OSD state"/>
+        </request>
+
+        <request name="apply">
+            <description summary="apply pending keyboard changes">
+                Ask the compositor to apply the pending keyboard settings
+                carried by this object.
+            </description>
+        </request>
+
+        <event name="repeat">
+            <description summary="report the current repeat configuration">
+                This event reports the current keyboard repeat configuration.
+
+                The compositor sends this event immediately after the
+                treeland_keyboard_settings_v1 object is created as part of the
+                initial keyboard state batch.
+
+                Changes requested through set_repeat do not cause this event to
+                be emitted automatically.
+            </description>
+            <arg name="rate" type="int"
+                 summary="repeat rate in characters per second"/>
+            <arg name="delay" type="int"
+                 summary="delay in milliseconds before repeating starts"/>
+        </event>
+
+        <event name="num_lock">
+            <description summary="report the current num lock state">
+                This event reports the current num lock state.
+
+                The compositor sends this event immediately after the
+                treeland_keyboard_settings_v1 object is created as part of the
+                initial keyboard state batch.
+
+                Changes requested through set_num_lock do not cause this event
+                to be emitted automatically.
+            </description>
+            <arg name="state" type="uint" enum="treeland_keyboard_settings_v1.toggle_state"
+                 summary="current num lock state"/>
+        </event>
+
+        <event name="caps_lock_osd">
+            <description summary="report the current caps lock OSD state">
+                This event reports whether compositor-managed caps lock OSD
+                feedback is currently enabled.
+
+                The compositor sends this event immediately after the
+                treeland_keyboard_settings_v1 object is created as part of the
+                initial keyboard state batch.
+
+                Changes requested through set_caps_lock_osd do not cause this
+                event to be emitted automatically.
+            </description>
+            <arg name="state" type="uint" enum="treeland_input_manager_v1.state"
+                 summary="current caps lock OSD state"/>
+        </event>
+
+        <event name="failed">
+            <description summary="apply failed">
+                This event indicates that the compositor failed to apply one or
+                more pending keyboard settings carried by this object.
+
+                This event does not destroy the object. The client may continue
+                using the object and send further requests.
+            </description>
+        </event>
+
+        <event name="done">
+            <description summary="end of a keyboard state batch">
+                This event is sent once when all keyboard state events in the
+                current batch have been sent.
+
+                The compositor must always end a batch of keyboard state events
+                with this event, regardless of whether it sends the initial
+                state or a later update.
+            </description>
+        </event>
+    </interface>
+</protocol>
