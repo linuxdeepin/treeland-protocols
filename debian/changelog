@@ -1,3 +1,10 @@
+treeland-protocols (0.5.7) unstable; urgency=medium
+
+  * docs: clarify virtual output validation and error codes
+  * foreign-toplevel: add attention state
+
+ -- rewine <luhongxu@deepin.org>  Fri, 22 May 2026 09:43:40 +0800
+
 treeland-protocols (0.5.6) unstable; urgency=medium
 
   * fix(xml): fix wine window management stacking docs
