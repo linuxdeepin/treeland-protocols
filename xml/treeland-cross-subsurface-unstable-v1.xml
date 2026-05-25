@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_cross_subsurface_unstable_v1">
+
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="cross-process sub-surface compositing">
+        Extends wl_subcompositor to support sub-surface relationships
+        between surfaces belonging to different client connections.
+
+        In wl_subcompositor both the parent surface and sibling
+        surfaces must be local wl_surface objects from the same
+        client.  This protocol removes that restriction:
+
+        1. Any wl_surface can be exported, receiving a stable numeric
+           surface_id.  The owning client shares surface_id with other
+           clients through any out-of-band mechanism (shared memory,
+           D-Bus, socket, etc.).
+
+        2. A client creates a cross-process sub-surface by providing
+           its own local wl_surface and the parent's surface_id.
+           The compositor maintains the relationship server-side.
+
+        3. The compositor assigns a numeric subsurface_id to every
+           sub-surface under an exported surface, including standard
+           wl_subcompositor sub-surfaces.  All IDs share one namespace
+           and can be used as sibling references in place_above and
+           place_below.
+
+        A surface may be both a wl_subsurface (child of some parent)
+        and an exported surface (parent of its own children).  This
+        allows arbitrary nesting of sub-surface trees across processes.
+
+        All sub-surface semantics (positioning, sync/desync modes,
+        mapping rules) follow the wl_subcompositor specification
+        unless explicitly noted in this document.
+
+        The compositor should restrict binding to trusted clients.
+
+        The key words "must", "must not", "required", "shall",
+        "shall not", "should", "should not", "recommended", "may",
+        and "optional" in this document are to be interpreted as
+        described in RFC 2119.
+    </description>
+
+    <!-- ================================================================ -->
+    <!--  treeland_subsurface_manager_v1                                  -->
+    <!-- ================================================================ -->
+
+    <interface name="treeland_subsurface_manager_v1" version="1">
+        <description summary="factory for cross-process sub-surfaces">
+            Global factory object.  Provides two operations:
+
+            export_surface registers a wl_surface as a potential
+            parent for cross-process sub-surfaces and assigns it a
+            surface_id.
+
+            create_remote_subsurface creates a cross-process
+            sub-surface by attaching the caller's local wl_surface to
+            a parent identified by surface_id.
+        </description>
+
+        <enum name="error">
+            <entry name="bad_surface" value="0"
+                summary="the wl_surface already has an incompatible role"/>
+            <entry name="bad_parent_id" value="1"
+                summary="parent_id does not identify a live exported surface"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Informs the server that the client will not use this
+                protocol object anymore.  Existing
+                treeland_exported_surface_v1 and
+                treeland_remote_subsurface_v1 objects are not affected.
+            </description>
+        </request>
+
+        <request name="export_surface">
+            <description summary="register a surface for cross-process sub-surface use">
+                Register surface as a potential parent for cross-process
+                sub-surfaces.  Upon success the compositor emits the
+                surface_id event on the new treeland_exported_surface_v1
+                object.
+
+                The surface must not have been previously exported
+                through this manager.  Violating this rule results in a
+                bad_surface error.  A surface may carry both an
+                xdg_toplevel (or any other) role and an export; the
+                export only marks it as addressable by ID.
+
+                The compositor begins tracking standard
+                wl_subcompositor sub-surfaces created under this
+                surface and assigns each a subsurface_id, reported
+                via the child_entered event.
+            </description>
+            <arg name="id" type="new_id"
+                 interface="treeland_exported_surface_v1"/>
+            <arg name="surface" type="object" interface="wl_surface"
+                 summary="the surface to export"/>
+        </request>
+
+        <request name="create_remote_subsurface">
+            <description summary="create a cross-process sub-surface">
+                Create a cross-process sub-surface by attaching the
+                caller's local surface to the parent identified by
+                parent_id.
+
+                The surface must not already carry a wl_subsurface
+                role or a treeland_remote_subsurface_v1 role.  Violating
+                this rule results in a bad_surface error.
+
+                The parent_id must be a valid surface_id from a live
+                treeland_exported_surface_v1 object.  Providing an
+                unknown or already-destroyed parent_id results in a
+                bad_parent_id error.  The compositor should also reject
+                parent_id values that refer to surfaces belonging to
+                untrusted clients, according to its access-control policy.
+
+                Upon success the compositor emits subsurface_id
+                followed by parent_geometry.  The initial mode is
+                synchronized.
+            </description>
+            <arg name="id" type="new_id"
+                 interface="treeland_remote_subsurface_v1"/>
+            <arg name="surface" type="object" interface="wl_surface"
+                 summary="the local surface to make a sub-surface"/>
+            <arg name="parent_id" type="uint"
+                 summary="surface_id of the parent, obtained via export"/>
+        </request>
+    </interface>
+
+    <!-- ================================================================ -->
+    <!--  treeland_exported_surface_v1                                    -->
+    <!-- ================================================================ -->
+
+    <interface name="treeland_exported_surface_v1" version="1">
+        <description summary="an exported surface, addressable by ID">
+            Represents a wl_surface that has been registered as a
+            potential parent for cross-process sub-surfaces.
+
+            The compositor monitors standard wl_subcompositor
+            sub-surfaces created under this surface.  Each receives a
+            subsurface_id reported via child_entered, allowing the
+            surface owner to share sibling references with other
+            clients.
+
+            When this object is destroyed the surface_id is revoked.
+            Any treeland_remote_subsurface_v1 objects that reference
+            this parent receive a parent_destroyed event and become
+            inert.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="revoke the export">
+                The surface_id is no longer valid.  Cross-process
+                sub-surfaces under this surface receive
+                parent_destroyed.  Standard wl_subcompositor
+                sub-surfaces are not affected.
+            </description>
+        </request>
+
+        <event name="surface_id">
+            <description summary="the assigned surface identifier">
+                Emitted immediately after export_surface.  The value
+                is unique within the compositor's namespace and
+                guaranteed to be in the range [1, 0xFFFFFFFE]
+                (0 and 0xFFFFFFFF are reserved).
+
+                The owning client should share this ID with other
+                clients through an out-of-band mechanism so they can
+                create cross-process sub-surfaces or reference this
+                surface as a sibling.
+            </description>
+            <arg name="id" type="uint"
+                 summary="the surface identifier (range [1, 0xFFFFFFFE])"/>
+        </event>
+
+        <event name="child_entered">
+            <description summary="a standard sub-surface was added under this surface">
+                The compositor emits this event whenever a standard
+                wl_subcompositor sub-surface is created under this
+                exported surface.  The subsurface_id can be shared
+                with other clients as a sibling reference in
+                place_above / place_below.
+
+                The surface argument identifies the child
+                wl_surface from the perspective of the exporting
+                client (it is a local proxy in the exporter's
+                connection).
+            </description>
+            <arg name="subsurface_id" type="uint"
+                 summary="assigned sub-surface identifier (range [1, 0xFFFFFFFE])"/>
+            <arg name="surface" type="object" interface="wl_surface"
+                 summary="the child wl_surface"/>
+        </event>
+
+        <event name="child_left">
+            <description summary="a standard sub-surface was removed">
+                The subsurface_id is no longer valid.  The
+                compositor emits this when the corresponding
+                wl_subsurface is destroyed.
+            </description>
+            <arg name="subsurface_id" type="uint"
+                 summary="the sub-surface identifier that was removed"/>
+        </event>
+
+        <event name="destroyed">
+            <description summary="the exported surface has been destroyed">
+                The underlying wl_surface was destroyed.  This
+                treeland_exported_surface_v1 object is now inert.
+                No further events will be emitted.  The client
+                should destroy this object.
+            </description>
+        </event>
+    </interface>
+
+    <!-- ================================================================ -->
+    <!--  treeland_remote_subsurface_v1                                   -->
+    <!-- ================================================================ -->
+
+    <interface name="treeland_remote_subsurface_v1" version="1">
+        <description summary="a cross-process sub-surface">
+            Interface to a wl_surface that has been made a sub-surface
+            of a parent in a different client connection.
+
+            Semantics mirror wl_subsurface except for how the parent
+            and siblings are identified:
+
+            - The parent is identified at creation time by surface_id
+              and cannot be changed.
+
+            - place_above and place_below accept sibling_ref (uint32)
+              instead of a wl_surface proxy.  See the sibling_ref
+              documentation for valid values.
+
+            Mapping and unmapping rules follow wl_subsurface: the
+            sub-surface is mapped when both it has a non-NULL buffer
+            and the parent is mapped; it is hidden when the parent
+            is hidden or when a NULL buffer is attached.
+        </description>
+
+        <enum name="error">
+            <entry name="bad_sibling" value="0"
+                summary="sibling_ref is 0 or does not identify a valid sibling of the same parent"/>
+        </enum>
+
+        <!-- ---- requests (mirror wl_subsurface) ---- -->
+
+        <request name="destroy" type="destructor">
+            <description summary="remove the sub-surface relationship">
+                The surface's association to the parent is deleted and
+                the surface is unmapped immediately, matching
+                wl_subsurface.destroy semantics.
+            </description>
+        </request>
+
+        <request name="set_position">
+            <description summary="reposition the sub-surface">
+                Sets the position of the sub-surface relative to the
+                parent surface's local coordinate system.  Coordinates
+                are subject to the parent's buffer_transform and scale,
+                matching wl_subsurface.set_position semantics.
+
+                Position is double-buffered state on the parent
+                surface.  The child must commit its own surface for
+                the new position to take effect.
+            </description>
+            <arg name="x" type="int"
+                 summary="x coordinate in the parent surface local coordinate system"/>
+            <arg name="y" type="int"
+                 summary="y coordinate in the parent surface local coordinate system"/>
+        </request>
+
+        <request name="place_above">
+            <description summary="restack above a sibling or the parent">
+                This sub-surface is taken from the stack and placed
+                just above the surface identified by sibling_ref.
+
+                Valid sibling_ref values:
+
+                - The surface_id of the parent surface itself
+                  (places the sub-surface directly above the parent).
+
+                - The subsurface_id of any sibling sub-surface
+                  under the same parent, regardless of whether that
+                  sibling was created via wl_subcompositor
+                  (reported by child_entered on the parent's
+                  treeland_exported_surface_v1) or via this
+                  protocol (reported by subsurface_id on the
+                  sibling's treeland_remote_subsurface_v1).
+
+                - 0xFFFFFFFF (sibling_ref.top): place at the very
+                  top of the sibling stack.
+
+                The value 0 is reserved and must result in a
+                bad_sibling error.
+
+                Z-order is double-buffered state on the parent
+                surface.
+            </description>
+            <arg name="sibling_ref" type="uint"
+                 summary="surface_id, subsurface_id, or sibling_ref.top"/>
+        </request>
+
+        <request name="place_below">
+            <description summary="restack below a sibling or the parent">
+                Places this sub-surface just below the surface
+                identified by sibling_ref.  The same sibling_ref
+                values are accepted as in place_above.
+            </description>
+            <arg name="sibling_ref" type="uint"
+                 summary="surface_id, subsurface_id, or sibling_ref.top"/>
+        </request>
+
+        <request name="set_sync">
+            <description summary="set synchronized mode">
+                Change the commit behaviour to synchronized mode.
+                See wl_subsurface.set_sync.
+            </description>
+        </request>
+
+        <request name="set_desync">
+            <description summary="set desynchronized mode">
+                Change the commit behaviour to desynchronized mode.
+                See wl_subsurface.set_desync.
+            </description>
+        </request>
+
+        <!-- ---- events ---- -->
+
+        <event name="subsurface_id">
+            <description summary="compositor-assigned sub-surface identifier">
+                Emitted immediately after create_remote_subsurface,
+                before parent_geometry.  The value is in
+                [1, 0xFFFFFFFE].
+
+                Other clients may use this ID as a sibling_ref
+                in their own place_above / place_below requests.
+                The owning client should share this ID through an
+                out-of-band mechanism.
+            </description>
+            <arg name="id" type="uint"
+                 summary="the sub-surface identifier (range [1, 0xFFFFFFFE])"/>
+        </event>
+
+        <event name="parent_geometry">
+            <description summary="parent surface geometry for coordinate computation">
+                Provides the information needed by the child client
+                to convert its own logical coordinates into the
+                parent's surface-local coordinate system for
+                set_position.
+
+                Emitted:
+                - immediately after subsurface_id on creation,
+                - whenever the parent surface's position or output
+                  configuration changes.
+
+                The x, y values give the parent surface origin in
+                the compositor's global logical coordinate space.
+
+                The scale value is the parent surface's current
+                buffer_scale.
+
+                The transform value follows the semantics of
+                wl_output.transform: 0 = normal, 1 = 90 degrees
+                counter-clockwise, etc.
+            </description>
+            <arg name="x" type="int"
+                 summary="parent origin x in global logical coordinates"/>
+            <arg name="y" type="int"
+                 summary="parent origin y in global logical coordinates"/>
+            <arg name="scale" type="int"
+                 summary="parent wl_surface.buffer_scale"/>
+            <arg name="transform" type="int"
+                 summary="parent wl_surface.buffer_transform (wl_output.transform semantics)"/>
+        </event>
+
+        <event name="parent_destroyed">
+            <description summary="the parent surface has been destroyed">
+                Emitted when the parent's treeland_exported_surface_v1
+                is destroyed (via its destroy request) or when the
+                underlying wl_surface of the parent is destroyed.
+
+                After this event this treeland_remote_subsurface_v1
+                object is inert: all subsequent requests are ignored
+                and no further events will be emitted.  The client
+                should destroy this object.
+            </description>
+        </event>
+
+    </interface>
+
+</protocol>
