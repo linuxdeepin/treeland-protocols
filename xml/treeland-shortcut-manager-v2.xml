@@ -4,7 +4,7 @@
     SPDX-FileCopyrightText: 2024-2025 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
-    <interface name="treeland_shortcut_manager_v2" version="1">
+    <interface name="treeland_shortcut_manager_v2" version="2">
         <description summary="global shortcuts manager for treeland">
             This interface allows privileged clients to register global shortcuts.
 
@@ -95,6 +95,7 @@
             <entry name="occupied" value="1"/>
             <entry name="not_acquired" value="2"/>
             <entry name="invalid_commit" value="3"/>
+            <entry name="invalid_surface" value="4" since="2"/>
         </enum>
 
         <request name="destroy" type="destructor">
@@ -229,6 +230,56 @@
             <arg name="name" type="string" summary="unique name of the binding to be removed"/>
         </request>
 
+        <request name="capture_next_shortcut" since="2">
+            <description summary="capture the next shortcut once">
+                Request the compositor to capture the next shortcut input once,
+                bound to the provided surface.
+
+                The capture object is created by this request via new_id.
+                The compositor performs validation after receiving the request,
+                and may immediately emit a terminal event on the newly created object.
+                Clients must be prepared to handle a capture object that is
+                failed immediately after creation.
+
+                The surface argument must be a wl_surface owned by the requesting client.
+                Otherwise, the compositor will raise the `invalid_surface` protocol error.
+
+                The compositor must verify that the provided surface currently has
+                keyboard focus or is active before starting capture.
+                If this check fails, the compositor must first decide that capture
+                does not start, and then must emit `failed` with reason
+                `not_active` on the created object.
+
+                The compositor monitors both key_press and key_release events during
+                capture. The shortcut candidate is established on key_press of a valid
+                non-modifier key; the terminal event (captured or failed) is sent on
+                key_release of that non-modifier key. Pure modifier-only key presses
+                (e.g. Ctrl, Alt, Shift) are silently consumed while waiting for a
+                non-modifier key. Auto-repeat events are consumed and ignored.
+
+                If the next intercepted input is not a valid shortcut input
+                (for example: unmodified alphanumeric keys such as a, b, c, d,
+                1, 2, 3, unmodified Escape, or pointer button and wheel events),
+                the compositor
+                must fail capture with reason `interrupted`.
+                For either `interrupted` failure or successful `captured`,
+                the triggering input event must be consumed by the compositor
+                and must not be forwarded to the client.
+
+                The compositor creates a treeland_shortcut_capture_v1 object and starts
+                a one-shot capture flow for this request.
+
+                This request does not modify existing shortcut bindings.
+                This request does not require acquire.
+            </description>
+            <arg name="surface" type="object" interface="wl_surface"
+                 summary="surface used for focus or active validation"/>
+            <arg name="seat" type="object" interface="wl_seat" allow-null="true"
+                 summary="seat to capture from, or null to capture from any seat"/>
+            <arg name="capture" type="new_id" interface="treeland_shortcut_capture_v1"
+                 summary="one-shot capture object"/>
+        </request>
+
         <event name="activated">
             <description summary="a shortcut has been activated">
                 This event is emitted when a binding registered with action `notify` is activated.
@@ -255,6 +306,58 @@
             </description>
             <arg name="name" type="string" summary="binding name that caused the failure"/>
             <arg name="error" type="uint" enum="bind_error" summary="error code indicating the reason of the failure"/>
+        </event>
+    </interface>
+
+    <interface name="treeland_shortcut_capture_v1" version="1">
+        <description summary="one-shot shortcut capture object">
+            This object represents one request to capture the next shortcut input.
+
+            After creation, the compositor captures input once and may send at most one
+            terminal event: either captured or failed.
+
+            If the client destroys this object while capture is pending,
+            no terminal event is sent.
+
+            After a terminal event is sent, this object becomes inert.
+            The client should destroy this object promptly after receiving
+            captured or failed.
+        </description>
+
+        <enum name="failed_reason">
+            <description summary="capture failure reason">
+                Reasons why a one-shot capture could not complete.
+            </description>
+            <entry name="busy" value="1" summary="another capture is in progress"/>
+            <entry name="aborted" value="2" summary="capture was aborted by compositor policy"/>
+            <entry name="not_active" value="3"
+                   summary="surface focus or active validation failed"/>
+            <entry name="interrupted" value="4"
+                   summary="capture was interrupted by a non-shortcut intercepted input"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the capture object">
+                Destroy this capture object.
+
+                Destroying the object cancels capture if it is still pending.
+            </description>
+        </request>
+
+        <event name="captured">
+            <description summary="a shortcut input was captured">
+                The compositor captured one shortcut input for this request.
+
+                The key argument uses the same textual format as bind_key.
+            </description>
+            <arg name="key" type="string" summary="captured shortcut sequence"/>
+        </event>
+
+        <event name="failed">
+            <description summary="the capture failed">
+                The compositor could not complete this capture request.
+            </description>
+            <arg name="reason" type="uint" enum="failed_reason" summary="failure reason"/>
         </event>
     </interface>
 </protocol>
