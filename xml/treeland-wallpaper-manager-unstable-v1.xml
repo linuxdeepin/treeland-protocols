@@ -33,7 +33,10 @@
                 may notify the client of the current wallpaper file path used by that
                 workspace.
 
-                Note: The treeland_wallpaper_v1 object must be destroyed before
+                Note:
+                1. The treeland_wallpaper_v1 object must be destroyed before
+                the associated wl_output is destroyed.
+                1. The treeland_wallpaper_v1 object must be destroyed before
                 the associated wl_surface is destroyed.
             </description>
             <arg name="id" type="new_id" interface="treeland_wallpaper_v1"/>
