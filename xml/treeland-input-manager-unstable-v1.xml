@@ -235,7 +235,7 @@
             <entry name="left" value="1" summary="left-handed mode"/>
         </enum>
 
-        <enum name="acceleration_profile" bitfield="true">
+        <enum name="acceleration_profile">
             <description summary="pointer acceleration profiles">
                 Pointer acceleration profiles. The semantics correspond to
                 libinput acceleration profiles.
