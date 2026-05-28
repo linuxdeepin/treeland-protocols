@@ -18,9 +18,7 @@
         factor, handed mode, double-click interval, send events mode,
         disable-while-typing and tap-to-click are managed through a
         treeland_pointer_device_configuration_v1 object created from the
-        device-specific settings interface. The lifetime of a settings object
-        is independent from the wl_seat object used to identify the target at
-        creation time.
+        device-specific settings interface.
     </description>
 
     <interface name="treeland_input_manager_v1" version="1">
@@ -66,8 +64,8 @@
 
         <request name="get_mouse_settings">
             <description summary="create a mouse-specific settings object">
-                Create a treeland_mouse_settings_v1 object for the specified
-                seat.
+                Create a treeland_mouse_settings_v1 object bound to the
+                specified wl_seat.
 
                 The created object acts as a factory for
                 treeland_pointer_device_configuration_v1 objects that manage
@@ -76,6 +74,10 @@
                 The seat must currently expose mouse capability. If the seat
                 does not identify a valid mouse-capable target, the compositor
                 raises the protocol error.
+
+                Note:
+                1. The treeland_mouse_settings_v1 object must be destroyed
+                before the associated wl_seat is destroyed.
             </description>
             <arg name="id" type="new_id" interface="treeland_mouse_settings_v1"/>
             <arg name="seat" type="object" interface="wl_seat"
@@ -84,8 +86,8 @@
 
         <request name="get_touchpad_settings">
             <description summary="create a touchpad-specific settings object">
-                Create a treeland_touchpad_settings_v1 object for the specified
-                seat.
+                Create a treeland_touchpad_settings_v1 object bound to the
+                specified wl_seat.
 
                 The created object acts as a factory for
                 treeland_pointer_device_configuration_v1 objects that manage
@@ -94,6 +96,10 @@
                 The seat must currently expose touchpad capability. If the seat
                 does not identify a valid touchpad-capable target, the
                 compositor raises the protocol error.
+
+                Note:
+                1. The treeland_touchpad_settings_v1 object must be destroyed
+                before the associated wl_seat is destroyed.
             </description>
             <arg name="id" type="new_id" interface="treeland_touchpad_settings_v1"/>
             <arg name="seat" type="object" interface="wl_seat"
@@ -102,12 +108,16 @@
 
         <request name="get_keyboard_settings">
             <description summary="create a keyboard settings object">
-                Create a treeland_keyboard_settings_v1 object for the specified
-                seat.
+                Create a treeland_keyboard_settings_v1 object bound to the
+                specified wl_seat.
 
                 The seat must currently expose keyboard capability. If the seat
                 does not identify a valid keyboard-capable target, the
                 compositor raises the protocol error.
+
+                Note:
+                1. The treeland_keyboard_settings_v1 object must be destroyed
+                before the associated wl_seat is destroyed.
             </description>
             <arg name="id" type="new_id" interface="treeland_keyboard_settings_v1"/>
             <arg name="seat" type="object" interface="wl_seat"
