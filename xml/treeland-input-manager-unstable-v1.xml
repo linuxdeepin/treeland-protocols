@@ -275,14 +275,14 @@
 
         <request name="set_scroll_factor">
             <description summary="set the scroll delta scaling factor">
-                Set a scaling factor applied to scroll axis deltas generated
+                Set a scaling factor applied to scroll axis delta generated
                 by wheel and other continuous scrolling input sources. This
                 request requires the scroll_factor feature to be advertised via
                 the feature event.
 
                 The compositor multiplies scroll axis values by the specified
                 factor before forwarding them to clients. This affects
-                continuous scroll deltas only and does not modify discrete
+                continuous scroll delta only and does not modify discrete
                 scroll step events.
 
                 This request updates only the pending state associated with
@@ -292,12 +292,12 @@
                 Sending this request or the corresponding apply request does
                 not by itself cause a scroll_factor event to be emitted.
 
-                deltas = factor * _deltas
+                delta = factor * _delta
             </description>
-
             <arg name="factor"
                 type="fixed"
-                summary="scaling factor applied to scroll axis deltas"/>
+                summary="scaling factor applied to scroll axis delta,
+                The factor must be greater than 0."/>
         </request>
 
         <request name="set_handed_mode">
@@ -326,7 +326,10 @@
                 does not by itself cause an accel_speed event to be emitted.
             </description>
             <arg name="accel_speed" type="fixed"
-                 summary="desired pointer acceleration speed"/>
+                 summary="desired pointer acceleration speed, The valid range is -1.0 to 1.0,
+                 where 0.0 is the neutral default meaning no acceleration adjustment. Negative
+                 values reduce acceleration (cursor moves more slowly at higher speeds), positive
+                 values increase acceleration (cursor moves faster at higher speeds)."/>
         </request>
 
         <request name="set_acceleration_profile">
