@@ -1,3 +1,22 @@
+treeland-protocols (0.5.8) unstable; urgency=medium
+
+  * feat: add treeland-keyboard-state-notify-unstable-v1 protocol
+  * feat(input-manager): document valid ranges for scroll factor and
+    accel speed
+  * feat(input-manager): remove bitfield flag from acceleration_profile
+    enum
+  * feat(input-manager): clarify seat association and destruction order
+    for settings objects
+  * feat(wallpaper): document wl_output destruction order requirement
+  * feat(treeland-wine-window-management): add serial to position
+    requests
+  * feat: add ready request for initial wallpaper synchronization
+  * feat: add one-shot shortcut capture interface
+  * feat: add treeland-input-manager-unstable-v1 protocol
+  * refactor: protocol cleanup and version normalization
+
+ -- rewine <luhongxu@deepin.org>  Thu, 04 Jun 2026 16:04:48 +0800
+
 treeland-protocols (0.5.7) unstable; urgency=medium
 
   * docs: clarify virtual output validation and error codes
