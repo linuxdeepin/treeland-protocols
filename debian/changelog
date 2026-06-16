@@ -1,3 +1,10 @@
+treeland-protocols (0.5.9) unstable; urgency=medium
+
+  * feat(wallpaper-shell): bump treeland_wallpaper_shell_v1 to version 2
+  * feat: remove wallpapercontext from personalization manager 
+
+ -- YaoBing Xiao <xiaoyaobing@uniontech.com>  Tue, 16 Jun 2026 14:41:16 +0800
+
 treeland-protocols (0.5.8) unstable; urgency=medium
 
   * feat: add treeland-keyboard-state-notify-unstable-v1 protocol
