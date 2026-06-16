@@ -60,7 +60,7 @@
         </event>
     </interface>
 
-    <interface name="treeland_wallpaper_shell_v1" version="1">
+    <interface name="treeland_wallpaper_shell_v1" version="2">
         <description summary="Wallpaper shell global">
             The treeland_wallpaper_shell_v1 interface is a global object exposed by
             the compositor that allows a client to assign the wallpaper role to
