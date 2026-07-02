@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <protocol name="treeland_personalization_manager_v1">
     <copyright><![CDATA[
-    SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
+    SPDX-FileCopyrightText: 2024-2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
     <interface name="treeland_personalization_manager_v1" version="2">
@@ -95,7 +95,7 @@
             <arg name="size" type="uint" summary="cursor size" />
         </event>
     </interface>
-    <interface name="treeland_personalization_window_context_v1" version="1">
+    <interface name="treeland_personalization_window_context_v1" version="2">
         <description summary="client custom window context">
             This interface allows a client personalization window.
 
@@ -130,12 +130,12 @@
             </description>
             <arg name="radius" type="int" />
         </request>
-        <request name="set_shadow">
+        <request name="set_shadow" since="1">
             <description summary="set window shadow">
-                Set window shadow's radius, offset and color, invoking this request indicates that
-                client want to manage
-                the window shadow by itself. If not invoked, window shadow will be decided by the
-                compositor
+                Set window shadow's radius, offset and color. This request indicates
+                that the client wants to enable and manage the window shadow.
+                A radius of 0 means the shadow is enabled but has zero blur radius
+                (effectively invisible).
             </description>
             <arg name="radius" type="int" />
             <arg name="offset_x" type="int" />
@@ -145,15 +145,40 @@
             <arg name="b" type="int" />
             <arg name="a" type="int" />
         </request>
-        <request name="set_border">
+        <request name="set_border" since="1">
             <description summary="set window border">
-                Set window border width and color
+                Set window border width and color. This request indicates
+                that the client wants to enable and manage the window border.
+                A width of 0 means the border is enabled but has zero width
+                (effectively invisible).
             </description>
             <arg name="width" type="int" />
             <arg name="r" type="int" />
             <arg name="g" type="int" />
             <arg name="b" type="int" />
             <arg name="a" type="int" />
+        </request>
+        <request name="enable_shadow" since="2">
+            <description summary="enable window shadow with compositor defaults">
+                Request the compositor to enable shadow using default parameters.
+                The compositor will send shadow_configured event with the actual parameters.
+            </description>
+        </request>
+        <request name="disable_shadow" since="2">
+            <description summary="disable window shadow">
+                Request the compositor to disable shadow for this window.
+            </description>
+        </request>
+        <request name="enable_border" since="2">
+            <description summary="enable window border with compositor defaults">
+                Request the compositor to enable border using default parameters.
+                The compositor will send border_configured event with the actual parameters.
+            </description>
+        </request>
+        <request name="disable_border" since="2">
+            <description summary="disable window border">
+                Request the compositor to disable border for this window.
+            </description>
         </request>
         <enum name="enable_mode">
             <description summary="window enable mode">
@@ -173,6 +198,30 @@
                 Destroy the context object.
             </description>
         </request>
+        <event name="shadow_configured" since="2">
+            <description summary="shadow configuration event">
+                Notifies the client about the actual shadow parameters being used.
+                Sent in response to enable_shadow or set_shadow requests.
+            </description>
+            <arg name="radius" type="int" />
+            <arg name="offset_x" type="int" />
+            <arg name="offset_y" type="int" />
+            <arg name="r" type="int" />
+            <arg name="g" type="int" />
+            <arg name="b" type="int" />
+            <arg name="a" type="int" />
+        </event>
+        <event name="border_configured" since="2">
+            <description summary="border configuration event">
+                Notifies the client about the actual border parameters being used.
+                Sent in response to enable_border or set_border requests.
+            </description>
+            <arg name="width" type="int" />
+            <arg name="r" type="int" />
+            <arg name="g" type="int" />
+            <arg name="b" type="int" />
+            <arg name="a" type="int" />
+        </event>
     </interface>
     <interface name="treeland_personalization_font_context_v1" version="1">
         <description summary="treeland window global font settings">
