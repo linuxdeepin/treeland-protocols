@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <protocol name="treeland_personalization_manager_v1">
     <copyright><![CDATA[
-    SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
+    SPDX-FileCopyrightText: 2024-2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
     <interface name="treeland_personalization_manager_v1" version="2">
@@ -95,7 +95,7 @@
             <arg name="size" type="uint" summary="cursor size" />
         </event>
     </interface>
-    <interface name="treeland_personalization_window_context_v1" version="1">
+    <interface name="treeland_personalization_window_context_v1" version="2">
         <description summary="client custom window context">
             This interface allows a client personalization window.
 
@@ -132,10 +132,10 @@
         </request>
         <request name="set_shadow">
             <description summary="set window shadow">
-                Set window shadow's radius, offset and color, invoking this request indicates that
-                client want to manage
-                the window shadow by itself. If not invoked, window shadow will be decided by the
-                compositor
+                Set window shadow's radius, offset and color. This request indicates
+                that the client wants to enable and manage the window shadow.
+                A radius of 0 means the shadow is enabled but has zero blur radius
+                (effectively invisible).
             </description>
             <arg name="radius" type="int" />
             <arg name="offset_x" type="int" />
@@ -147,13 +147,34 @@
         </request>
         <request name="set_border">
             <description summary="set window border">
-                Set window border width and color
+                Set window border width and color. This request indicates
+                that the client wants to enable and manage the window border.
+                A width of 0 means the border is enabled but has zero width
+                (effectively invisible).
             </description>
             <arg name="width" type="int" />
             <arg name="r" type="int" />
             <arg name="g" type="int" />
             <arg name="b" type="int" />
             <arg name="a" type="int" />
+        </request>
+        <request name="set_shadow_enabled" since="2">
+            <description summary="enable or disable window shadow">
+                Request to enable or disable window shadow.
+                When enabled (1), uses system default shadow parameters if not
+                previously set via set_shadow. When disabled (0), clears any
+                custom shadow parameters.
+            </description>
+            <arg name="enabled" type="uint" />
+        </request>
+        <request name="set_border_enabled" since="2">
+            <description summary="enable or disable window border">
+                Request to enable or disable window border.
+                When enabled (1), uses system default border parameters if not
+                previously set via set_border. When disabled (0), clears any
+                custom border parameters.
+            </description>
+            <arg name="enabled" type="uint" />
         </request>
         <enum name="enable_mode">
             <description summary="window enable mode">
