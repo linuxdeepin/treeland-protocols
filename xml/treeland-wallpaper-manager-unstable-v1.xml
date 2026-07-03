@@ -5,7 +5,7 @@
     SPDX-License-Identifier: MIT
     ]]></copyright>
 
-    <interface name="treeland_wallpaper_manager_v1" version="1">
+    <interface name="treeland_wallpaper_manager_v1" version="2">
         <description summary="Wallpaper manager interface">
             The treeland_wallpaper_manager_v1 interface is a global object used to
             create wallpaper objects for specific outputs.
@@ -46,7 +46,7 @@
         </request>
     </interface>
 
-    <interface name="treeland_wallpaper_v1" version="1">
+    <interface name="treeland_wallpaper_v1" version="2">
         <description summary="Wallpaper object interface for setting and managing wallpaper content">
             The treeland_wallpaper_v1 interface represents a wallpaper instance
             created by the compositor for a specific output, role.
@@ -69,6 +69,7 @@
         <enum name="wallpaper_source_type">
             <entry name="image" value="0" summary="The wallpaper source is an image"/>
             <entry name="video" value="1" summary="The wallpaper source is a video"/>
+            <entry name="shader" value="2" summary="The wallpaper source is a shader package"/>
         </enum>
 
         <enum name="wallpaper_role">
@@ -183,5 +184,24 @@
             <arg name="file_source" type="string"
                 summary="The file path of the current wallpaper source"/>
         </event>
+
+        <request name="set_shader_source" since="2">
+            <description summary="Set a shader wallpaper source">
+                Sets a shader package as the wallpaper source, apply to the current
+                wl_output and the active workspace. except for lockscreen
+                wallpapers, only one wallpaper can be set per wl_output.
+
+                The source must identify a package directory prepared by the client
+                or system wallpaper importer. The package is expected to contain
+                precompiled shader data that the wallpaper renderer can load without
+                compiling shader source during wallpaper activation.
+
+                If the shader package cannot be opened, validated, or rendered, a
+                failed event will be emitted.
+            </description>
+            <arg name="file_source" type="string"
+                summary="Path to the shader package directory to be used as the wallpaper"/>
+            <arg name="role" type="uint" summary="wallpaper role"/>
+        </request>
     </interface>
 </protocol>
