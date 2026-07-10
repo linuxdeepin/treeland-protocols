@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <protocol name="treeland_personalization_manager_v1">
     <copyright><![CDATA[
-    SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
     <interface name="treeland_personalization_manager_v1" version="2">
@@ -132,10 +132,12 @@
         </request>
         <request name="set_shadow">
             <description summary="set window shadow">
-                Set window shadow's radius, offset and color, invoking this request indicates that
-                client want to manage
-                the window shadow by itself. If not invoked, window shadow will be decided by the
-                compositor
+                Set window shadow's radius, offset and color.
+                When enabled, the client manages the window shadow itself.
+                - radius = -1: enable shadow with system default parameters
+                - radius =  0: disable shadow completely
+                - radius >  0: enable shadow with custom parameters
+                If not invoked, the compositor uses its default behavior.
             </description>
             <arg name="radius" type="int" />
             <arg name="offset_x" type="int" />
@@ -147,7 +149,12 @@
         </request>
         <request name="set_border">
             <description summary="set window border">
-                Set window border width and color
+                Set window border width and color.
+                When enabled, the client manages the window border itself.
+                - width = -1: enable border with system default parameters
+                - width =  0: disable border completely
+                - width >  0: enable border with custom parameters
+                If not invoked, the compositor uses its default behavior.
             </description>
             <arg name="width" type="int" />
             <arg name="r" type="int" />
@@ -164,7 +171,12 @@
         </enum>
         <request name="set_titlebar">
             <description summary="set if system titlebar is enabled">
-                Set if system titlebar is enabled
+                Set system titlebar state.
+                - mode = enable: force show the system titlebar
+                - mode = disable: force hide the system titlebar
+                Once set, the compositor will not use its own default behavior
+                for the titlebar.
+                If not invoked, the compositor uses its default behavior.
             </description>
             <arg name="mode" type="int" enum="enable_mode" />
         </request>
