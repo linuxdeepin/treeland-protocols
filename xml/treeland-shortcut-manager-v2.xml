@@ -4,7 +4,7 @@
     SPDX-FileCopyrightText: 2024-2025 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
-    <interface name="treeland_shortcut_manager_v2" version="2">
+    <interface name="treeland_shortcut_manager_v2" version="3">
         <description summary="global shortcuts manager for treeland">
             This interface allows privileged clients to register global shortcuts.
 
@@ -59,6 +59,8 @@
             <entry name="taskswitch_prev" value="25"/>
             <entry name="taskswitch_sameapp_next" value="26"/>
             <entry name="taskswitch_sameapp_prev" value="27"/>
+            <entry name="tile_left" value="28" since="3"/>
+            <entry name="tile_right" value="29" since="3"/>
         </enum>
 
         <enum name="keybind_flag" bitfield="true">
