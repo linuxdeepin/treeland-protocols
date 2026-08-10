@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_privileged_overlay_v1">
+
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="promote xdg_toplevel surfaces above the lock screen">
+        This protocol allows privileged clients to promote their xdg_toplevel
+        surfaces to be displayed above all other surfaces, including the lock
+        screen.
+
+        This is intended for system-level modal overlays such as low-battery
+        warnings or post-update notifications that must remain visible and
+        interactive even when the session is locked.
+
+        A client binds treeland_privileged_overlay_manager_v1 and calls add
+        with an xdg_toplevel to promote it to the overlay layer.  The client
+        may add multiple surfaces and remove them individually.  Destroying
+        the manager removes all tracked surfaces and returns them to their
+        original z-order.
+
+        Access control is mandatory.  The compositor must restrict binding
+        to this global to trusted system clients only and must validate
+        each add request against the client's privileges.
+
+        The key words "must", "must not", "should", "should not", and "may"
+        in this document are to be interpreted as described in IETF RFC 2119.
+
+        Warning! The protocol described in this file is currently in the
+        testing phase.  Backward compatible changes may be added together
+        with the corresponding interface version bump.  Backward incompatible
+        changes can only be done by creating a new major version of the
+        extension.
+    </description>
+
+    <interface name="treeland_privileged_overlay_manager_v1" version="1">
+        <description summary="manager for privileged overlay surfaces">
+            A compositor global that promotes xdg_toplevel surfaces to the
+            privileged overlay layer.  Each promoted surface is displayed
+            above the lock screen and captures all input events.
+
+            The client calls add to promote a surface and remove to demote
+            it.  Destroying the manager removes all surfaces that were added
+            through it and returns them to their original z-order below the
+            lock screen.
+
+            When the client disconnects, the compositor destroys the manager
+            and cleans up all tracked surfaces automatically.
+
+            Warning!  This interface exposes highly sensitive capabilities.
+            The compositor must restrict binding to this global object to
+            trusted system clients only (e.g., via Unix group membership,
+            SELinux label, or explicit UID whitelist).  Unprivileged clients
+            must be denied access at the bind phase.
+        </description>
+
+        <enum name="error">
+            <entry name="permission_denied" value="0"
+                summary="the client has no permission to create an overlay surface"/>
+            <entry name="overlay_not_found" value="1"
+                summary="the given xdg_toplevel has not been added"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager and all tracked surfaces">
+                Destroys the manager object.  All surfaces previously added
+                through add on this manager are removed from the overlay
+                layer and returned to their original z-order.  No further
+                requests may be sent on this object after destruction.
+            </description>
+        </request>
+
+        <request name="add">
+            <description summary="promote an xdg_toplevel to overlay surface">
+                Promotes the given xdg_toplevel surface to the privileged
+                overlay layer.  The surface is placed above the lock screen,
+                is exempt from lock-screen hiding, and captures all keyboard
+                and pointer input.
+
+                The compositor must strictly verify that the client has
+                sufficient privileges (e.g., system UID, specific capability)
+                to promote a surface; otherwise it must raise a
+                permission_denied error.
+            </description>
+            <arg name="toplevel" type="object" interface="xdg_toplevel"/>
+        </request>
+
+        <request name="remove">
+            <description summary="remove an xdg_toplevel from the overlay layer">
+                Removes the privileged overlay status from the given
+                xdg_toplevel surface.  The surface returns to its original
+                z-order below the lock screen.
+
+                If the xdg_toplevel has not been added as an overlay surface
+                on this manager the compositor must raise an
+                overlay_not_found error.
+            </description>
+            <arg name="toplevel" type="object" interface="xdg_toplevel"/>
+        </request>
+    </interface>
+
+</protocol>
