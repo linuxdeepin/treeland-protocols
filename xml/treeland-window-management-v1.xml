@@ -5,6 +5,16 @@
     SPDX-License-Identifier: MIT
     ]]></copyright>
 
+    <description summary="application window management">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_window_management_v1" version="1">
         <description summary="application windows management">
             This interface manages application windows.
