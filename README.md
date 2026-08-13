@@ -2,6 +2,15 @@
 
 Wayland protocol extensions for treeland.
 
+## Experimental status
+
+All Treeland Wayland protocol extensions defined in this repository are
+**experimental**. They may change at any time, including in
+backward-incompatible ways, and no compatibility guarantees of any kind
+are provided. Consumers must track the upstream protocol definition and
+must not rely on current interface names, requests, events, or semantics
+remaining stable.
+
 ## Dependencies
 
 Check `debian/control` for build-time dependencies, or use `cmake` to check the missing required dependencies.

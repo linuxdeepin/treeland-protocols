@@ -167,3 +167,24 @@ Before considering the XML finished, check:
 - all enum references resolve correctly
 - nullable args are intentional
 - the protocol is added to `CMakeLists.txt` if it is new
+- the protocol-level `<description>` contains the experimental disclaimer (see section 12)
+
+## 12. Experimental status disclaimer
+
+Every Treeland protocol XML must include the following experimental disclaimer in its **protocol-level** `<description>` (the `<description>` that is a direct child of `<protocol>`, not inside an `<interface>`):
+
+```
+Warning! This protocol is EXPERIMENTAL and under active development.
+It may change at any time, including in backward-incompatible ways,
+without incrementing the interface major version and without prior
+notice. No compatibility guarantees of any kind are provided. Clients
+and compositors must track the upstream definition in treeland-protocols
+and must not rely on the current interface names, requests, events, or
+semantics remaining stable across releases.
+```
+
+Rules:
+- the disclaimer must appear exactly once, in the protocol-level `<description>` only
+- do not duplicate the disclaimer inside `<interface>` descriptions
+- do not use the old "testing phase" wording that promises version-bump discipline — the current disclaimer explicitly states that no compatibility guarantees are provided
+- when creating a new protocol file from the template, the disclaimer is already present; keep it

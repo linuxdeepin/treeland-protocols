@@ -4,14 +4,20 @@
     SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
+
+    <description summary="keyboard shortcut management">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_shortcut_manager_v1" version="2">
         <description summary="shortcut manager">
             This interface allows a client to get some shell's info.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
 
         <request name="register_shortcut_context">
@@ -32,11 +38,6 @@
     <interface name="treeland_shortcut_context_v1" version="1">
         <description summary="client shortcut context">
             This interface allows a client to listen a shortcut action.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
 
         <enum name="error">

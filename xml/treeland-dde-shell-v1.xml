@@ -4,14 +4,20 @@
     SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
+
+    <description summary="DDE shell integration for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_dde_shell_manager_v1" version="2">
         <description summary="dde shell manager">
             This interface allows DDE change some treeland function.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <request name="get_window_overlap_checker">
             <arg name="id" type="new_id" interface="treeland_window_overlap_checker" />
@@ -87,11 +93,6 @@
         <description summary="An opened toplevel">
             A treeland_dde_shell_handle_v1 object represents an opened toplevel window. Each
             app may have multiple opened toplevels.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
 
         <event name="enter">

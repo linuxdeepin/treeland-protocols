@@ -4,14 +4,20 @@
     SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
+
+    <description summary="manage foreign toplevel windows">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_foreign_toplevel_manager_v1" version="2">
         <description summary="foreign toplevel manager">
             This interface allows a client to get toplevel some info.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <event name="toplevel">
             <description summary="a toplevel has been created">
@@ -51,11 +57,6 @@
         <description summary="An opened toplevel">
             A treeland_foreign_toplevel_handle_v1 object represents an opened toplevel window. Each
             app may have multiple opened toplevels.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <event name="pid">
             <description summary="Process id of application owning the window has changed">
@@ -266,11 +267,6 @@
     <interface name="treeland_dock_preview_context_v1" version="1">
         <description summary="handle dock preview">
             This interface allows dock set windows preview.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
 
         <enum name="direction">

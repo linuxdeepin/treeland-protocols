@@ -4,6 +4,17 @@
     SPDX-FileCopyrightText: 2024 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
+
+    <description summary="virtual output creation and management">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_virtual_output_manager_v1" version="2">
         <description summary="Manager creates virtual output">
             This interface is a manager that allows the creation of copied output.

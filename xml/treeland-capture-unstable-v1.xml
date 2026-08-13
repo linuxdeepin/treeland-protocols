@@ -7,6 +7,14 @@
   <description summary="protocol for capturing output contents or window contents">
     This protocol allows authorized application to capture output contents or window
     contents(useful for window streaming).
+
+    Warning! This protocol is EXPERIMENTAL and under active development.
+    It may change at any time, including in backward-incompatible ways,
+    without incrementing the interface major version and without prior
+    notice. No compatibility guarantees of any kind are provided. Clients
+    and compositors must track the upstream definition in treeland-protocols
+    and must not rely on the current interface names, requests, events, or
+    semantics remaining stable across releases.
   </description>
 
   <interface name="treeland_capture_session_v1" version="1">

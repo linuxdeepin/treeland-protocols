@@ -4,14 +4,20 @@
     SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
+
+    <description summary="personalization and theming for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_personalization_manager_v1" version="2">
         <description summary="personalization manager">
             This interface allows a client to customized display effects.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <request name="get_window_context">
             <description summary="get personalization window context">
@@ -46,11 +52,6 @@
     <interface name="treeland_personalization_cursor_context_v1" version="1">
         <description summary="client custom cursor context">
             This interface allows a client personalization cursor.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <request name="set_theme">
             <description summary="set system cursor theme" />
@@ -98,11 +99,6 @@
     <interface name="treeland_personalization_window_context_v1" version="1">
         <description summary="client custom window context">
             This interface allows a client personalization window.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <enum name="blend_mode">
             <description summary="window blend mode">
@@ -189,11 +185,6 @@
     <interface name="treeland_personalization_font_context_v1" version="1">
         <description summary="treeland window global font settings">
             This interface allows set treeland window global font settings.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <event name="font">
             <description summary="font event">
@@ -255,11 +246,6 @@
     <interface name="treeland_personalization_appearance_context_v1" version="1">
         <description summary="treeland window global appearance settings">
             This interface allows set treeland window global appearance settings.
-
-            Warning! The protocol described in this file is currently in the testing
-            phase. Backward compatible changes may be added together with the
-            corresponding interface version bump. Backward incompatible changes can
-            only be done by creating a new major version of the extension.
         </description>
         <enum name="theme_type">
             <description summary="window theme type" />

@@ -4,6 +4,17 @@
     SPDX-FileCopyrightText: 2025 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
+
+    <description summary="screensaver control for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
     <interface name="treeland_screensaver_v1" version="2">
         <description summary="Simple idle inhibit protocol">
             This object implements a simple idle inhibit protocol used
@@ -20,12 +31,6 @@
             inhibit multiple times will raise an error. Call uninhibit
             before inhibit to update application_name and reason
             recorded.
-
-            Warning! The protocol described in this file is currently
-            in the testing phase. Backward compatible changes may be
-            added together with the corresponding interface version
-            bump. Backward incompatible changes can only be done by
-            creating a new major version of the extension.
         </description>
         <request name="inhibit">
             <description summary="Inhibit idleness">
