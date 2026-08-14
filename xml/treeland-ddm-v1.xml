@@ -33,18 +33,6 @@
             </description>
             <arg name="username" type="string"/>
         </request>
-        <request name="activate_session">
-            <description summary="activate wayland session">
-                Activate treeland session. This will makes treeland try to take
-                control of screen.
-            </description>
-        </request>
-        <request name="deactivate_session">
-            <description summary="deactivate wayland session">
-                Deactivate treeland session. This will release control of the
-                screen, but not to close the current seats.
-            </description>
-        </request>
         <request name="enable_render">
             <description summary="start treeland rendering">
                 Enable treeland rendering. This is primarily called after
