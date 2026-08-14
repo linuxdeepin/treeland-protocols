@@ -13,6 +13,7 @@ include(CMakePackageConfigHelpers)
 
 # Public protocol XML files (for general application developers)
 set(TREELAND_PROTOCOL_XML_FILES
+  public/treeland-snap-target-unstable-v1.xml
   public/treeland-window-transition-unstable-v1.xml
   public/treeland-appearance-unstable-v1.xml
   public/treeland-decoration-unstable-v1.xml

@@ -5,6 +5,7 @@
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
 | `treeland-window-transition-unstable-v1.xml` | `treeland_window_transition_unstable_v1` | `treeland_window_transition_manager_v1`, `treeland_window_transition_rect_v1` | 相对某个矩形的窗口打开/关闭转场，可附带源图像 |
+| `treeland-snap-target-unstable-v1.xml` | `treeland_snap_target_unstable_v1` | `treeland_snap_target_v1` | 合成器侧吸附区域提示；窗口目标的 pidfd 事件为可选项，需在 `start` 中置 `event_type.pidfd` 位启用 |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | 查询与订阅用户级外观设置：光标主题/大小、字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、圆角 |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | 逐窗口服务端装饰（SSD）定制：圆角、阴影、边框、标题栏可见性；需先经 xdg-decoration 申请 SSD |
 
