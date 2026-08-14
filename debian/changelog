@@ -1,3 +1,13 @@
+treeland-protocols (0.5.10) unstable; urgency=medium
+
+  * protocols: mark all treeland protocols as experimental with no
+    compatibility guarantees
+  * protocols: add treeland-remote-subsurface-unstable-v1
+  * feat(shortcut): add tile_left and tile_right actions
+  * docs: update treeland personalization protocol documentation
+
+ -- rewine <luhongxu@deepin.org>  Fri, 14 Aug 2026 13:29:46 +0800
+
 treeland-protocols (0.5.9) unstable; urgency=medium
 
   * feat(wallpaper-shell): bump treeland_wallpaper_shell_v1 to version 2
