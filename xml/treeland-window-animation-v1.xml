@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_window_animation_v1">
+
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="window open/close animation relative to a rectangle">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This extension allows a client to request that the compositor play
+        window animation for a new window that transitions from a specified
+        rectangular area, and, when the window is closed, transitions back
+        to that same rectangular area.
+
+        The rectangle is attached to an xdg-activation-v1 token object before
+        the token is committed, so the compositor can associate the rectangle
+        with the originating surface and use it as the animation source when
+        the target window appears.
+
+        Unlike a one-shot animation source, the rectangle object is
+        persistent: the client may call commit multiple times to update the
+        geometry, and the compositor uses the latest committed geometry for
+        both the open and the close animation.
+
+        The full flow is:
+        1. Application A obtains an xdg_activation_token_v1, calls set_surface
+           to identify its own surface.
+        2. A calls get_window_animation_rect on this manager, passing the
+           token.
+        3. A calls set_geometry on the resulting rect object to define the
+           animation rectangle (relative to the originating surface).
+        4. A calls commit on the rect object.
+        5. A calls commit on the xdg_activation_token_v1 to obtain the token
+           string.
+        6. A passes the token string to application B (e.g. via environment
+           variable).
+        7. B calls xdg_activation_v1.activate with the token and its surface.
+        8. The compositor looks up the rectangle associated with the token,
+           converts it to global coordinates using the originating surface
+           position, and plays the open animation from that rectangle to the
+           target window geometry.
+        9. While B's window is alive, A may call set_geometry and commit again
+           on the rect object to update the animation rectangle. The
+           compositor uses the latest committed geometry when B's window is
+           closed.
+        10. When B's window is closed, the compositor plays the close
+            animation from the window geometry back to the rectangle.
+        11. If A destroys the rect object before B's window is closed (or if
+            A's client disconnects, or if the originating surface is
+            destroyed), the compositor falls back to its default close
+            animation.
+
+        Timing and responsibilities:
+
+        The client MUST call xdg_activation_v1.activate on the target
+        surface before that surface is first mapped (i.e. before the
+        wl_surface.commit that causes the compositor to map it). This
+        ensures the compositor has the animation rectangle available when
+        the surface appears.
+
+        If activate is applied to a surface that is already mapped, the
+        compositor does not play an open animation, discards the
+        rectangle association, and does not substitute any other
+        animation. This is a client timing violation and the compositor
+        does not compensate.
+
+        The rectangle coordinates are relative to the local coordinate
+        space of the surface set via xdg_activation_token_v1.set_surface.
+        The compositor converts them to global coordinates using the
+        originating surface position. When the originating surface moves
+        on screen, the compositor automatically recalculates the global
+        position of the animation rectangle — the client only needs to
+        call commit when the rectangle's position or size relative to the
+        originating surface changes. Animation parameters such as
+        duration and easing are compositor policy and are not negotiated
+        by this protocol.
+    </description>
+
+    <interface name="treeland_window_animation_manager_v1" version="1">
+        <description summary="manager for window animation rectangles">
+            This interface is a manager for creating window animation
+            rectangle objects. A window animation rectangle is attached to
+            an xdg_activation_token_v1 object to request that the compositor
+            play window animation from that rectangle when the token is used
+            to activate a new window, and back to that rectangle when the
+            window is closed.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager"/>
+        </request>
+
+        <request name="get_window_animation_rect">
+            <description summary="create a window animation rectangle for a token">
+                Creates a new window animation rectangle object associated
+                with the given xdg_activation_token_v1 object. The rectangle
+                geometry must be set and committed before the token itself
+                is committed.
+            </description>
+            <arg name="rect" type="new_id" interface="treeland_window_animation_rect_v1" summary="new window animation rectangle object"/>
+            <arg name="token" type="object" interface="xdg_activation_token_v1" summary="the activation token to attach the rectangle to"/>
+        </request>
+    </interface>
+
+    <interface name="treeland_window_animation_rect_v1" version="1">
+        <description summary="window animation rectangle">
+            Represents a rectangle that the compositor uses as the
+            reference area for window open and close animations. The
+            rectangle coordinates are relative to the surface set on the
+            associated xdg_activation_token_v1 via set_surface. The
+            compositor combines the surface's position with the rectangle
+            offset to determine the global animation area.
+
+            The rectangle must be committed at least once before the
+            associated activation token is committed. After the initial
+            commit the object remains live: the client may call
+            set_geometry followed by commit again to update the rectangle,
+            and the compositor will use the latest committed geometry for
+            the close animation when the target window is closed.
+
+            When the client destroys this object (or the client
+            disconnects, or the originating surface is destroyed), the
+            compositor falls back to its default close animation for the
+            target window.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the rectangle object">
+                Destroying the rectangle object removes the animation
+                association. If the target window is still alive, the
+                compositor will use its default close animation when the
+                window is closed.
+            </description>
+        </request>
+
+        <request name="set_geometry">
+            <description summary="set the rectangle geometry">
+                Sets the rectangle geometry. The x and y coordinates are
+                relative to the surface set on the associated activation
+                token via set_surface. This request may be called before
+                each commit.
+
+                A non-positive width or height is rejected with the
+                invalid_geometry error.
+            </description>
+            <arg name="x" type="int" summary="x offset relative to the originating surface"/>
+            <arg name="y" type="int" summary="y offset relative to the originating surface"/>
+            <arg name="width" type="int" summary="rectangle width"/>
+            <arg name="height" type="int" summary="rectangle height"/>
+        </request>
+
+        <request name="commit">
+            <description summary="commit the rectangle geometry">
+                Commits the rectangle geometry, associating it with the
+                activation token. This request may be called multiple
+                times: each call updates the committed geometry. The
+                compositor uses the latest committed geometry for both the
+                open and the close animation.
+
+                Calling commit before a valid set_geometry has been set
+                raises the no_geometry error.
+            </description>
+        </request>
+
+        <enum name="error">
+            <entry name="invalid_geometry" value="0"
+                   summary="the geometry was invalid (non-positive width or height)"/>
+            <entry name="no_geometry" value="1"
+                   summary="commit was called before a valid set_geometry was set"/>
+        </enum>
+    </interface>
+</protocol>

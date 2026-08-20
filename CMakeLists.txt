@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25.0)
 
-project(TreelandProtocols VERSION 0.5.10)
+project(TreelandProtocols VERSION 0.5.11)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -33,6 +33,7 @@ set(XML
   xml/treeland-input-manager-unstable-v1.xml
   xml/treeland-keyboard-state-notify-unstable-v1.xml
   xml/treeland-remote-subsurface-unstable-v1.xml
+  xml/treeland-window-animation-v1.xml
 )
 
 install(FILES ${XML} DESTINATION ${CMAKE_INSTALL_DATADIR}/treeland-protocols)
