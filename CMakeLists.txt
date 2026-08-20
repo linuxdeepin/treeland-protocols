@@ -14,6 +14,7 @@ include(CMakePackageConfigHelpers)
 # Public protocol XML files (for general application developers)
 set(TREELAND_PROTOCOL_XML_FILES
   public/treeland-dde-shell-v1.xml
+  public/treeland-window-animation-v1.xml
 )
 
 # DDE component protocol XML files
