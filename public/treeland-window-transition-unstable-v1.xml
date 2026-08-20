@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_window_transition_unstable_v1">
+
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="window open/close transition relative to a rectangle">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This extension allows a client to request that the compositor play
+        a window transition for a new window that opens from a specified
+        rectangular area, and, when the window is closed, transitions back
+        to that same rectangular area.
+
+        The rectangle is attached to an xdg-activation-v1 token object before
+        the token is committed, so the compositor can associate the rectangle
+        with the originating surface and use it as the animation source when
+        the target window appears.
+
+        The client may call set_geometry multiple times to update the
+        geometry, and the compositor uses the latest set geometry for both
+        the open and the close animation.
+
+        Optionally, the client may attach an image (a wl_buffer) to the
+        rectangle via set_source_buffer. When an image is set, the compositor
+        uses it as the source image for the transition instead of an empty
+        rectangle.
+
+        The client may temporarily disable the rectangle by setting a
+        geometry of 0x0 size (zero width and zero height). While the
+        rectangle is disabled, the compositor does not use it as the
+        animation source or target and behaves as if no rectangle were
+        set, but the rectangle object and its association with the
+        activation token remain alive. The client can re-enable the
+        rectangle later by setting a positive size again; the target
+        window uses the latest set geometry whenever the rectangle is
+        enabled.
+
+        The full flow is:
+        1. A, the originating surface, obtains an xdg_activation_token_v1
+           and calls set_surface to identify itself.
+        2. A calls get_window_transition_rect on this manager, passing the
+           token.
+        3. A calls set_geometry on the resulting rect object to define the
+           transition rectangle (relative to A).
+        4. A calls commit on the xdg_activation_token_v1 to obtain the token
+           string.
+        5. A passes the token string to B, the target window.
+        6. B calls xdg_activation_v1.activate with the token and B's surface.
+        7. The compositor looks up the rectangle associated with the token,
+           converts it to global coordinates using A's position, and plays
+           the open animation from that rectangle to B's geometry.
+        8. While B is alive, A may call set_geometry again on the rect
+           object to update the transition rectangle. The compositor uses
+           the latest set geometry when B is closed.
+        9. When B is closed, the compositor plays the close animation from
+           B's geometry back to the rectangle.
+         10. Once the compositor stops using the rectangle (e.g. because B
+             is destroyed), it sends the closed event on the rect object.
+             A destroys the rect object after receiving this event.
+        11. If A destroys the rect object before B is closed (or if A's
+            client disconnects, or if A is destroyed), the compositor falls
+            back to its default close animation and does not send the closed
+            event.
+
+        Timing and responsibilities:
+
+        The client must call xdg_activation_v1.activate on the target
+        surface before that surface is first mapped (i.e. before the
+        wl_surface.commit that causes the compositor to map it). This
+        ensures the compositor has the transition rectangle available when
+        the surface appears.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_window_transition_manager_v1" version="1">
+        <description summary="manager for window transition rectangles">
+            This interface is a manager for creating window transition
+            rectangle objects. A window transition rectangle is attached to
+            an xdg_activation_token_v1 object to request that the compositor
+            play a window transition from that rectangle when the token is
+            used to activate a new window, and back to that rectangle when
+            the window is closed.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager"/>
+        </request>
+
+        <request name="get_window_transition_rect">
+            <description summary="create a window transition rectangle for a token">
+                Creates a new window transition rectangle object associated
+                with the given xdg_activation_token_v1 object. The rectangle
+                geometry must be set before the token itself is committed.
+            </description>
+            <arg name="rect" type="new_id" interface="treeland_window_transition_rect_v1" summary="new window transition rectangle object"/>
+            <arg name="token" type="object" interface="xdg_activation_token_v1" summary="the activation token to attach the rectangle to"/>
+        </request>
+    </interface>
+
+    <interface name="treeland_window_transition_rect_v1" version="1">
+        <description summary="window transition rectangle">
+            Represents a rectangle that the compositor uses as the
+            reference area for window open and close animations. The
+            rectangle coordinates are relative to the surface set on the
+            associated xdg_activation_token_v1 via set_surface. The
+            compositor combines the surface's position with the rectangle
+            offset to determine the global animation area.
+
+            The rectangle geometry must be set before the associated
+            activation token is committed. The object remains live: the
+            client may call set_geometry again to update the rectangle, and
+            the compositor will use the latest set geometry for the close
+            animation when the target window is closed.
+
+            When the client destroys this object (or the client
+            disconnects, or the originating surface is destroyed), the
+            compositor falls back to its default close animation for the
+            target window.
+        </description>
+
+        <enum name="error">
+            <entry name="invalid_geometry" value="0"
+                   summary="the geometry cannot be handled by the compositor"/>
+            <entry name="invalid_buffer" value="1"
+                   summary="the source buffer could not be imported"/>
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the rectangle object">
+                Destroying the rectangle object removes the animation
+                association. If the target window is still alive, the
+                compositor will use its default close animation when the
+                window is closed.
+            </description>
+        </request>
+
+        <request name="set_geometry">
+            <description summary="set the rectangle geometry">
+                Sets the rectangle geometry, taking effect immediately. The
+                x and y coordinates are relative to the surface set on the
+                associated activation token via set_surface. This request
+                may be called multiple times to update the geometry.
+
+                A geometry with a positive width and a positive height is
+                guaranteed to be valid. A width and height of both 0 is
+                also guaranteed to be valid and temporarily disables the
+                rectangle. Otherwise might be rejected with the
+                invalid_geometry error.
+            </description>
+            <arg name="x" type="int" summary="x offset relative to the originating surface"/>
+            <arg name="y" type="int" summary="y offset relative to the originating surface"/>
+            <arg name="width" type="int" summary="rectangle width"/>
+            <arg name="height" type="int" summary="rectangle height"/>
+        </request>
+
+        <request name="set_source_buffer">
+            <description summary="set the source image used by the transition">
+                Sets the source image used by the transition for this
+                rectangle. This request takes effect immediately.
+
+                The compositor samples the buffer content when this request
+                is applied, then sends wl_buffer.release, after which the
+                client may reuse or destroy the buffer. The client must keep
+                the buffer alive and its content valid until that release is
+                received.
+
+                Passing null clears the source image. The buffer may be
+                replaced, including with null, by a later call.
+
+                A buffer that cannot be imported by the compositor raises
+                the invalid_buffer error.
+            </description>
+            <arg name="buffer" type="object" interface="wl_buffer" allow-null="true"
+                 summary="the source image, or null to clear it"/>
+        </request>
+
+        <event name="closed">
+            <description summary="the rectangle is no longer usable">
+                Sent once the compositor no longer references this rectangle,
+                e.g. because the target window has been destroyed. From this
+                point the object is useless to the client and should be
+                destroyed.
+
+                This is a notification only. This event is sent at most once
+                per rectangle object, and only if the rectangle object was
+                still alive when the compositor stopped using it. If the client
+                destroys the rectangle (or disconnects) before then, this event
+                is not sent. No further events are delivered on this object
+                after closed.
+            </description>
+        </event>
+    </interface>
+</protocol>
