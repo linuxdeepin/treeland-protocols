@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_launch_animation_v1">
+
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="launch animation from a specified rectangular area">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This extension allows a client to request that the compositor play a
+        launch animation for a new window that transitions from a specified
+        rectangular area. The rectangle is attached to an xdg-activation-v1
+        token object before the token is committed, so the compositor can
+        associate the rectangle with the originating surface and use it as the
+        animation source when the target window appears.
+
+        The full flow is:
+        1. Application A obtains an xdg_activation_token_v1, calls set_surface
+           to identify its own surface.
+        2. A calls get_launch_rect on this manager, passing the token.
+        3. A calls set_geometry on the resulting rect object to define the
+           animation source rectangle (relative to the originating surface).
+        4. A calls commit on the rect object.
+        5. A calls commit on the xdg_activation_token_v1 to obtain the token
+           string.
+        6. A passes the token string to application B (e.g. via environment
+           variable).
+        7. B calls xdg_activation_v1.activate with the token and its surface.
+        8. The compositor looks up the rectangle associated with the token,
+           converts it to global coordinates using the originating surface
+           position, and plays the launch animation from that rectangle to the
+           target window geometry.
+
+        Timing and responsibilities:
+
+        The client MUST call xdg_activation_v1.activate on the target
+        surface before that surface is first mapped (i.e. before the
+        wl_surface.commit that causes the compositor to map it). This
+        ensures the compositor has the launch rectangle available when
+        the surface appears.
+
+        If activate is applied to a surface that is already mapped, the
+        compositor does not play a launch animation, discards the
+        rectangle, and does not substitute any other animation. This is
+        a client timing violation and the compositor does not compensate.
+
+        The rectangle coordinates are relative to the local coordinate
+        space of the surface set via xdg_activation_token_v1.set_surface.
+        The compositor converts them to global coordinates using the
+        originating surface position. Animation parameters such as
+        duration and easing are compositor policy and are not negotiated
+        by this protocol.
+    </description>
+
+    <interface name="treeland_launch_animation_manager_v1" version="1">
+        <description summary="manager for launch animation rectangles">
+            This interface is a manager for creating launch animation rectangle
+            objects. A launch animation rectangle is attached to an
+            xdg_activation_token_v1 object to request that the compositor play
+            a launch animation from that rectangle when the token is used to
+            activate a new window.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager"/>
+        </request>
+
+        <request name="get_launch_rect">
+            <description summary="create a launch rectangle for a token">
+                Creates a new launch rectangle object associated with the given
+                xdg_activation_token_v1 object. The rectangle geometry must be
+                set and committed before the token itself is committed.
+            </description>
+            <arg name="launch_rect" type="new_id" interface="treeland_launch_rect_v1" summary="new launch rectangle object"/>
+            <arg name="token" type="object" interface="xdg_activation_token_v1" summary="the activation token to attach the rectangle to"/>
+        </request>
+    </interface>
+
+    <interface name="treeland_launch_rect_v1" version="1">
+        <description summary="launch animation rectangle">
+            Represents a rectangle that the compositor uses as the source area
+            for a launch animation. The rectangle coordinates are relative to
+            the surface set on the associated xdg_activation_token_v1 via
+            set_surface. The compositor combines the surface's position with
+            the rectangle offset to determine the global animation source area.
+
+            The rectangle must be committed before the associated activation
+            token is committed. After commit the object is inert.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the rectangle object"/>
+        </request>
+
+        <request name="set_geometry">
+            <description summary="set the rectangle geometry">
+                Sets the rectangle geometry. The x and y coordinates are
+                relative to the surface set on the associated activation token
+                via set_surface. This request must be called before commit.
+
+                A non-positive width or height is rejected with the
+                invalid_geometry error. Calling this request after commit is
+                rejected with the already_committed error.
+            </description>
+            <arg name="x" type="int" summary="x offset relative to the originating surface"/>
+            <arg name="y" type="int" summary="y offset relative to the originating surface"/>
+            <arg name="width" type="int" summary="rectangle width"/>
+            <arg name="height" type="int" summary="rectangle height"/>
+        </request>
+
+        <request name="commit">
+            <description summary="commit the rectangle">
+                Commits the rectangle geometry, associating it with the
+                activation token. This request must be called before the
+                activation token is committed. After commit the object is
+                inert and further set_geometry requests are rejected with the
+                already_committed error.
+
+                Calling commit before a valid set_geometry has been set raises
+                the no_geometry error.
+
+                The committed rectangle is consumed once when the target
+                surface is first mapped. If the surface is already mapped
+                when activate is called, or if the surface is never mapped,
+                the rectangle is discarded without playing any animation.
+            </description>
+        </request>
+
+        <enum name="error">
+            <entry name="already_committed" value="0"
+                   summary="commit was called more than once"/>
+            <entry name="invalid_geometry" value="1"
+                   summary="the geometry was invalid (non-positive width or height)"/>
+            <entry name="no_geometry" value="2"
+                   summary="commit was called before a valid set_geometry was set"/>
+        </enum>
+    </interface>
+</protocol>
