@@ -1,0 +1,1 @@
+Public protocols primarily designed for deepin first-party applications that are not tightly coupled with the desktop environment. Note that all protocols here are unstable and subject to API changes in future versions.
