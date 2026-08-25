@@ -46,11 +46,12 @@
                 Note:
                 1. The treeland_wallpaper_v1 object must be destroyed before
                 the associated wl_output is destroyed.
-                1. The treeland_wallpaper_v1 object must be destroyed before
+                2. The treeland_wallpaper_v1 object must be destroyed before
                 the associated wl_surface is destroyed.
             </description>
             <arg name="id" type="new_id" interface="treeland_wallpaper_v1"/>
-            <arg name="output" type="object" interface="wl_output"/>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the output to associate the wallpaper with"/>
             <arg name="surface" type="object" interface="wl_surface" allow-null="true"
                 summary="The wl_surface associated with this wallpaper, or null to unset it"/>
         </request>
@@ -116,7 +117,7 @@
             </description>
             <arg name="file_source" type="string"
                 summary="Path to the image file to be used as the wallpaper"/>
-            <arg name="role" type="uint" summary="wallpaper role"/>
+            <arg name="role" type="uint" enum="wallpaper_role" summary="wallpaper role"/>
         </request>
 
         <request name="set_video_source">
@@ -143,7 +144,7 @@
             </description>
             <arg name="file_source" type="string"
                 summary="Path to the video file to be used as the wallpaper"/>
-            <arg name="role" type="uint" summary="wallpaper role"/>
+            <arg name="role" type="uint" enum="wallpaper_role" summary="wallpaper role"/>
         </request>
 
         <event name="failed">
@@ -180,9 +181,8 @@
                 (except for lockscreen wallpapers) that affect the active
                 wallpaper, or other system components.
 
-                Because the desktop wallpaper is designed to support different
-                workspaces. if the client is a surface, changes to its displayed
-                workspace will also send (reference set_reference_surface).
+                For desktop wallpapers, workspace switches may also trigger
+                this event to report the wallpaper used by the new workspace.
 
                 The event provides the current wallpaper source type and the
                 corresponding source file path.

@@ -17,7 +17,7 @@
 
     <interface name="treeland_foreign_toplevel_manager_v1" version="2">
         <description summary="foreign toplevel manager">
-            This interface allows a client to get toplevel some info.
+            This interface allows a client to observe information about toplevel windows managed by the compositor.
         </description>
         <event name="toplevel">
             <description summary="a toplevel has been created">
@@ -29,7 +29,7 @@
                 be sent immediately after this event via the corresponding events in
                 treeland_foreign_toplevel_handle_v1.
             </description>
-            <arg name="toplevel" type="new_id" interface="treeland_foreign_toplevel_handle_v1" />
+            <arg name="toplevel" type="new_id" interface="treeland_foreign_toplevel_handle_v1" summary="the new toplevel handle" />
         </event>
         <request name="stop">
             <description summary="Stop sending events">
@@ -49,8 +49,9 @@
             </description>
         </event>
         <request name="get_dock_preview_context">
-            <arg name="relative_surface" type="object" interface="wl_surface" />
-            <arg name="id" type="new_id" interface="treeland_dock_preview_context_v1" />
+            <description summary="create a dock preview context">Create a treeland_dock_preview_context_v1 for the given surface.</description>
+            <arg name="relative_surface" type="object" interface="wl_surface" summary="the surface the preview is relative to" />
+            <arg name="id" type="new_id" interface="treeland_dock_preview_context_v1" summary="the new dock preview context" />
         </request>
     </interface>
     <interface name="treeland_foreign_toplevel_handle_v1" version="2">
@@ -63,20 +64,20 @@
                 This event will be sent when the compositor has set the process id this window
                 belongs to. This should be set once before the initial_state is sent.
             </description>
-            <arg name="pid" type="uint" />
+            <arg name="pid" type="uint" summary="process ID of the application" />
         </event>
         <event name="title">
             <description summary="title change">
                 This event is emitted whenever the title of the toplevel changes.
             </description>
-            <arg name="title" type="string" />
+            <arg name="title" type="string" summary="the title of the toplevel" />
         </event>
 
         <event name="app_id">
             <description summary="app-id change">
                 This event is emitted whenever the app-id of the toplevel changes.
             </description>
-            <arg name="app_id" type="string" />
+            <arg name="app_id" type="string" summary="the application ID of the toplevel" />
         </event>
         <event name="identifier">
             <description summary="a stable identifier for a toplevel">
@@ -87,7 +88,7 @@
                 The compositor must not reuse identifiers to ensure there are no races when
                 identifiers are shared between processes.
             </description>
-            <arg name="identifier" type="uint" />
+            <arg name="identifier" type="uint" summary="a unique stable identifier for this toplevel" />
         </event>
 
         <event name="output_enter">
@@ -95,7 +96,7 @@
                 This event is emitted whenever the toplevel becomes visible on
                 the given output. A toplevel may be visible on multiple outputs.
             </description>
-            <arg name="output" type="object" interface="wl_output" />
+            <arg name="output" type="object" interface="wl_output" summary="the output the toplevel entered" />
         </event>
 
         <event name="output_leave">
@@ -104,7 +105,7 @@
                 the given output. It is guaranteed that an entered-output event
                 with the same output has been emitted before this event.
             </description>
-            <arg name="output" type="object" interface="wl_output" />
+            <arg name="output" type="object" interface="wl_output" summary="the output the toplevel left" />
         </event>
 
         <request name="set_maximized">
@@ -140,7 +141,7 @@
                 Request that this toplevel be activated on the given seat.
                 There is no guarantee the toplevel will be actually activated.
             </description>
-            <arg name="seat" type="object" interface="wl_seat" />
+            <arg name="seat" type="object" interface="wl_seat" summary="the seat to activate on" />
         </request>
 
         <enum name="state">
@@ -163,7 +164,7 @@
                 compositor action or because of a request in this protocol.
             </description>
 
-            <arg name="state" type="array" />
+            <arg name="state" type="array" summary="array of active states" />
         </event>
 
         <event name="done">
@@ -202,11 +203,11 @@
                 Setting width=height=0 removes the already-set rectangle.
             </description>
 
-            <arg name="surface" type="object" interface="wl_surface" />
-            <arg name="x" type="int" />
-            <arg name="y" type="int" />
-            <arg name="width" type="int" />
-            <arg name="height" type="int" />
+            <arg name="surface" type="object" interface="wl_surface" summary="the reference surface" />
+            <arg name="x" type="int" summary="x offset in surface-local coordinates" />
+            <arg name="y" type="int" summary="y offset in surface-local coordinates" />
+            <arg name="width" type="int" summary="width of the rectangle" />
+            <arg name="height" type="int" summary="height of the rectangle" />
         </request>
 
         <enum name="error">
@@ -244,7 +245,7 @@
                 is NULL, the compositor should decide which output the toplevel will be
                 fullscreened on, if at all.
             </description>
-            <arg name="output" type="object" interface="wl_output" allow-null="true" />
+            <arg name="output" type="object" interface="wl_output" allow-null="true" summary="the output to fullscreen on, or null for compositor choice" />
         </request>
 
         <request name="unset_fullscreen">
@@ -261,7 +262,7 @@
                 No event is emitted when the parent handle is destroyed by the client.
             </description>
             <arg name="parent" type="object" interface="treeland_foreign_toplevel_handle_v1"
-                allow-null="true" />
+                allow-null="true" summary="the parent toplevel handle, or null if no parent" />
         </event>
     </interface>
     <interface name="treeland_dock_preview_context_v1" version="1">
@@ -271,12 +272,13 @@
 
         <enum name="direction">
             <description summary="types of direction on the dock preview">
+                Direction of the dock preview relative to the anchor surface.
             </description>
 
-            <entry name="top" value="0" summary="top" />
-            <entry name="right" value="1" summary="right" />
-            <entry name="bottom" value="2" summary="bottom" />
-            <entry name="left" value="3" summary="left" />
+            <entry name="top" value="0" summary="above the anchor" />
+            <entry name="right" value="1" summary="to the right of the anchor" />
+            <entry name="bottom" value="2" summary="below the anchor" />
+            <entry name="left" value="3" summary="to the left of the anchor" />
         </enum>
 
         <event name="enter">
@@ -299,19 +301,20 @@
             <arg name="surfaces" type="array" />
             <arg name="x" type="int" />
             <arg name="y" type="int" />
-            <arg name="direction" type="uint" />
+            <arg name="direction" type="uint" enum="direction" />
         </request>
 
         <request name="show_tooltip">
-            <arg name="tooltip" type="string" />
-            <arg name="x" type="int" />
-            <arg name="y" type="int" />
-            <arg name="direction" type="uint" />
+            <description summary="show a tooltip">Show a tooltip at the specified position relative to the relative_surface.</description>
+            <arg name="tooltip" type="string" summary="tooltip text to display" />
+            <arg name="x" type="int" summary="x position relative to relative_surface" />
+            <arg name="y" type="int" summary="y position relative to relative_surface" />
+            <arg name="direction" type="uint" enum="direction" />
         </request>
 
         <request name="close">
             <description summary="close preview box">
-                close preview box
+                Close the preview box and hide it.
             </description>
         </request>
 

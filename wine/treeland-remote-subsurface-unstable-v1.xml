@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <protocol name="treeland_remote_subsurface_unstable_v1">
-
     <copyright><![CDATA[
     SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
 
     <description summary="sub-surface compositing via token-based references">
-        Provides sub-surface relationships between wl_surface objects
-        using token-based identifiers exchanged out-of-band, instead
-        of the direct wl_surface references required by
-        wl_subcompositor.  This allows parent-child relationships
-        both across different client connections and within the
-        same client.
+        This protocol provides sub-surface relationships between
+        wl_surface objects using token-based identifiers exchanged
+        out-of-band, instead of the direct wl_surface references
+        required by wl_subcompositor.  This allows parent-child
+        relationships both across different client connections and
+        within the same client.
 
         In wl_subcompositor both the parent surface and sibling
         surfaces must be local wl_surface objects from the same
@@ -61,8 +60,24 @@
 
     <interface name="treeland_subsurface_manager_v1" version="1">
         <description summary="factory for remote sub-surfaces">
-            Global factory for exporting surfaces as token-addressable
-            sub-surface parents or children.
+            Global factory for exporting wl_surface objects as
+            token-addressable sub-surface parents or children.
+
+            The typical workflow is:
+
+            1. The client calls export_surface on a wl_surface to
+               obtain a treeland_exported_surface_v1 and receive a
+               surface_token event.
+
+            2. The token is shared out-of-band with another client.
+
+            3. That client exports its own wl_surface, then calls
+               create_remote_subsurface with the parent's token to
+               establish a sub-surface relationship.
+
+            Destroying this manager does not affect already-exported
+            surfaces or existing sub-surface relationships; it only
+            prevents creation of new exported surfaces.
         </description>
 
         <enum name="error">
@@ -71,22 +86,25 @@
         </enum>
 
         <request name="destroy" type="destructor">
-            <description summary="unbind from the sub-surface manager">
-                Informs the server that the client will no longer use
-                this global.  Child objects are not affected.
+            <description summary="destroy the remote sub-surface manager">
+                Destroys this manager object.  Already-exported
+                treeland_exported_surface_v1 objects and existing
+                sub-surface relationships are not affected.
             </description>
         </request>
 
         <request name="export_surface">
             <description summary="register a surface for token-addressable sub-surface use">
-                Register surface as addressable by token, receiving a
-                treeland_exported_surface_v1.  Upon success the
-                compositor emits the surface_token event.
+                Registers a wl_surface as addressable by token,
+                creating a treeland_exported_surface_v1.  Upon
+                success the compositor emits the surface_token event
+                on the new object.
 
                 The surface must not have been previously exported
-                through this manager.  A surface may carry both an
-                xdg_toplevel (or any other) role and an export; the
-                export only marks it as addressable by token.
+                through this manager; doing so is a bad_surface
+                error.  A surface may carry both an xdg_toplevel (or
+                any other role) and an export; the export only marks
+                it as addressable by token.
             </description>
             <arg name="id" type="new_id"
                  interface="treeland_exported_surface_v1"/>
@@ -108,12 +126,19 @@
         </description>
 
         <enum name="error">
+            <description summary="error values for treeland_exported_surface_v1">
+                These errors can be raised in response to
+                treeland_exported_surface_v1 requests.
+            </description>
             <entry name="bad_surface" value="0"
                 summary="the child surface already has an incompatible role"/>
         </enum>
 
         <enum name="reject_reason">
             <description summary="why create_remote_subsurface was rejected">
+                Indicates why a create_remote_subsurface request
+                could not establish the requested parent-child
+                relationship.
             </description>
             <entry name="invalid_token" value="0"
                 summary="parent_token does not identify a live exported surface"/>
@@ -123,26 +148,30 @@
 
         <request name="destroy" type="destructor">
             <description summary="revoke the surface token">
-                Revokes the surface_token; subsequent use results
-                in a parent_rejected event.
-                The client must destroy this object before
-                destroying the associated wl_surface.
+                Revokes the surface_token; subsequent use of the
+                token in create_remote_subsurface results in an
+                invalid_token parent_rejected event on the
+                requesting treeland_exported_surface_v1.
+
+                The client must destroy this object before destroying
+                the associated wl_surface.
             </description>
         </request>
 
         <request name="create_remote_subsurface">
             <description summary="attach this surface as a child to a remote parent">
-                Attach the exported surface to the parent identified
-                by parent_token.  The surface must not already have a
-                wlroots role; it will be assigned the exclusive
+                Attaches the exported surface to the parent identified
+                by parent_token, creating a treeland_remote_subsurface_v1.
+                The surface must not already have a wlroots role; it
+                will be assigned the exclusive
                 treeland_remote_subsurface_v1 role.  If the surface
                 already has an incompatible role, a bad_surface error
                 is raised and the new treeland_remote_subsurface_v1
                 object is inert.
 
-                If the parent_token is invalid or would
-                introduce a cycle, the request is ignored and
-                a parent_rejected event is emitted.
+                If the parent_token is invalid or would introduce a
+                cycle, the request is ignored and a parent_rejected
+                event is emitted carrying the reject_reason.
 
                 The sub-surface addition is double-buffered on the
                 parent.
@@ -168,8 +197,8 @@
 
         <event name="parent_rejected">
             <description summary="create_remote_subsurface could not attach to the parent">
-                The parent_token could not be used to create a
-                sub-surface relationship.
+                Emitted when create_remote_subsurface cannot
+                establish the requested parent-child relationship.
             </description>
             <arg name="reason" type="uint" enum="reject_reason"
                  summary="why the parent_token was rejected"/>
@@ -254,13 +283,13 @@
                 invalid_sibling event.
             </description>
             <arg name="sibling_token" type="string"
-                 summary="a surface_token"/>
+                 summary="a surface_token; empty string is not valid for place_below"/>
         </request>
 
         <event name="invalid_sibling">
             <description summary="a place_above or place_below request could not be fulfilled">
-                The sibling_token did not identify a valid target.
-                The corresponding restack request was ignored.
+                Emitted when a sibling_token does not identify a valid
+                target.  The corresponding restack request was ignored.
             </description>
             <arg name="sibling_token" type="string"
                  summary="the unrecognized token"/>

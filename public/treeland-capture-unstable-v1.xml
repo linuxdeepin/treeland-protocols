@@ -18,6 +18,9 @@
   </description>
 
   <interface name="treeland_capture_session_v1" version="1">
+    <description summary="persistent screen capture session">
+      Represents a persistent screen capture session that continuously sends frames.
+    </description>
 
     <enum name="cancel_reason">
       <entry name="temporary" value="0" summary="temporary error, source will produce more frames"/>
@@ -47,9 +50,9 @@
         "ready" event is acknowledged. The timestamp should be the same as the one sent in "ready" event.
         If the frame has the "transient" flag, all objects sent before become invalid after this event.
       </description>
-      <arg name="tv_sec_hi" type="uint"/>
-      <arg name="tv_sec_lo" type="uint"/>
-      <arg name="tv_usec" type="uint"/>
+      <arg name="tv_sec_hi" type="uint" summary="high 32 bits of the ready timestamp seconds"/>
+      <arg name="tv_sec_lo" type="uint" summary="low 32 bits of the ready timestamp seconds"/>
+      <arg name="tv_usec" type="uint" summary="ready timestamp microseconds"/>
     </request>
 
     <event name="frame">
@@ -61,25 +64,26 @@
       </description>
       <arg name="offset_x" type="int" summary="crop offset x"/>
       <arg name="offset_y" type="int" summary="crop offset y"/>
-      <arg name="width" type="uint"/>
-      <arg name="height" type="uint"/>
-      <arg name="buffer_flags" type="uint"/>
-      <arg name="flags" type="uint" enum="treeland_capture_session_v1.flags"/>
-      <arg name="format" type="uint"/>
-      <arg name="mod_high" type="uint"/>
-      <arg name="mod_low" type="uint"/>
-      <arg name="num_objects" type="uint"/>
+      <arg name="width" type="uint" summary="frame width in pixels"/>
+      <arg name="height" type="uint" summary="frame height in pixels"/>
+      <arg name="buffer_flags" type="uint" summary="buffer flags"/>
+      <arg name="flags" type="uint" enum="flags"/>
+      <arg name="format" type="uint" summary="DRM format code"/>
+      <arg name="mod_high" type="uint" summary="DRM format modifier high bits"/>
+      <arg name="mod_low" type="uint" summary="DRM format modifier low bits"/>
+      <arg name="num_objects" type="uint" summary="number of DMA-BUF objects in the frame"/>
     </event>
 
     <event name="object">
       <description summary="supply the client with object fd">
+        Provides a DMA-BUF object for the current frame.
       </description>
-      <arg name="index" type="uint"/>
-      <arg name="fd" type="fd"/>
-      <arg name="size" type="uint"/>
-      <arg name="offset" type="uint"/>
-      <arg name="stride" type="uint"/>
-      <arg name="plane_index" type="uint"/>
+      <arg name="index" type="uint" summary="object index"/>
+      <arg name="fd" type="fd" summary="DMA-BUF file descriptor"/>
+      <arg name="size" type="uint" summary="size of the DMA-BUF in bytes"/>
+      <arg name="offset" type="uint" summary="offset into the DMA-BUF"/>
+      <arg name="stride" type="uint" summary="line stride in bytes"/>
+      <arg name="plane_index" type="uint" summary="plane index within the buffer"/>
     </event>
 
     <event name="ready">
@@ -87,9 +91,9 @@
         This event is sent as soon as the frame is presented, indicating it is available for reading. This event
         includes the time at which presentation happened at.
       </description>
-      <arg name="tv_sec_hi" type="uint"/>
-      <arg name="tv_sec_lo" type="uint"/>
-      <arg name="tv_nsec" type="uint"/>
+      <arg name="tv_sec_hi" type="uint" summary="high 32 bits of the presentation timestamp seconds"/>
+      <arg name="tv_sec_lo" type="uint" summary="low 32 bits of the presentation timestamp seconds"/>
+      <arg name="tv_nsec" type="uint" summary="presentation timestamp nanoseconds"/>
     </event>
 
     <event name="cancel">
@@ -97,7 +101,7 @@
         If the capture failed or if the frame is no longer valid after the "frame" event has been emitted, this
         event will be used to inform the client to scrap the frame.
       </description>
-      <arg name="reason" type="uint" enum="treeland_capture_session_v1.cancel_reason"/>
+      <arg name="reason" type="uint" enum="cancel_reason"/>
     </event>
 
   </interface>
@@ -142,7 +146,7 @@
         Provides flags about the frame. This event is sent once before the
         "ready" event.
       </description>
-      <arg name="flags" type="uint" enum="treeland_capture_frame_v1.flags" summary="frame flags"/>
+      <arg name="flags" type="uint" enum="flags" summary="frame flags"/>
     </event>
 
     <event name="ready">
@@ -187,7 +191,7 @@
           Selector is provided by compositor. Client can provide source hint to hint compositor
           to provide certain kinds of source.
         </description>
-        <arg name="source_hint" type="uint" enum="source_type"/>
+        <arg name="source_hint" type="uint" enum="source_type" summary="hint for the type of source to select"/>
         <arg name="freeze" type="uint" summary="freeze compositing or not"/>
         <arg name="with_cursor" type="uint" summary="whether source content contains cursor or not"/>
         <arg name="mask" type="object" interface="wl_surface" allow-null="true" summary="this mask is guaranteed to be at the top most"/>
@@ -195,10 +199,10 @@
 
     <request name="capture">
         <description summary="capture one frame">
-          This event can be called just once. A second call might result in a protocol error cause
+          This request can be called just once. A second call might result in a protocol error cause
           we just provide transient
         </description>
-        <arg name="frame" type="new_id" interface="treeland_capture_frame_v1"/>
+        <arg name="frame" type="new_id" interface="treeland_capture_frame_v1" summary="the new capture frame object"/>
     </request>
 
     <request name="create_session">
@@ -230,6 +234,9 @@
   </interface>
 
   <interface name="treeland_capture_manager_v1" version="1">
+    <description summary="capture manager">
+      Global factory for creating capture sessions and capture contexts.
+    </description>
 
     <request name="destroy" type="destructor">
       <description summary="destroy the capture manager">

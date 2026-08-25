@@ -36,8 +36,8 @@
             <description summary="Inhibit idleness">
                 Inhibit idleness with given application_name and reason_for_inhibit.
             </description>
-            <arg name="application_name" type="string"/>
-            <arg name="reason_for_inhibit" type="string"/>
+            <arg name="application_name" type="string" summary="name of the application requesting the inhibit"/>
+            <arg name="reason_for_inhibit" type="string" summary="human-readable reason for the inhibit request"/>
         </request>
         <request name="uninhibit">
             <description summary="Uninhibit idleness">

@@ -148,7 +148,7 @@
                 This request should only be sent when the client intends to
                 permanently stop using the wallpaper surface, such as when the
                 client is shutting down or after receiving the
-                treeland_wallpaper_produce_v1.removed event for this surface.
+                treeland_wallpaper_notifier_v1.remove event for this surface.
             </description>
         </request>
 

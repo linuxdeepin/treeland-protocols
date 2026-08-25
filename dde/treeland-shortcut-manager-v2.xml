@@ -28,45 +28,45 @@
         </description>
 
         <enum name="direction">
-            <entry name="down" value="1"/>
-            <entry name="left" value="2"/>
-            <entry name="up" value="3"/>
-            <entry name="right" value="4"/>
+            <entry name="down" value="1" summary="down direction"/>
+            <entry name="left" value="2" summary="left direction"/>
+            <entry name="up" value="3" summary="up direction"/>
+            <entry name="right" value="4" summary="right direction"/>
         </enum>
 
         <enum name="action">
             <description summary="compositor actions">
                 Compositor actions that can be assigned to a shortcut.
             </description>
-            <entry name="notify" value="1"/>
-            <entry name="workspace_1" value="2"/>
-            <entry name="workspace_2" value="3"/>
-            <entry name="workspace_3" value="4"/>
-            <entry name="workspace_4" value="5"/>
-            <entry name="workspace_5" value="6"/>
-            <entry name="workspace_6" value="7"/>
-            <entry name="prev_workspace" value="8"/>
-            <entry name="next_workspace" value="9"/>
-            <entry name="show_desktop" value="10"/>
-            <entry name="maximize" value="11"/>
-            <entry name="cancel_maximize" value="12"/>
-            <entry name="move_window" value="13"/>
-            <entry name="close_window" value="14"/>
-            <entry name="show_window_menu" value="15"/>
-            <entry name="open_multitask_view" value="16"/>
-            <entry name="close_multitask_view" value="17"/>
-            <entry name="toggle_multitask_view" value="18"/>
-            <entry name="toggle_fps_display" value="19"/>
-            <entry name="lockscreen" value="20"/>
-            <entry name="shutdown_menu" value="21"/>
-            <entry name="quit" value="22"/>
-            <entry name="taskswitch_enter" value="23"/>
-            <entry name="taskswitch_next" value="24"/>
-            <entry name="taskswitch_prev" value="25"/>
-            <entry name="taskswitch_sameapp_next" value="26"/>
-            <entry name="taskswitch_sameapp_prev" value="27"/>
-            <entry name="tile_left" value="28" since="3"/>
-            <entry name="tile_right" value="29" since="3"/>
+            <entry name="notify" value="1" summary="notify the client when the shortcut is activated"/>
+            <entry name="workspace_1" value="2" summary="switch to workspace 1"/>
+            <entry name="workspace_2" value="3" summary="switch to workspace 2"/>
+            <entry name="workspace_3" value="4" summary="switch to workspace 3"/>
+            <entry name="workspace_4" value="5" summary="switch to workspace 4"/>
+            <entry name="workspace_5" value="6" summary="switch to workspace 5"/>
+            <entry name="workspace_6" value="7" summary="switch to workspace 6"/>
+            <entry name="prev_workspace" value="8" summary="switch to the previous workspace"/>
+            <entry name="next_workspace" value="9" summary="switch to the next workspace"/>
+            <entry name="show_desktop" value="10" summary="toggle show desktop"/>
+            <entry name="maximize" value="11" summary="maximize the active window"/>
+            <entry name="cancel_maximize" value="12" summary="unmaximize the active window"/>
+            <entry name="move_window" value="13" summary="start window move mode"/>
+            <entry name="close_window" value="14" summary="close the active window"/>
+            <entry name="show_window_menu" value="15" summary="show the window menu"/>
+            <entry name="open_multitask_view" value="16" summary="open the multitask view"/>
+            <entry name="close_multitask_view" value="17" summary="close the multitask view"/>
+            <entry name="toggle_multitask_view" value="18" summary="toggle the multitask view"/>
+            <entry name="toggle_fps_display" value="19" summary="toggle FPS display"/>
+            <entry name="lockscreen" value="20" summary="lock the screen"/>
+            <entry name="shutdown_menu" value="21" summary="show shutdown menu"/>
+            <entry name="quit" value="22" summary="quit the compositor"/>
+            <entry name="taskswitch_enter" value="23" summary="enter task switcher"/>
+            <entry name="taskswitch_next" value="24" summary="switch to next task in switcher"/>
+            <entry name="taskswitch_prev" value="25" summary="switch to previous task in switcher"/>
+            <entry name="taskswitch_sameapp_next" value="26" summary="switch to next task of same application"/>
+            <entry name="taskswitch_sameapp_prev" value="27" summary="switch to previous task of same application"/>
+            <entry name="tile_left" value="28" since="3" summary="tile the active window to the left"/>
+            <entry name="tile_right" value="29" since="3" summary="tile the active window to the right"/>
         </enum>
 
         <enum name="keybind_flag" bitfield="true">
@@ -93,17 +93,17 @@
             <description summary="binding error codes">
                 Error codes indicating the reason of a binding failure.
             </description>
-            <entry name="name_conflict" value="1"/>
-            <entry name="duplicate_binding" value="2"/>
-            <entry name="invalid_argument" value="3"/>
-            <entry name="internal_error" value="4"/>
+            <entry name="name_conflict" value="1" summary="a binding with this name already exists"/>
+            <entry name="duplicate_binding" value="2" summary="a binding with this key sequence and action already exists"/>
+            <entry name="invalid_argument" value="3" summary="an argument has an invalid value"/>
+            <entry name="internal_error" value="4" summary="an internal compositor error occurred"/>
         </enum>
 
         <enum name="error">
-            <entry name="occupied" value="1"/>
-            <entry name="not_acquired" value="2"/>
-            <entry name="invalid_commit" value="3"/>
-            <entry name="invalid_surface" value="4" since="2"/>
+            <entry name="occupied" value="1" summary="the shortcut manager is already acquired by another client"/>
+            <entry name="not_acquired" value="2" summary="the client has not acquired the shortcut manager"/>
+            <entry name="invalid_commit" value="3" summary="a commit was sent while a previous commit is pending"/>
+            <entry name="invalid_surface" value="4" since="2" summary="the provided surface is not owned by the requesting client"/>
         </enum>
 
         <request name="destroy" type="destructor">

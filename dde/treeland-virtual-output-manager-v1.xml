@@ -43,7 +43,7 @@
                 The client calling this interface will not generate an additional wl_output
                 object on the client.
             </description>
-            <arg name="id" type="new_id" interface="treeland_virtual_output_v1" />
+            <arg name="id" type="new_id" interface="treeland_virtual_output_v1" summary="the new virtual output object" />
             <arg name="name" type="string" summary="The name of the user readable virtual output" />
             <arg name="outputs" type="array" summary="Screen name array" />
         </request>
@@ -68,7 +68,7 @@
                 through the virtual output name.
             </description>
             <arg name="name" type="string" summary="The name of the user readable virtual output" />
-            <arg name="id" type="new_id" interface="treeland_virtual_output_v1" />
+            <arg name="id" type="new_id" interface="treeland_virtual_output_v1" summary="the virtual output object" />
         </request>
         <request name="destroy" type="destructor" since="2">
             <description summary="destroy treeland_virtual_output_manager_v1 object" />
@@ -76,7 +76,7 @@
     </interface>
     <interface name="treeland_virtual_output_v1" version="1">
         <description summary="screen output object">
-            A treeland_virtual_output_v1 represents a set virtual screen output object.
+            Represents a virtual screen output object that mirrors the content of physical outputs.
         </description>
         <event name="outputs">
             <description summary="screen output changes">
@@ -101,7 +101,7 @@
 
                 The code argument uses treeland_virtual_output_v1.error.
             </description>
-            <arg name="code" type="uint" enum="treeland_virtual_output_v1.error" summary="error code" />
+            <arg name="code" type="uint" enum="error" summary="error code" />
             <arg name="message" type="string" summary="error description" />
         </event>
         <enum name="error">

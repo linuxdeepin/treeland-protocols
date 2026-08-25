@@ -17,7 +17,7 @@
 
     <interface name="treeland_personalization_manager_v1" version="2">
         <description summary="personalization manager">
-            This interface allows a client to customized display effects.
+            This interface allows a client to customize display effects.
         </description>
         <request name="get_window_context">
             <description summary="get personalization window context">
@@ -27,8 +27,8 @@
             <arg name="surface" type="object" interface="wl_surface" />
         </request>
         <request name="get_cursor_context">
-            <description summary="custom wallpaper context">
-                custom user cursor
+            <description summary="create a cursor customization context">
+                Create a cursor customization context for configuring the system cursor.
             </description>
             <arg name="id" type="new_id" interface="treeland_personalization_cursor_context_v1" />
         </request>
@@ -44,7 +44,7 @@
             </description>
             <arg name="id" type="new_id" interface="treeland_personalization_appearance_context_v1" />
         </request>
-         <request name="destroy" type="destructor" since="2">
+        <request name="destroy" type="destructor" since="2">
             <description summary="destroy treeland_personalization_manager_v1 object" />
         </request>
     </interface>
@@ -54,22 +54,30 @@
             This interface allows a client personalization cursor.
         </description>
         <request name="set_theme">
-            <description summary="set system cursor theme" />
+            <description summary="set system cursor theme">
+                Set the system cursor theme name.
+            </description>
             <arg name="name" type="string" summary="cursor theme name" />
         </request>
         <request name="get_theme">
-            <description summary="get system cursor theme" />
+            <description summary="get system cursor theme">
+                Query the current system cursor theme name. The compositor will respond with a theme event.
+            </description>
         </request>
         <request name="set_size">
-            <description summary="set system cursor size" />
+            <description summary="set system cursor size">
+                Set the system cursor size.
+            </description>
             <arg name="size" type="uint" summary="cursor size" />
         </request>
         <request name="get_size">
-            <description summary="get system cursor size" />
+            <description summary="get system cursor size">
+                Query the current system cursor size. The compositor will respond with a size event.
+            </description>
         </request>
         <request name="commit">
-            <description summary="commit configure">
-                if only one commit fails validation, the commit will fail
+            <description summary="commit pending cursor configuration">
+                Apply pending cursor configuration changes.
             </description>
         </request>
         <request name="destroy" type="destructor">
@@ -85,20 +93,22 @@
         </event>
         <event name="theme">
             <description summary="cursor theme changed event">
-                Send this signal after system cursor theme changed.
+                Sent when the system cursor theme has changed.
             </description>
             <arg name="name" type="string" summary="cursor theme name" />
         </event>
         <event name="size">
             <description summary="cursor size changed event">
-                Send this signal after system cursor size changed.
+                Sent when the system cursor size has changed.
             </description>
             <arg name="size" type="uint" summary="cursor size" />
         </event>
     </interface>
     <interface name="treeland_personalization_window_context_v1" version="1">
-        <description summary="client custom window context">
-            This interface allows a client personalization window.
+        <description summary="per-window personalization context">
+            This interface allows a client to customize per-window visual properties
+            including background blend mode, round corner radius, shadow, border,
+            and titlebar visibility.
         </description>
         <enum name="blend_mode">
             <description summary="window blend mode">
@@ -114,7 +124,7 @@
             <description summary="set window background blend mode">
                 Set window background blend mode
             </description>
-            <arg name="mode" type="int" enum="blend_mode" />
+            <arg name="mode" type="int" enum="blend_mode" summary="the blend mode to apply" />
         </request>
         <request name="set_round_corner_radius">
             <description summary="set window round corner radius">
@@ -124,7 +134,7 @@
                 radius will
                 be decided by compositor.
             </description>
-            <arg name="radius" type="int" />
+            <arg name="radius" type="int" summary="window round corner radius in pixels" />
         </request>
         <request name="set_shadow">
             <description summary="set window shadow">
@@ -135,13 +145,13 @@
                 - radius >  0: enable shadow with custom parameters
                 If not invoked, the compositor uses its default behavior.
             </description>
-            <arg name="radius" type="int" />
-            <arg name="offset_x" type="int" />
-            <arg name="offset_y" type="int" />
-            <arg name="r" type="int" />
-            <arg name="g" type="int" />
-            <arg name="b" type="int" />
-            <arg name="a" type="int" />
+            <arg name="radius" type="int" summary="shadow radius, -1 for system default, 0 to disable" />
+            <arg name="offset_x" type="int" summary="shadow x offset" />
+            <arg name="offset_y" type="int" summary="shadow y offset" />
+            <arg name="r" type="int" summary="shadow color red component (0-255)" />
+            <arg name="g" type="int" summary="shadow color green component (0-255)" />
+            <arg name="b" type="int" summary="shadow color blue component (0-255)" />
+            <arg name="a" type="int" summary="shadow color alpha component (0-255)" />
         </request>
         <request name="set_border">
             <description summary="set window border">
@@ -152,11 +162,11 @@
                 - width >  0: enable border with custom parameters
                 If not invoked, the compositor uses its default behavior.
             </description>
-            <arg name="width" type="int" />
-            <arg name="r" type="int" />
-            <arg name="g" type="int" />
-            <arg name="b" type="int" />
-            <arg name="a" type="int" />
+            <arg name="width" type="int" summary="border width in pixels, -1 for system default, 0 to disable" />
+            <arg name="r" type="int" summary="border color red component (0-255)" />
+            <arg name="g" type="int" summary="border color green component (0-255)" />
+            <arg name="b" type="int" summary="border color blue component (0-255)" />
+            <arg name="a" type="int" summary="border color alpha component (0-255)" />
         </request>
         <enum name="enable_mode">
             <description summary="window enable mode">
@@ -174,7 +184,7 @@
                 for the titlebar.
                 If not invoked, the compositor uses its default behavior.
             </description>
-            <arg name="mode" type="int" enum="enable_mode" />
+            <arg name="mode" type="int" enum="enable_mode" summary="the titlebar enable mode" />
         </request>
         <request name="destroy" type="destructor">
             <description summary="destroy the context object">
@@ -183,8 +193,9 @@
         </request>
     </interface>
     <interface name="treeland_personalization_font_context_v1" version="1">
-        <description summary="treeland window global font settings">
-            This interface allows set treeland window global font settings.
+        <description summary="global font settings context">
+            This interface allows a client to configure global font settings
+            including the general font, monospace font, and font size.
         </description>
         <event name="font">
             <description summary="font event">
@@ -244,8 +255,10 @@
         </request>
     </interface>
     <interface name="treeland_personalization_appearance_context_v1" version="1">
-        <description summary="treeland window global appearance settings">
-            This interface allows set treeland window global appearance settings.
+        <description summary="global appearance settings context">
+            This interface allows a client to configure global appearance settings
+            including round corner radius, icon theme, active color, window opacity,
+            window theme type, and window titlebar height.
         </description>
         <enum name="theme_type">
             <description summary="window theme type" />
@@ -281,7 +294,7 @@
         </event>
         <event name="window_opacity">
             <description summary="window opacity">
-                Send this signal after setting the system active color
+                Sent when the window opacity has changed.
             </description>
             <arg name="opacity" type="uint" summary="window opacity" />
         </event>
@@ -331,14 +344,14 @@
             </description>
         </request>
         <request name="set_window_opacity">
-            <description summary="set window window opacity">
-                Set the window window opacity
+            <description summary="set window opacity">
+                Set the window opacity.
             </description>
             <arg name="opacity" type="uint" summary="opacity" />
         </request>
         <request name="get_window_opacity">
-            <description summary="get window window opacity">
-                Get the window window opacity
+            <description summary="get window opacity">
+                Get the current window opacity.
             </description>
         </request>
         <request name="set_window_theme_type">
