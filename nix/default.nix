@@ -33,7 +33,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Wayland protocol extensions for treeland";
     homepage = "https://github.com/linuxdeepin/treeland-protocols";
-    license = with lib.licenses; [ gpl3Only lgpl3Only asl20 ];
+    license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     maintainers = with lib.maintainers; [ rewine ];
   };

@@ -1,0 +1,1 @@
+Protocols for Treeland and its partner components (e.g. dde-application-manager, display manager) only. Not for general application developers.
