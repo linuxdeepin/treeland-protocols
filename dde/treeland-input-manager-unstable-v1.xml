@@ -351,7 +351,7 @@
                 does not by itself cause an acceleration_profile event to be
                 emitted.
             </description>
-            <arg name="profile" type="uint" enum="treeland_pointer_device_configuration_v1.acceleration_profile"
+            <arg name="profile" type="uint" enum="acceleration_profile"
                  summary="desired acceleration profile"/>
         </request>
 
@@ -366,7 +366,7 @@
                 object. Sending this request, or the following apply request,
                 does not by itself cause a send_events_mode event to be emitted.
             </description>
-            <arg name="mode" type="uint" enum="treeland_pointer_device_configuration_v1.send_events_mode"
+            <arg name="mode" type="uint" enum="send_events_mode"
                  summary="desired pointer event delivery mode"/>
         </request>
 
@@ -495,7 +495,7 @@
                 Changes requested through set_acceleration_profile do not cause
                 this event to be emitted automatically.
             </description>
-            <arg name="profile" type="uint" enum="treeland_pointer_device_configuration_v1.acceleration_profile"
+            <arg name="profile" type="uint" enum="acceleration_profile"
                  summary="current acceleration profile"/>
         </event>
 
@@ -511,7 +511,7 @@
                 Changes requested through set_send_events_mode do not cause
                 this event to be emitted automatically.
             </description>
-            <arg name="mode" type="uint" enum="treeland_pointer_device_configuration_v1.send_events_mode"
+            <arg name="mode" type="uint" enum="send_events_mode"
                  summary="current pointer event delivery mode"/>
         </event>
 
@@ -745,7 +745,7 @@
                 object. Sending this request, or the following apply request,
                 does not by itself cause a num_lock event to be emitted.
             </description>
-            <arg name="state" type="uint" enum="treeland_keyboard_settings_v1.toggle_state"
+            <arg name="state" type="uint" enum="toggle_state"
                  summary="desired num lock state"/>
         </request>
 
@@ -800,7 +800,7 @@
                 Changes requested through set_num_lock do not cause this event
                 to be emitted automatically.
             </description>
-            <arg name="state" type="uint" enum="treeland_keyboard_settings_v1.toggle_state"
+            <arg name="state" type="uint" enum="toggle_state"
                  summary="current num lock state"/>
         </event>
 

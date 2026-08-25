@@ -26,27 +26,26 @@
         </description>
 
         <enum name="desktop_state">
-            <entry name="normal" value="0" />
-            <entry name="show" value="1" />
-            <entry name="preview_show" value="2" />
+            <entry name="normal" value="0" summary="normal desktop state" />
+            <entry name="show" value="1" summary="show desktop mode" />
+            <entry name="preview_show" value="2" summary="preview show desktop mode" />
         </enum>
 
         <request name="set_desktop">
             <description summary="show/hide the desktop">
                 Tell the compositor to show/hide the desktop.
             </description>
-            <arg name="state" type="uint" summary="requested state" />
+            <arg name="state" type="uint" enum="desktop_state" summary="requested state" />
         </request>
 
         <event name="show_desktop">
             <description summary="notify the client when the show desktop mode is entered/left">
-                This event will be sent whenever the show desktop mode changes. E.g. when it is
-                entered
-                or left.
+                This event will be sent whenever the show desktop mode changes. For example, this
+                event is sent when the user enters or leaves show desktop mode.
 
                 On binding the interface the current state is sent.
             </description>
-            <arg name="state" type="uint" summary="new state" />
+            <arg name="state" type="uint" enum="desktop_state" summary="new state" />
         </event>
 
         <request name="destroy" type="destructor">

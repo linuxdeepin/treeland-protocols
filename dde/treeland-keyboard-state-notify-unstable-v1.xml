@@ -110,7 +110,6 @@
 
                 caps_lock: the Caps Lock modifier.
                 num_lock: the Num Lock modifier.
-                scroll_lock: the Scroll Lock modifier.
 
                 Examples:
                 caps_lock: monitor only Caps Lock.
@@ -166,7 +165,7 @@
                 Set the keyboard modifiers to watch on this watcher.
 
                 The modifiers argument is a bitfield of values from the modifier
-                enum (e.g. caps_lock = 1, num_lock = 2, scroll_lock = 4).
+                enum (e.g. caps_lock = 1, num_lock = 2).
                 Multiple modifiers can be combined using bitwise OR.
 
                 Calling set_modifiers replaces any previously pending modifiers.

@@ -16,14 +16,17 @@
     </description>
 
     <interface name="treeland_output_manager_v1" version="2">
-        <description summary="expose which is the primary display">
+        <description summary="primary output and color control manager">
             Protocol for telling which is the primary display among the selection of enabled
             outputs.
         </description>
 
         <request name="set_primary_output">
-            <description summary="Select which primary output to use" />
-            <arg name="output" type="string" allow-null="false" />
+            <description summary="Select which primary output to use">
+                Select the primary output by name. The compositor will emit a primary_output
+                event with the current primary output name upon binding.
+            </description>
+            <arg name="output" type="string" allow-null="false" summary="the name of the output to set as primary" />
         </request>
 
         <event name="primary_output">
@@ -45,7 +48,7 @@
     </interface>
 
     <interface name="treeland_output_color_control_v1" version="1">
-        <description summary="Color control interface for output.">
+        <description summary="per-output color temperature and brightness control">
             Protocol for controlling color temperature and brightness settings of a specific output.
         </description>
 
@@ -82,7 +85,7 @@
                 of the display on a Planckian locus.
                 With the current implementation, the neutral temperature is 6600K.
                 This event is sent once after the treeland_output_color_control_v1 object is created,
-                or right after when a color temperature change for the output is successfully commited.
+                or right after when a color temperature change for the output is successfully committed.
             </description>
             <arg name="temperature" type="uint" summary="current color temperature in Kelvin"/>
         </event>
@@ -92,7 +95,7 @@
                 Provides the current brightness setting of the output.
                 Brightness is valued in the range [0.0, 100.0].
                 This event is sent once after the treeland_output_color_control_v1 object is created,
-                or right after when a brightness change for the output is successfully commited.
+                or right after when a brightness change for the output is successfully committed.
             </description>
             <arg name="brightness" type="fixed" summary="current brightness level (in range [0.0, 100.0])"/>
         </event>
