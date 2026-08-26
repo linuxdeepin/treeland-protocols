@@ -6,17 +6,11 @@ This reference condenses standard Wayland protocol conventions together with the
 
 When drafting a protocol:
 - use standard Wayland reference protocols as the style reference for XML structure and protocol evolution
-- use `xml/` as the source of Treeland-specific naming and packaging conventions
+- use AGENTS.md for file placement, naming, and repo integration conventions
 
 Do not copy a reference protocol mechanically. Reuse its structure only when the lifecycle matches.
 
-## 2. Naming and versioning
-
-Treeland protocol defaults for this repo:
-- file: `xml/treeland-foo-unstable-v1.xml`
-- protocol: `treeland_foo_unstable_v1`
-- interfaces usually still end with `_v1` and usually do not include `_unstable`
-- if maintainers later stabilize a protocol line, follow the naming convention requested in that stabilization review
+## 2. Versioning
 
 Backward-compatible extension:
 - keep the same file
@@ -33,6 +27,8 @@ Backward-incompatible extension:
 - rename the protocol and interfaces to the new major suffix
 - reset interface versions to `1`
 - remove old `since` attributes unless needed again within the new major line
+
+See AGENTS.md for file naming and placement conventions.
 
 ## 3. XML structure
 
@@ -113,7 +109,16 @@ Use:
 - `new_id` for created protocol objects
 - `object` for existing protocol objects such as `wl_output`, `wl_surface`, `wl_buffer`, `wl_callback`, `wl_compositor`, `wl_seat`, `wl_pointer`, `wl_touch`, and `wl_keyboard`
 - `allow-null="true"` only when null is explicitly valid
-- `enum="..."` on integer args that reference enums
+### Enum reference format on `<arg>` elements
+
+When an `<arg>` references an enum, use the format that matches where the enum is defined:
+
+- **Same-interface enum**: short format — `enum="button_state"`
+- **Cross-interface enum**: fully-qualified format with the interface prefix — `enum="wl_shm.format"` or `enum="wp_color_manager_v1.primaries"`
+
+This matches how `wayland-scanner`'s `find_enumeration()` resolves references: short format searches only within the current interface, fully-qualified format searches across all interfaces in the protocol.
+
+Upstream wayland-protocols consistently follows this rule (all 91 enum refs: 75 short for same-interface, 16 fully-qualified for cross-interface — zero exceptions).
 - `bitfield="true"` on enum definitions used as flag sets
 
 Add `summary` for args when it materially improves readability.
@@ -133,26 +138,10 @@ If the protocol text relies on words like `must`, `should`, or `may` normatively
 
 Do not add that paragraph if the protocol text is otherwise non-normative.
 
-## 10. Treeland repo integration
-
-When adding a new protocol file:
-- place it under `xml/`
-- add it to the `XML` list in the repository `CMakeLists.txt`
-- follow the local SPDX block:
-
-```xml
-<copyright><![CDATA[
-SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
-SPDX-License-Identifier: MIT
-]]></copyright>
-```
-
-Match the year range used by neighboring files when editing an existing protocol family.
-
-## 11. Review checklist
+## 10. Review checklist
 
 Before considering the XML finished, check:
-- file name, protocol name, and interface suffixes all agree
+- file name, protocol name, and interface naming follow the conventions in AGENTS.md
 - interface `version` matches the highest supported additive version
 - interfaces that create or expose upgraded interfaces were reviewed for required version bumps
 - new additions in an existing interface have `since`
@@ -164,12 +153,12 @@ Before considering the XML finished, check:
 - requests appear before events
 - object lifetime constraints are documented
 - event ordering constraints are documented where required
-- all enum references resolve correctly
+- all enum references resolve correctly (short format for same-interface, fully-qualified `interface.enum` for cross-interface)
 - nullable args are intentional
-- the protocol is added to `CMakeLists.txt` if it is new
-- the protocol-level `<description>` contains the experimental disclaimer (see section 12)
+- the file is registered in the correct `CMakeLists.txt` variable — see AGENTS.md
+- the protocol-level `<description>` contains the experimental disclaimer (see section 11)
 
-## 12. Experimental status disclaimer
+## 11. Experimental status disclaimer
 
 Every Treeland protocol XML must include the following experimental disclaimer in its **protocol-level** `<description>` (the `<description>` that is a direct child of `<protocol>`, not inside an `<interface>`):
 
