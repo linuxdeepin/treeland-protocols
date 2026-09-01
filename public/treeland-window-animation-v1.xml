@@ -30,6 +30,13 @@
         geometry, and the compositor uses the latest committed geometry for
         both the open and the close animation.
 
+        Optionally, the client may attach an image (a wl_buffer) to the
+        rectangle via set_source_buffer. When an image is set, the
+        compositor displays it, scaled to fit within the rectangle, as the
+        visual starting point of the open animation and as the visual
+        ending point of the close animation. When no image is set, the
+        compositor animates from/to an empty rectangle.
+
         The full flow is:
         1. Application A obtains an xdg_activation_token_v1, calls set_surface
            to identify its own surface.
@@ -199,11 +206,43 @@
             </description>
         </request>
 
+        <request name="set_source_buffer">
+            <description summary="set the image used as the animation starting visual">
+                Sets a buffer whose content the compositor uses as the visual
+                starting point of the open animation and as the visual ending
+                point of the close animation, at the rectangle. The buffer is
+                latched by this request and applied together with the geometry
+                on the next commit, keeping the existing set_geometry + commit
+                model intact.
+
+                The compositor samples the buffer content when the commit is
+                applied, then sends wl_buffer.release, after which the client
+                may reuse or destroy the buffer. The client must keep the
+                buffer alive and its content valid until that release is
+                received.
+
+                For buffers whose content becomes valid asynchronously (for
+                example linux-dmabuf buffers), the client must attach and
+                commit the buffer to a wl_surface before passing it here.
+
+                Passing null clears the source image, and the compositor falls
+                back to animating from/to an empty rectangle. The buffer may be
+                replaced, including with null, on a later commit.
+
+                A buffer that cannot be imported by the compositor raises the
+                invalid_buffer error.
+            </description>
+            <arg name="buffer" type="object" interface="wl_buffer" allow-null="true"
+                 summary="the source image, or null to clear it"/>
+        </request>
+
         <enum name="error">
             <entry name="invalid_geometry" value="0"
                    summary="the geometry was invalid (non-positive width or height)"/>
             <entry name="no_geometry" value="1"
                    summary="commit was called before a valid set_geometry was set"/>
+            <entry name="invalid_buffer" value="2"
+                   summary="the source buffer could not be imported"/>
         </enum>
     </interface>
 </protocol>

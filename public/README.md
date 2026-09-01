@@ -4,6 +4,7 @@ For general application developers. Installed via `TREELAND_PROTOCOL_XML_FILES`.
 
 | File | Protocol | Interfaces | Purpose |
 |------|----------|-----------|---------| 
+| `treeland-window-animation-v1.xml` | `treeland_window_animation_v1` | `treeland_window_animation_manager_v1`, `treeland_window_animation_rect_v1` | Window open/close animation relative to a rectangle, with optional source image |
 | `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker`, `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1`, `treeland_multitaskview_v1`, `treeland_window_picker_v1`, `treeland_lockscreen_v1` | DDE shell integration: surface roles, overlap detection, active events, multitask view, window picker, lockscreen |
 
 ## Breaking changes
