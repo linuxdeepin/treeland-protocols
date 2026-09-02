@@ -36,7 +36,7 @@
                 Destroys this treeland_wallpaper_notifier_v1 object.
 
                 Destroying a bound treeland_wallpaper_notifier_v1 object while
-                wallpaper surface objects created from it are still alive is
+                wallpaper surface objects are still alive is
                 illegal and will result in a protocol error.
             </description>
         </request>
@@ -149,6 +149,9 @@
                 permanently stop using the wallpaper surface, such as when the
                 client is shutting down or after receiving the
                 treeland_wallpaper_notifier_v1.remove event for this surface.
+                Before destroying this object, the client should detach any
+                buffer from the underlying wl_surface, for example by attaching
+                a null buffer and committing.
             </description>
         </request>
 
@@ -193,7 +196,7 @@
             </description>
         </request>
 
-        <event name="position">
+        <event name="position" since="2">
             <description summary="Update wallpaper position or progress">
                 This event provides a position value associated with the wallpaper.
 
@@ -206,7 +209,7 @@
                 summary="Position or progress value in fixed-point format"/>
         </event>
 
-        <event name="pause">
+        <event name="pause" since="2">
             <description summary="Pause wallpaper updates">
                 This event instructs the client to pause wallpaper updates or
                 animations.
@@ -217,25 +220,25 @@
             </description>
         </event>
 
-        <event name="set_playback_rate">
+        <event name="set_playback_rate" since="2">
             <description summary="Set wallpaper playback rate">
                 Sets the playback speed of the wallpaper content.
 
                 A rate of 1.0 represents normal speed.
-                A rate of 0.0 represents a paused state.
+                A rate of 0.0 is equivalent to receiving a pause event.
             </description>
             <arg name="rate" type="fixed"
                 summary="Playback rate multiplier"/>
         </event>
 
-        <event name="play">
+        <event name="play" since="2">
             <description summary="Resume wallpaper updates">
                 This event instructs the client to resume wallpaper updates or
                 animations after a pause.
             </description>
         </event>
 
-        <event name="slow_down">
+        <event name="slow_down" since="2">
             <description summary="Request a gradual slowdown of wallpaper updates">
                 This event instructs the client to progressively reduce the playback
                 or animation update rate of the wallpaper content until it comes to
