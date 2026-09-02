@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<protocol name="treeland_wine_window_state_v1">
+<protocol name="treeland_wine_window_state_unstable_v1">
     <copyright><![CDATA[
     SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT

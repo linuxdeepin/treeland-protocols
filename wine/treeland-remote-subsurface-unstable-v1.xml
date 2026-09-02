@@ -58,7 +58,7 @@
         semantics remaining stable across releases.
     </description>
 
-    <interface name="treeland_subsurface_manager_v1" version="1">
+    <interface name="treeland_remote_subsurface_manager_v1" version="1">
         <description summary="factory for remote sub-surfaces">
             Global factory for exporting wl_surface objects as
             token-addressable sub-surface parents or children.
