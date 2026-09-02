@@ -39,11 +39,18 @@ New protocol files must be added to the corresponding variable in `CMakeLists.tx
 
 ```
 file:              treeland-<topic>-unstable-v1.xml
-protocol name:     treeland_<topic>_unstable_v1
-interface names:   treeland_<foo>_v1        (no _unstable in interface names)
+protocol name:     treeland_<topic>_unstable_v1   (contains _unstable_ for unstable protocols)
+interface names:   treeland_<foo>_v1               (no _unstable in interface names)
 ```
 
-**Key convention**: interface names usually end with `_v1` but do **not** include `_unstable`, even in unstable files. This mirrors the upstream Wayland convention (e.g. `wl_surface` is defined in `wayland.xml`, not in a file named after the interface).
+**Key convention**: This follows the upstream `wayland-protocols` naming pattern:
+
+- **Unstable protocols**: file name and `<protocol name>` both contain `unstable`; interface names do **not**.
+- **Stable protocols** (promoted from unstable): file name and `<protocol name>` drop `unstable`; interface names stay the same.
+
+  Examples from upstream `wayland-protocols`:
+  - `xdg-shell-unstable-v6.xml` → `<protocol name="xdg_shell_unstable_v6">` → interfaces `xdg_surface_v6`, `xdg_toplevel_v6`
+  - `linux-dmabuf-v1.xml` (stable) → `<protocol name="linux_dmabuf_v1">` → interfaces `wp_linux_dmabuf_v1`
 
 ### Version bumping
 

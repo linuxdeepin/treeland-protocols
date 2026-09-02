@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<protocol name="treeland_prelaunch_splash_v2">
-
+<protocol name="treeland_prelaunch_splash_unstable_v2">
     <copyright><![CDATA[
     SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
     SPDX-License-Identifier: MIT
     ]]></copyright>
 
     <description summary="prelaunch splash screen management">
+        The key words "must", "must not", "required", "shall",
+        "shall not", "should", "should not", "recommended", "may",
+        and "optional" in this document are to be interpreted as
+        described in RFC 2119.
+
         Warning! This protocol is EXPERIMENTAL and under active development.
         It may change at any time, including in backward-incompatible ways,
         without incrementing the interface major version and without prior
