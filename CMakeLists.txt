@@ -31,9 +31,9 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
 
 # Internal protocol XML files (Treeland-specific, not for general app developers)
 set(TREELAND_PROTOCOL_INTERNAL_XML_FILES
-  internal/treeland-app-id-resolver-v1.xml
-  internal/treeland-prelaunch-splash-v2.xml
-  internal/treeland-screensaver-v1.xml
+  internal/treeland-app-id-resolver-unstable-v2.xml
+  internal/treeland-prelaunch-splash-unstable-v2.xml
+  internal/treeland-screensaver-unstable-v2.xml
   internal/treeland-wallpaper-shell-unstable-v1.xml
 )
 
@@ -46,9 +46,11 @@ set(TREELAND_PROTOCOL_WINE_XML_FILES
 
 # Deprecated protocol XML files (replaced by newer versions)
 set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
+  deprecated/treeland-app-id-resolver-v1.xml
   deprecated/treeland-capture-unstable-v1.xml
   deprecated/treeland-ddm-v1.xml
   deprecated/treeland-prelaunch-splash-v1.xml
+  deprecated/treeland-screensaver-v1.xml
   deprecated/treeland-shortcut-manager-v1.xml
   deprecated/treeland-wallpaper-color-v1.xml
 )
