@@ -5,7 +5,16 @@
     SPDX-License-Identifier: MIT
     ]]></copyright>
 
-    <description summary="screensaver control for treeland">
+    <description summary="screensaver D-Bus relay for treeland">
+        Internal protocol that relays org.freedesktop.ScreenSaver inhibit/uninhibit
+        requests between treeland and a per-user-session helper, because a
+        multi-user compositor does not host per-user-session D-Bus itself.
+
+        The key words "must", "must not", "required", "shall",
+        "shall not", "should", "should not", "recommended", "may",
+        and "optional" in this document are to be interpreted as
+        described in RFC 2119.
+
         Warning! This protocol is EXPERIMENTAL and under active development.
         It may change at any time, including in backward-incompatible ways,
         without incrementing the interface major version and without prior
@@ -16,21 +25,28 @@
     </description>
 
     <interface name="treeland_screensaver_v2" version="1">
-        <description summary="Simple idle inhibit protocol">
-            This object implements a simple idle inhibit protocol used
-            to implement org.freedesktop.ScreenSaver D-Bus interface.
+        <description summary="treeland screensaver DBus relay">
+            This interface is an internal relay between treeland and a
+            privileged helper that implements the org.freedesktop.ScreenSaver
+            D-Bus interface. Treeland is a multi-user compositor and does not
+            host per-user-session D-Bus itself, so the org.freedesktop.ScreenSaver
+            Inhibit/UnInhibit calls are forwarded over this Wayland protocol to a
+            helper running in the user session, which then performs the actual
+            idle-inhibit bookkeeping.
 
-            Call inhibit to prevent treeland from entering idle state.
-            Call uninhibit or disconnect from the global to release
-            the inhibit.
+            Only that dedicated relay helper should bind this global. Regular
+            applications must NOT use this protocol to inhibit idleness; they
+            should use the upstream zwp_idle_inhibit_manager_v1 protocol instead,
+            which treeland exposes for normal clients.
 
-            If the client disconnects from the compositor, the inhibit
-            associated with that client is automatically released.
-
-            There can be only one inhibit per client per time. Calling
-            inhibit multiple times will raise an error. Call uninhibit
-            before inhibit to update application_name and reason
-            recorded.
+            The relay helper calls inhibit to register an inhibit on behalf of a
+            D-Bus caller and uninhibit (or disconnects the bound object) to
+            release it. If the bound object is destroyed, the inhibit associated
+            with it is automatically released. At most one inhibit is active per
+            bound object at a time; calling inhibit while an inhibit is already
+            active raises already_inhibited, and calling uninhibit with no active
+            inhibit raises not_yet_inhibited. Call uninhibit before inhibit to
+            update application_name and reason.
         </description>
 
         <enum name="error">
@@ -39,7 +55,13 @@
         </enum>
 
         <request name="destroy" type="destructor">
-            <description summary="destroy treeland_screensaver_v2 object" />
+            <description summary="destroy the screensaver relay object">
+                Destroy the bound treeland_screensaver_v2 object. Any inhibit
+                previously registered through this object is released as if
+                uninhibit had been called, and the relay helper must stop
+                holding the corresponding org.freedesktop.ScreenSaver inhibit on
+                the D-Bus caller's behalf.
+            </description>
         </request>
 
         <request name="inhibit">
