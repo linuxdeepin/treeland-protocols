@@ -14,6 +14,8 @@ include(CMakePackageConfigHelpers)
 # Public protocol XML files (for general application developers)
 set(TREELAND_PROTOCOL_XML_FILES
   public/treeland-dde-shell-v1.xml
+  public/treeland-appearance-unstable-v1.xml
+  public/treeland-decoration-unstable-v1.xml
 )
 
 # DDE component protocol XML files
@@ -22,8 +24,8 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-input-manager-unstable-v1.xml
   dde/treeland-keyboard-state-notify-unstable-v1.xml
   dde/treeland-output-manager-v1.xml
-  dde/treeland-personalization-manager-v1.xml
   dde/treeland-shortcut-manager-v2.xml
+  dde/treeland-appearance-manager-unstable-v1.xml
   dde/treeland-virtual-output-manager-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml
   dde/treeland-show-desktop-unstable-v1.xml
@@ -49,6 +51,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-app-id-resolver-v1.xml
   deprecated/treeland-capture-unstable-v1.xml
   deprecated/treeland-ddm-v1.xml
+  deprecated/treeland-personalization-manager-v1.xml
   deprecated/treeland-prelaunch-splash-v1.xml
   deprecated/treeland-screensaver-v1.xml
   deprecated/treeland-shortcut-manager-v1.xml

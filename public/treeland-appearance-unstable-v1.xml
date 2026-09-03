@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_appearance_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="query and observe user-level appearance settings">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows general applications to query and receive live
+        notifications for user-level appearance settings managed by the
+        compositor, including cursor theme and size, fonts (proportional,
+        monospace, size), and visual appearance (icon theme, accent color,
+        window opacity, color scheme, titlebar height, and corner radius).
+
+        Any client may bind this interface. The compositor pushes the current
+        value of every setting immediately after the client binds this global,
+        and broadcasts events to all bound clients whenever a setting changes.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_appearance_v1" version="1">
+        <description summary="user-level appearance settings observer">
+            A singleton global for observing user-level appearance settings
+            of the current user. These settings are shared by all windows
+            and clients of the user rather than being per-window. Each
+            bound client receives events reporting the initial values of
+            all settings immediately after binding, and subsequent events
+            whenever any setting changes.
+        </description>
+
+        <enum name="color_scheme">
+            <description summary="user-level color scheme hint">
+                A user-level hint for the preferred color scheme. Clients
+                should use this value to style their self-drawn widgets and
+                UI elements accordingly. The compositor also applies this
+                hint to server-side decorations. This is semantically
+                equivalent to org.freedesktop.appearance color-scheme and
+                the CSS prefers-color-scheme media feature.
+
+                This enum mirrors treeland_appearance_manager_v1.color_scheme
+                (in the privileged treeland-appearance-manager-unstable-v1
+                protocol): the entry names and values are identical and must
+                stay in sync. Any new value must be added to both at once.
+            </description>
+            <entry name="light" value="0" summary="prefer light color scheme" />
+            <entry name="dark"  value="1" summary="prefer dark color scheme" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the appearance observer object">
+                Destroy the treeland_appearance_v1 object. The
+                compositor will no longer send events on this object after
+                this request.
+            </description>
+        </request>
+
+        <!-- Cursor Settings Events -->
+
+        <event name="cursor_theme">
+            <description summary="cursor theme has changed">
+                Emitted by the compositor when the cursor theme changes.
+                Also emitted immediately after binding to report the
+                current theme.
+            </description>
+            <arg name="name" type="string"
+                summary="current cursor theme name" />
+        </event>
+
+        <event name="cursor_size">
+            <description summary="cursor size has changed">
+                Emitted by the compositor when the cursor size changes.
+                Also emitted immediately after binding to report the
+                current size in pixels. Width and height may differ on
+                hardware that supports non-square cursor planes.
+            </description>
+            <arg name="width"  type="uint" summary="current cursor width in pixels" />
+            <arg name="height" type="uint" summary="current cursor height in pixels" />
+        </event>
+
+        <!-- Font Settings Events -->
+
+        <event name="font">
+            <description summary="proportional font has changed">
+                Emitted when the proportional font family changes.
+                Also emitted immediately after binding to report the current
+                font.
+            </description>
+            <arg name="font_name" type="string"
+                summary="current proportional font family name" />
+        </event>
+
+        <event name="monospace_font">
+            <description summary="monospace font has changed">
+                Emitted when the monospace font family changes.
+                Also emitted immediately after binding to report the current
+                font.
+            </description>
+            <arg name="font_name" type="string"
+                summary="current monospace font family name" />
+        </event>
+
+        <event name="font_size">
+            <description summary="font size has changed">
+                Emitted when the base font size changes.
+                Also emitted immediately after binding to report the current
+                size in points.
+            </description>
+            <arg name="size" type="uint"
+                summary="current font size in points" />
+        </event>
+
+        <!-- Visual Appearance Settings Events -->
+
+        <event name="icon_theme">
+            <description summary="icon theme has changed">
+                Emitted when the icon theme changes. Also emitted
+                immediately after binding to report the current theme.
+            </description>
+            <arg name="theme_name" type="string"
+                summary="current icon theme name" />
+        </event>
+
+        <event name="accent_color">
+            <description summary="accent color has changed">
+                Emitted when the accent color changes. Also emitted
+                immediately after binding to report the current color.
+                Color components are unsigned values in the range [0, 255].
+            </description>
+            <arg name="r" type="uint" summary="current accent color red component [0, 255]" />
+            <arg name="g" type="uint" summary="current accent color green component [0, 255]" />
+            <arg name="b" type="uint" summary="current accent color blue component [0, 255]" />
+            <arg name="a" type="uint" summary="current accent color alpha component [0, 255]" />
+        </event>
+
+        <event name="window_opacity">
+            <description summary="global window opacity has changed">
+                Emitted when the global window background opacity changes.
+                Also emitted immediately after binding to report the current
+                value. The value is an integer percentage in the range
+                [0, 100].
+            </description>
+            <arg name="opacity" type="uint"
+                summary="current window background opacity as a percentage [0, 100]" />
+        </event>
+
+        <event name="color_scheme">
+            <description summary="color scheme hint has changed">
+                Emitted when the color scheme hint changes. Also
+                emitted immediately after binding to report the current
+                scheme. Clients should restyle their self-drawn components
+                whenever this event is received.
+            </description>
+            <arg name="scheme" type="uint" enum="color_scheme"
+                summary="current color scheme hint" />
+        </event>
+
+        <event name="titlebar_height">
+            <description summary="compositor titlebar height has changed">
+                Emitted when the compositor titlebar height changes. Also
+                emitted immediately after binding to report the current
+                value in pixels.
+            </description>
+            <arg name="height" type="uint"
+                summary="current compositor titlebar height in pixels" />
+        </event>
+
+        <event name="corner_radius">
+            <description summary="global window corner radius has changed">
+                Emitted when the global default corner radius changes.
+                Also emitted immediately after binding to report the current
+                value in pixels.
+            </description>
+            <arg name="radius" type="uint"
+                summary="current global corner radius in pixels" />
+        </event>
+    </interface>
+
+</protocol>

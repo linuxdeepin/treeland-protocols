@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_appearance_manager_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="user-level appearance configuration management">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows privileged clients such as the desktop control
+        center to configure user-level appearance settings managed by the
+        compositor, including cursor theme and size, fonts, and visual theming
+        (icon theme, accent color, window opacity, color scheme, titlebar height,
+        and corner radius).
+
+        This protocol is privileged. Binding it without compositor-level
+        authorization may result in requests being silently ignored or the
+        connection being terminated.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_appearance_manager_v1" version="1">
+        <description summary="user-level appearance settings manager">
+            A singleton privileged global for modifying user-level appearance
+            settings of the current user. These settings are shared by all
+            windows and clients of the user rather than being per-window.
+            Settings take effect immediately when a set_* request is sent.
+            The compositor applies each change and broadcasts the new value
+            to all clients bound to treeland_appearance_v1.
+        </description>
+
+        <enum name="color_scheme">
+            <description summary="user-level color scheme hint">
+                A user-level hint for the preferred color scheme. Clients
+                should use this value to style their self-drawn widgets and
+                UI elements accordingly. The compositor also applies this
+                hint to server-side decorations. This is semantically
+                equivalent to org.freedesktop.appearance color-scheme and
+                the CSS prefers-color-scheme media feature.
+
+                This enum mirrors treeland_appearance_v1.color_scheme
+                (in the read-only treeland-appearance-unstable-v1
+                protocol): the entry names and values are identical and must
+                stay in sync. Any new value must be added to both at once.
+            </description>
+            <entry name="light" value="0" summary="prefer light color scheme" />
+            <entry name="dark"  value="1" summary="prefer dark color scheme" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the appearance manager object">
+                Destroy the treeland_appearance_manager_v1 object.
+            </description>
+        </request>
+
+        <!-- Cursor Settings -->
+
+        <request name="set_cursor_theme">
+            <description summary="set the cursor theme">
+                Set the cursor theme name. The compositor applies
+                the change immediately and broadcasts a cursor_theme event to
+                all active appearance observers. If the requested theme is
+                empty or not installed, the compositor falls back to a
+                default cursor theme.
+            </description>
+            <arg name="name" type="string"
+                summary="cursor theme name as recognized by the cursor theme subsystem" />
+        </request>
+
+        <request name="set_cursor_size">
+            <description summary="set the cursor size">
+                Set the cursor size in pixels. Width and height
+                are specified independently to accommodate hardware cursor
+                planes that support non-square sizes. The compositor applies
+                the change immediately and broadcasts a cursor_size event to
+                all active appearance observers. Values of 0 or exceeding
+                compositor limits are clamped to the minimum or maximum
+                supported size.
+            </description>
+            <arg name="width"  type="uint" summary="cursor width in pixels" />
+            <arg name="height" type="uint" summary="cursor height in pixels" />
+        </request>
+
+        <!-- Font Settings -->
+
+        <request name="set_font">
+            <description summary="set the proportional font">
+                Set the proportional font family. The compositor
+                applies the change immediately and broadcasts a font event to
+                all active appearance observers. If the requested font family
+                is empty or not installed, the compositor falls back to a
+                default font.
+            </description>
+            <arg name="font_name" type="string"
+                summary="font family name" />
+        </request>
+
+        <request name="set_monospace_font">
+            <description summary="set the monospace font">
+                Set the monospace font family. The compositor
+                applies the change immediately and broadcasts a monospace_font
+                event to all active appearance observers. If the requested font
+                family is empty or not installed, the compositor falls back to
+                a default monospace font.
+            </description>
+            <arg name="font_name" type="string"
+                summary="monospace font family name" />
+        </request>
+
+        <request name="set_font_size">
+            <description summary="set the font size">
+                Set the base font size in points. The compositor
+                applies the change immediately and broadcasts a font_size
+                event to all active appearance observers. A size of 0 or
+                exceeding compositor limits is clamped to the minimum or maximum
+                supported size.
+            </description>
+            <arg name="size" type="uint"
+                summary="font size in points" />
+        </request>
+
+        <!-- Visual Appearance Settings -->
+
+        <request name="set_icon_theme">
+            <description summary="set the icon theme">
+                Set the icon theme name. The compositor applies
+                the change immediately and broadcasts an icon_theme event to
+                all active appearance observers. If the specified theme is
+                empty or not installed, the compositor falls back to a
+                default icon theme or ignores the change.
+            </description>
+            <arg name="theme_name" type="string"
+                summary="icon theme name" />
+        </request>
+
+        <request name="set_accent_color">
+            <description summary="set the accent color">
+                Set the accent color used for window
+                decorations, focus indicators, and compositor UI elements.
+
+                Color components are unsigned values in the range [0, 255].
+                The compositor handles out-of-range values according to its
+                own policy and may clamp a component to a supported bound.
+
+                The compositor applies the change immediately and broadcasts
+                an accent_color event to all active appearance observers.
+            </description>
+            <arg name="r" type="uint" summary="accent color red component [0, 255]" />
+            <arg name="g" type="uint" summary="accent color green component [0, 255]" />
+            <arg name="b" type="uint" summary="accent color blue component [0, 255]" />
+            <arg name="a" type="uint" summary="accent color alpha component [0, 255]" />
+        </request>
+
+        <request name="set_window_opacity">
+            <description summary="set the global window background opacity">
+                Set the global window background opacity as an integer
+                percentage in the range [0, 100]. A value of 100 means fully
+                opaque; 0 means fully transparent. The compositor handles
+                out-of-range values according to its own policy and may clamp
+                a value to a supported bound.
+
+                The compositor applies the change immediately and broadcasts
+                a window_opacity event to all active appearance observers.
+            </description>
+            <arg name="opacity" type="uint"
+                summary="window background opacity as a percentage [0, 100]" />
+        </request>
+
+        <request name="set_color_scheme">
+            <description summary="set the color scheme hint">
+                Set the color scheme hint. Values outside the color_scheme
+                enum range are silently ignored; the current color scheme
+                is kept unchanged.
+
+                The compositor applies the change immediately, updates
+                server-side decorations, and broadcasts a color_scheme event
+                to all active appearance observers so that clients can
+                restyle their self-drawn components.
+            </description>
+            <arg name="scheme" type="uint" enum="color_scheme"
+                summary="color scheme hint to apply" />
+        </request>
+
+        <request name="set_titlebar_height">
+            <description summary="set the compositor titlebar height">
+                Set the height of the compositor-drawn titlebar in pixels.
+                A value of 0 hides the compositor titlebar. The compositor
+                handles out-of-range values according to its own policy and
+                may clamp a value to a supported bound.
+
+                The compositor applies the change immediately and broadcasts
+                a titlebar_height event to all active appearance observers.
+            </description>
+            <arg name="height" type="uint"
+                summary="titlebar height in pixels; 0 to hide titlebar" />
+        </request>
+
+        <request name="set_corner_radius">
+            <description summary="set the global window corner radius">
+                Set the global default corner radius applied to window
+                decorations in pixels. This is the default for all windows;
+                individual windows may override it via
+                treeland_decoration_context_v1.set_corner_radius.
+                A value of 0 specifies square (unrounded) corners. The
+                compositor handles out-of-range values according to its own
+                policy and may clamp a value to a supported bound.
+
+                The compositor applies the change immediately and broadcasts
+                a corner_radius event to all active appearance observers.
+            </description>
+            <arg name="radius" type="uint"
+                summary="corner radius in pixels; 0 for square corners" />
+        </request>
+    </interface>
+
+</protocol>
