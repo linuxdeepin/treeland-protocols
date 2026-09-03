@@ -26,7 +26,7 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-shortcut-manager-v2.xml
   dde/treeland-virtual-output-manager-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml
-  dde/treeland-window-management-v1.xml
+  dde/treeland-show-desktop-unstable-v1.xml
 )
 
 # Internal protocol XML files (Treeland-specific, not for general app developers)
@@ -53,6 +53,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-screensaver-v1.xml
   deprecated/treeland-shortcut-manager-v1.xml
   deprecated/treeland-wallpaper-color-v1.xml
+  deprecated/treeland-window-management-v1.xml
 )
 
 option(TREELAND_PROTOCOLS_INSTALL_DEPRECATED "Install deprecated protocol files" ON)
