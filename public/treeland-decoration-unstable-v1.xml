@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_decoration_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="per-window server-side decoration customization">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol fine-tunes the compositor-drawn server-side decorations
+        (SSD) of the client's own toplevel windows: corner radius, shadow,
+        border, and titlebar visibility.
+
+        It is not standalone: the client must first negotiate SSD for the
+        surface via xdg-decoration. The compositor applies these requests
+        according to its own policy; in particular it may silently ignore a
+        set_* request on a surface that has not negotiated SSD, or clamp an
+        out-of-range value to a supported bound instead of raising an error.
+
+        This enables a "half-CSD, half-SSD" configuration: keep the
+        compositor's border, corners and shadow while hiding its titlebar
+        (set_titlebar_mode(hide)) and drawing a custom one.
+
+        Each property is opt-in: if a set_* request is never sent, the
+        compositor applies its own default for that window's SSD. Sending a
+        request takes ownership of that property for the lifetime of the
+        context.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_decoration_manager_v1" version="1">
+        <description summary="factory for per-window SSD customization contexts">
+            A global that creates per-surface SSD customization contexts.
+
+            Each surface may have at most one active decoration context.
+            Attempting to create a second context for the same surface while
+            one is already alive is a protocol error (already_used).
+        </description>
+
+        <enum name="error">
+            <description summary="protocol errors for this interface">
+                Error codes sent as protocol errors via wl_display.error.
+            </description>
+            <entry name="already_used" value="0"
+                summary="a decoration context already exists for this surface" />
+            <entry name="invalid_surface" value="1"
+                summary="the surface is not owned by the requesting client" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the decoration manager">
+                Destroy the treeland_decoration_manager_v1 object.
+                Existing treeland_decoration_context_v1 objects
+                created through this manager are not affected and must be
+                destroyed separately by the client.
+            </description>
+        </request>
+
+        <request name="get_decoration_context">
+            <description summary="create a decoration context for a surface">
+                Create a treeland_decoration_context_v1 for the given
+                surface. The surface must be owned by the requesting client;
+                passing a surface owned by another client raises the
+                invalid_surface protocol error.
+
+                The surface should hold a toplevel role (xdg_toplevel). The
+                context itself may be created before SSD is negotiated; until
+                SSD is negotiated via xdg-decoration, set_* requests on the
+                context have no effect and are silently ignored by the
+                compositor.
+
+                Creating a second context for the same surface while one is
+                already alive is a protocol error (already_used).
+            </description>
+            <arg name="id" type="new_id"
+                interface="treeland_decoration_context_v1"
+                summary="new decoration context for the given surface" />
+            <arg name="surface" type="object" interface="wl_surface"
+                summary="surface to decorate; must be owned by this client" />
+        </request>
+    </interface>
+
+    <interface name="treeland_decoration_context_v1" version="1">
+        <description summary="per-surface server-side decoration customization">
+            Controls the compositor-drawn server-side decorations for a single
+            surface. Created by
+            treeland_decoration_manager_v1.get_decoration_context.
+
+            All requests take effect immediately; there is no pending/commit
+            model. The compositor applies each change as soon as it processes
+            the request.
+
+            This object becomes inert when the underlying wl_surface is
+            destroyed; requests on an inert context are silently ignored.
+            The client should destroy this context before or immediately after
+            destroying the associated wl_surface.
+        </description>
+
+        <enum name="titlebar_mode">
+            <description summary="SSD titlebar visibility override">
+                Controls whether the compositor-drawn (server-side) titlebar
+                is visible, overriding the compositor's default. Hiding the
+                titlebar while keeping the rest of the SSD is what produces a
+                "half-CSD, half-SSD" configuration.
+            </description>
+            <entry name="show" value="0"
+                summary="show the compositor titlebar (the SSD default)" />
+            <entry name="hide" value="1"
+                summary="hide the compositor titlebar; the client is expected to draw its own titlebar inside the window content while keeping the rest of the SSD" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the decoration context">
+                Destroy the context. The compositor may revert any or all
+                customized properties to its default behavior after this
+                request.
+            </description>
+        </request>
+
+        <request name="set_corner_radius">
+            <description summary="override the SSD corner radius">
+                Override the compositor's corner rounding for this surface.
+                Once set, the compositor no longer applies its global corner
+                radius to this window.
+
+                A value of 0 requests square corners. The compositor applies
+                this request according to its own policy and may clamp an
+                out-of-range value to a supported bound.
+            </description>
+            <arg name="radius" type="uint"
+                summary="corner radius in pixels; 0 for square corners" />
+        </request>
+
+        <request name="set_shadow">
+            <description summary="configure the compositor-drawn shadow">
+                Override the compositor-drawn drop shadow for this surface.
+
+                When radius is 0 the shadow is disabled and all other
+                arguments are ignored. Color components are unsigned in
+                [0, 255]. The compositor applies this request according to its
+                own policy and may clamp an out-of-range radius to a supported
+                bound.
+            </description>
+            <arg name="radius"   type="uint"
+                summary="shadow blur radius in pixels; 0 to disable shadow" />
+            <arg name="offset_x" type="int"
+                summary="horizontal shadow offset in pixels; positive is right" />
+            <arg name="offset_y" type="int"
+                summary="vertical shadow offset in pixels; positive is down" />
+            <arg name="r" type="uint" summary="shadow color red component [0, 255]" />
+            <arg name="g" type="uint" summary="shadow color green component [0, 255]" />
+            <arg name="b" type="uint" summary="shadow color blue component [0, 255]" />
+            <arg name="a" type="uint" summary="shadow color alpha component [0, 255]" />
+        </request>
+
+        <request name="set_border">
+            <description summary="configure the compositor-drawn border">
+                Override the compositor-drawn border for this surface.
+
+                When width is 0 the border is disabled and the color
+                arguments are ignored. Color components are unsigned in
+                [0, 255]. The compositor applies this request according to its
+                own policy and may clamp an out-of-range width to a supported
+                bound.
+            </description>
+            <arg name="width" type="uint"
+                summary="border width in pixels; 0 to disable border" />
+            <arg name="r" type="uint" summary="border color red component [0, 255]" />
+            <arg name="g" type="uint" summary="border color green component [0, 255]" />
+            <arg name="b" type="uint" summary="border color blue component [0, 255]" />
+            <arg name="a" type="uint" summary="border color alpha component [0, 255]" />
+        </request>
+
+        <request name="set_titlebar_mode">
+            <description summary="control SSD titlebar visibility">
+                Override whether the compositor draws a server-side titlebar
+                for this surface, per the titlebar_mode enum. A mode value
+                outside the titlebar_mode enum range is silently ignored; the
+                current titlebar visibility is kept.
+
+                Hiding the titlebar leaves the rest of the SSD (border,
+                corner radius, shadow) in effect; the client is then expected
+                to draw its own titlebar inside the window content.
+            </description>
+            <arg name="mode" type="uint" enum="titlebar_mode"
+                summary="titlebar visibility override" />
+        </request>
+    </interface>
+
+</protocol>
