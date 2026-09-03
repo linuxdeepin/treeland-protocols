@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_show_desktop_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="show-desktop mode control">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged client such as a dock or desktop
+        shell to control and observe the compositor's show-desktop mode.
+        In show-desktop mode the compositor minimizes or hides all toplevel
+        windows to reveal the desktop surface underneath.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_show_desktop_v1" version="1">
+        <description summary="show-desktop mode controller">
+            A singleton global that provides read/write access to the
+            compositor's show-desktop mode state.
+
+            Only one client may bind this interface at a time. The
+            compositor should reject subsequent bind attempts from other
+            clients while a binding is already active.
+
+            On binding, the compositor immediately sends a show_desktop_state
+            event carrying the current mode so that the client starts
+            synchronized.
+
+            The client sends set_show_desktop_state to request a mode transition.
+            The compositor applies the transition at its discretion and
+            confirms the new state via a show_desktop_state event. The
+            compositor may also emit show_desktop_state spontaneously when
+            the mode changes through other means (e.g. a keyboard
+            shortcut or gesture).
+        </description>
+
+        <enum name="state">
+            <description summary="show-desktop mode values">
+                Describes the current display state of the desktop.
+            </description>
+            <entry name="normal"       value="0" summary="all windows are shown normally" />
+            <entry name="show"         value="1" summary="all windows are hidden to reveal the desktop" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the show-desktop controller">
+                Destroy the treeland_show_desktop_v1 object and release
+                the singleton binding. The compositor will accept a new
+                binding from another client after this request is processed.
+
+                This request does not alter the current show-desktop mode;
+                the compositor retains whatever state was last set.
+            </description>
+        </request>
+
+        <request name="set_show_desktop_state">
+            <description summary="request a show-desktop mode transition">
+                Request that the compositor transition to the given
+                show-desktop mode. The compositor may ignore the request
+                or apply it asynchronously. If the mode changes, the
+                compositor confirms the new state by emitting a
+                show_desktop_state event.
+
+                Sending the same mode that is already active is a no-op;
+                the compositor need not emit a show_desktop_state event in
+                response.
+            </description>
+            <arg name="state" type="uint" enum="state"
+                summary="requested show-desktop state" />
+        </request>
+
+        <event name="show_desktop_state">
+            <description summary="current show-desktop mode has changed">
+                Emitted by the compositor whenever the show-desktop mode
+                changes, including once immediately after the client binds
+                this interface to convey the initial state.
+
+                The compositor emits this event both in response to a
+                set_show_desktop_state request and when the mode changes through
+                any other compositor-side mechanism.
+            </description>
+            <arg name="state" type="uint" enum="state"
+                summary="new show-desktop state" />
+        </event>
+    </interface>
+
+</protocol>
