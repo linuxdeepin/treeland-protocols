@@ -15,7 +15,7 @@
         semantics remaining stable across releases.
     </description>
 
-    <interface name="treeland_virtual_output_manager_v1" version="2">
+    <interface name="treeland_virtual_output_manager_v1" version="3">
         <description summary="Manager creates virtual output">
             This interface is a manager that allows the creation of copied output.
         </description>
@@ -73,6 +73,17 @@
         <request name="destroy" type="destructor" since="2">
             <description summary="destroy treeland_virtual_output_manager_v1 object" />
         </request>
+        <event name="virtual_output_modified" since="3">
+            <description summary="A virtual output group changed">
+                Sent whenever the set of virtual output groups changes: a group
+                was created, updated, or removed (e.g. copy mode collapsed to
+                extension after its source was disabled).
+
+                The client should re-issue get_virtual_output_list to refresh
+                its view of the available groups.
+            </description>
+            <arg name="name" type="string" summary="The name of the changed virtual output" />
+        </event>
     </interface>
     <interface name="treeland_virtual_output_v1" version="1">
         <description summary="screen output object">
