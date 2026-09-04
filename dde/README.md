@@ -26,11 +26,10 @@ Superseded by `treeland-show-desktop-unstable-v1.xml`; the old v1 file moved to 
 
 1. The interface was renamed to `treeland_show_desktop_v1`.
 2. The `destroy` request was moved to the first request position.
-3. The `show_desktop` event was renamed to `desktop_state`.
-4. The `desktop_state` enum was renamed to `mode`.
+3. The `show_desktop` event was renamed to `show_desktop_state`.
+4. The `desktop_state` enum was renamed to `state`.
 5. The `preview_show` enum entry was removed because it was never implemented and is no longer needed.
 6. The `set_desktop` request was renamed to `set_show_desktop_state`.
-7. The `mode` enum was renamed to `state`.
-8. The description was corrected and expanded.
+7. The description was corrected and expanded.
 
-Consumers should rebind the global as `treeland_show_desktop_v1`, send `set_desktop` to request a transition, and listen for `desktop_state` to observe compositor-driven changes; the old v1 XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_show_desktop_v1`, send `set_show_desktop_state` to request a transition, and listen for `show_desktop_state` to observe compositor-driven changes; the old v1 XML is kept installed during migration but must not be used in new code.

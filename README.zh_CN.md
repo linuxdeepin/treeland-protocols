@@ -1,20 +1,18 @@
 # Treeland 协议
 
-Treeland 中的 Wayland 协议扩展
+Treeland 的 Wayland 协议扩展。
 
 ## 实验性状态
 
-本仓库中定义的所有 Treeland Wayland 协议扩展均处于**实验性**阶段，
-可能随时发生修改（包括不兼容的修改），不提供任何兼容性保证。
-使用方需自行跟踪上游协议定义，不应依赖当前接口名称、请求、事件或语义保持稳定。
+本仓库中定义的所有 Treeland Wayland 协议扩展均为**实验性**。它们可能随时更改，包括以不向后兼容的方式更改，且不提供任何形式的兼容性保证。使用者必须跟踪上游协议定义，不得依赖当前接口名称、请求、事件或语义保持稳定。
 
-## 依赖项
+## 依赖
 
-请检查 `debian/control` 文件以获取构建时依赖项，或者使用 `cmake` 检查缺失的必需依赖项。
+查看 `debian/control` 获取构建依赖，或使用 `cmake` 检查缺失的依赖。
 
 ## 构建
 
-构建过程遵循常规的 CMake 构建步骤，简而言之：
+使用常规的 CMake 构建步骤，简述如下：
 
 ```shell
 $ mkdir build && cd build
@@ -22,12 +20,12 @@ $ cmake ..
 $ cmake --build .
 ```
 
-## 如何参与
+## 参与贡献
 
-- [通过 GitHub 提交代码贡献](https://github.com/linuxdeepin/dde-launchpad/)
-- [在 GitHub Issues 或 Discussions 提交问题或建议](https://github.com/linuxdeepin/developer-center/issues/new/choose)
-- [在 Hosted Weblate 上将本项目翻译为您的语言](https://hosted.weblate.org/projects/deepin/dde-launchpad/)
+- [通过 GitHub 贡献代码](https://github.com/linuxdeepin/dde-launchpad/)
+- [在 GitHub Issues 或 GitHub Discussions 提交 Bug 或建议](https://github.com/linuxdeepin/developer-center/issues/new/choose)
+- [在 Hosted Weblate 上翻译本项目](https://hosted.weblate.org/projects/deepin/dde-launchpad/)
 
 ## 许可证
 
-Treeland遵循 MIT 许可证发布。
+**treeland-protocols** 采用 MIT 许可证。

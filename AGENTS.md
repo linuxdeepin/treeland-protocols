@@ -70,7 +70,9 @@ SPDX-License-Identifier: MIT
 
 ## Per-directory protocol listings
 
-Each subdirectory (except `deprecated/`) contains a `README.md` with a table of protocols and their interfaces.
+Each subdirectory (except `deprecated/`) contains a pair of README files:
+`README.md` (English) and `README.zh_CN.md` (Chinese), each with a table of
+protocols and their interfaces. Keep both files in sync.
 
 ## Deprecating a protocol
 
@@ -87,11 +89,30 @@ When a protocol is superseded or no longer needed, follow these steps:
 
 3. **Update the source directory `README.md`**
    - Remove the protocol row from the protocol table.
-   - Append a row to the **Breaking changes** table (create the section if it does not exist yet):
+   - Add a **Breaking changes** entry using the paragraph format:
 
-     | Version | Date | Protocol | Change |
-     |---------|------|----------|--------|
-     | x.y.z | YYYY/MM | `` `<protocol>.xml` `` | One-sentence explanation and replacement. |
+     ```markdown
+     ### Breaking changes
+
+     Breaking changes are grouped by version. Under each version heading,
+     one subsection per affected protocol explains what changed, what
+     replaces it, and how existing consumers should adapt.
+
+     #### <version>
+
+     ##### `<protocol>.xml`
+
+     <One or more paragraphs describing the change, replacement, and
+     migration guidance. Use a numbered list when there are multiple
+     wire-level differences.>
+     ```
+
+   - The breaking-change entry must be added to **both** the English
+     `README.md` and the Chinese `README.zh_CN.md`, with identical
+     structure and content.
+   - Each directory (except `deprecated/`) keeps two README files:
+     `README.md` (English) and `README.zh_CN.md` (Chinese). Keep
+     them in sync when editing.
 
 4. **Commit** with a message in the form:
    ```
