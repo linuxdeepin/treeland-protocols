@@ -1,4 +1,4 @@
-# Treeland protocols
+# Treeland Protocols
 
 Wayland protocol extensions for treeland.
 
