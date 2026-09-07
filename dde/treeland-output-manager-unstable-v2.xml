@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_output_manager_unstable_v2">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="manage output display configuration">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol provides two capabilities to privileged clients such as
+        display configuration panels:
+
+        1. Designating one connected output as the primary output, which the
+           compositor may use to decide placement of panels, notifications, and
+           newly opened windows.
+
+        2. Adjusting the color temperature and brightness of individual outputs
+           via a double-buffered pending/commit model.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_output_manager_v2" version="1">
+        <description summary="primary output and picture control manager">
+            A singleton global that exposes two capabilities: designating the
+            primary output and creating per-output picture control objects.
+
+            Only one client should bind this interface at a time. The compositor
+            may not advertise this global to additional clients, or may ignore
+            requests from them, while a binding is already active.
+
+            On binding, the compositor immediately emits a primary_output event
+            carrying the currently designated primary output, or null if no
+            primary output has been designated.
+        </description>
+
+        <enum name="primary_output_error">
+            <description summary="reasons a set_primary_output request was rejected">
+                Reasons returned by the primary_output_failed event.
+            </description>
+            <entry name="invalid_output" value="0"
+                summary="the provided output is null, disabled, or no longer available" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the output manager object">
+                Destroy the treeland_output_manager_v2 object.
+
+                Existing treeland_output_picture_control_v2 objects created
+                through this manager are not affected and must be destroyed
+                separately by the client.
+            </description>
+        </request>
+
+        <request name="set_primary_output">
+            <description summary="designate an output as the primary output">
+                Designate the given output as the primary output. The compositor
+                uses the primary output as a hint for panel placement, initial
+                window positioning, and other compositor-defined policies.
+
+                The output must be a currently enabled, available wl_output.
+                If the output is disabled or no longer available, the compositor
+                rejects the request and emits a primary_output_failed event;
+                the primary output designation is unchanged.
+
+                The compositor applies a successful change immediately and
+                confirms it by emitting a primary_output event carrying the
+                newly designated primary output.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="an enabled output to designate as primary" />
+        </request>
+
+        <request name="get_picture_control">
+            <description summary="create a picture control object for an output">
+                Create a treeland_output_picture_control_v2 object bound to the
+                given output. The returned object allows the client to adjust
+                the color temperature and brightness of that output.
+
+                For any live wl_output resource this request always succeeds
+                without a protocol error, regardless of the output state —
+                enabled, disabled, or no longer present in the configuration.
+                An invalid or destroyed object id, or an object of another
+                type, is still rejected by the core protocol
+                (wl_display.invalid_object). If the bound output is later
+                destroyed or not recognized by the compositor, subsequent
+                commits fail with the invalid_output result.
+
+                Multiple picture control objects may exist for the same output at
+                the same time; each object reports value changes independently.
+
+                If the output is disabled while a picture control object is
+                bound to it, commits may fail; the compositor reports the
+                outcome through the result event and leaves the applied
+                settings unchanged.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_picture_control_v2"
+                summary="new picture control object for the given output" />
+            <arg name="output" type="object" interface="wl_output"
+                summary="the output to control" />
+        </request>
+
+        <event name="primary_output">
+            <description summary="current primary output has changed">
+                Emitted by the compositor to report the current primary output.
+                This event is sent once immediately after the client binds this
+                interface, and again whenever the primary output designation
+                changes — whether in response to a set_primary_output request
+                or through a compositor-driven fallback.
+
+                When the designated primary output is disconnected or disabled,
+                the compositor automatically selects another available output as
+                the new primary and emits this event with it. When no output is
+                currently available, the event is emitted with a null output.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                allow-null="true"
+                summary="the currently designated primary output, or null when none is available" />
+        </event>
+
+        <event name="primary_output_failed">
+            <description summary="a set_primary_output request was rejected">
+                Emitted when a set_primary_output request cannot be applied,
+                indicating that the primary output designation is unchanged.
+                The error identifies why the request was rejected: the provided
+                output was disabled or no longer available.
+            </description>
+            <arg name="error" type="uint" enum="primary_output_error"
+                summary="why the set_primary_output request was rejected" />
+        </event>
+    </interface>
+
+    <interface name="treeland_output_picture_control_v2" version="1">
+        <description summary="per-output color temperature and brightness control">
+            Represents a picture control session bound to a specific output,
+            created by treeland_output_manager_v2.get_picture_control.
+
+            Color temperature and brightness are managed via a double-buffered
+            pending/commit model. The client accumulates changes with
+            set_color_temperature and set_brightness, then atomically applies
+            them with a single commit request. After a successful commit the
+            compositor emits a color_temperature or brightness event for each
+            value that actually changed.
+
+            On creation, the compositor emits color_temperature and brightness
+            events to report the current values of the output before the client
+            has made any changes.
+
+            Clients should destroy this object when the associated wl_output
+            is destroyed; otherwise subsequent commits fail with the
+            invalid_output result.
+        </description>
+
+        <enum name="commit_result">
+            <description summary="result of a commit request">
+                Indicates whether the preceding commit request was applied
+                successfully, and if not, whether it failed because a pending
+                value is outside its valid range, because the output does not
+                support the requested adjustment, because the associated
+                output is no longer available, or for another transient or
+                unknown reason.
+            </description>
+            <entry name="success" value="0"
+                summary="all pending settings were applied successfully" />
+            <entry name="failed" value="1"
+                summary="the commit failed to apply for a transient or unknown reason; settings remain unchanged" />
+            <entry name="unsupported" value="2"
+                summary="the output does not support the requested adjustment, for example when its hardware cannot apply color temperature changes; settings remain unchanged" />
+            <entry name="invalid_output" value="3"
+                summary="the associated output is destroyed or not recognized; settings remain unchanged" />
+            <entry name="invalid_color_temperature" value="4"
+                summary="the pending color temperature is outside the valid range [1000, 20000]; settings remain unchanged" />
+            <entry name="invalid_brightness" value="5"
+                summary="the pending brightness is outside the valid range [0.0, 100.0]; settings remain unchanged" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the picture control object">
+                Destroy the treeland_output_picture_control_v2 object and
+                release all associated compositor resources. Any uncommitted
+                pending settings are discarded.
+
+                After this request the compositor will no longer send result,
+                color_temperature, or brightness events on this object.
+            </description>
+        </request>
+
+        <request name="set_color_temperature">
+            <description summary="set pending color temperature">
+                Set the pending color temperature for the output. The value
+                is not applied until the client sends a commit request.
+
+                Valid range is [1000, 20000] Kelvin. A value outside this
+                range is stored in the pending state but causes the next
+                commit to fail with the invalid_color_temperature result.
+
+                Multiple calls before commit replace the pending value;
+                only the last value is applied.
+            </description>
+            <arg name="temperature" type="uint"
+                summary="color temperature in Kelvin, in the range [1000, 20000]" />
+        </request>
+
+        <request name="set_brightness">
+            <description summary="set pending brightness">
+                Set the pending brightness for the output. The value is not
+                applied until the client sends a commit request.
+
+                Valid range is [0.0, 100.0]. A value outside this range is
+                stored in the pending state but causes the next commit to
+                fail with the invalid_brightness result.
+
+                Multiple calls before commit replace the pending value;
+                only the last value is applied.
+            </description>
+            <arg name="brightness" type="fixed"
+                summary="brightness level in the range [0.0, 100.0]" />
+        </request>
+
+        <request name="commit">
+            <description summary="apply all pending color settings">
+                Atomically apply all pending color temperature and brightness
+                values accumulated since the last commit. The compositor always
+                responds with a result event indicating success or failure.
+                After a successful commit the compositor emits a
+                color_temperature or brightness event for each value that
+                actually changed.
+
+                It is valid to call commit without any preceding set_* requests;
+                the compositor treats this as a no-op that succeeds without
+                changing any value.
+
+                A failed commit reports its cause through the result event.
+                The compositor checks the pending values first: a color
+                temperature outside [1000, 20000] fails with
+                invalid_color_temperature, and a brightness outside [0.0, 100.0]
+                fails with invalid_brightness. The failure is otherwise caused
+                by the output: it does not support the requested adjustment
+                (unsupported, retrying the same settings is unlikely to
+                succeed), it has been destroyed or is no longer recognized
+                (invalid_output), or the commit could not be applied for a
+                transient or unknown reason (failed). In every failure case the
+                applied settings remain unchanged.
+            </description>
+        </request>
+
+        <event name="result">
+            <description summary="result of the last commit request">
+                Emitted by the compositor in response to every commit request,
+                including commits with no pending changes, to indicate whether
+                the settings were applied. Besides the failed, unsupported,
+                and invalid_output causes, the invalid_color_temperature and
+                invalid_brightness results indicate that a pending value is
+                outside its valid range. After a successful commit, a
+                color_temperature or brightness event is emitted for each
+                value that actually changed.
+            </description>
+            <arg name="result" type="uint" enum="commit_result"
+                summary="whether the commit succeeded or failed" />
+        </event>
+
+        <event name="color_temperature">
+            <description summary="current color temperature of the output">
+                Reports the currently applied color temperature of the output.
+                Emitted once immediately after the treeland_output_picture_control_v2
+                object is created to provide the initial value, and again
+                whenever the applied color temperature changes — whether
+                through a commit on this object, a commit on another color
+                control object for the same output, or a compositor-driven
+                change such as a system setting update.
+
+                Color temperature is expressed in Kelvin on a Planckian locus,
+                in the range [1000, 20000].
+            </description>
+            <arg name="temperature" type="uint"
+                summary="current color temperature in Kelvin" />
+        </event>
+
+        <event name="brightness">
+            <description summary="current brightness of the output">
+                Reports the currently applied brightness of the output.
+                Emitted once immediately after the treeland_output_picture_control_v2
+                object is created to provide the initial value, and again
+                whenever the applied brightness changes — whether through a
+                commit on this object, a commit on another picture control object
+                for the same output, or a compositor-driven change such as a
+                system setting update.
+
+                Brightness is expressed as a percentage in the range [0.0, 100.0].
+            </description>
+            <arg name="brightness" type="fixed"
+                summary="current brightness level in the range [0.0, 100.0]" />
+        </event>
+    </interface>
+
+</protocol>

@@ -7,7 +7,7 @@
 | `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | 重新设计的顶层窗口观察和 Dock 预览；修正了命名、成员顺序、destroy 位置和描述质量 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
-| `treeland-output-manager-v1.xml` | `treeland_output_manager_v1` | `treeland_output_manager_v1`, `treeland_output_color_control_v1` | 主输出选择、逐输出色温和亮度控制 |
+| `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制 |
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势及一次性快捷键捕获 |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | 虚拟（镜像）输出创建和管理 |
@@ -19,6 +19,19 @@
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
 
 ### 0.6.0
+
+#### `treeland-output-manager-v1.xml`
+
+被 `treeland-output-manager-unstable-v2.xml` 取代；旧 v1 文件原样移至 `deprecated/`。v2 协议重命名了两个接口，规范了成员排序，并将主屏标识从输出名称改为 `wl_output` 对象。线缆级差异：
+
+1. 接口重命名：`treeland_output_manager_v1` → `treeland_output_manager_v2`，`treeland_output_color_control_v1` → `treeland_output_picture_control_v2`；接口版本重置为 1，移除了 `since="2"` 标记。
+2. 两个接口的 `destroy` 移至首个请求，其余请求的操作码整体后移一位。
+3. `set_primary_output` 参数由输出名称 `string` 改为不可为 null 且已启用的 `wl_output` 对象；传已禁用或已销毁的输出将通过 `primary_output_failed` 事件拒绝而非协议错误。不再支持通过传 null 清除主屏指定。
+4. `primary_output` 事件参数由输出名称 `string` 改为 `wl_output` 对象（仅当无可用输出时为 null），绑定时立即发送一次，并确认每一次 `set_primary_output` 请求。当被指定的主屏被拔出或禁用时，合成器自动选择另一个可用输出作为新主屏并发送该事件。
+5. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为新增的 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`，`invalid_color_temperature = 4`，`invalid_brightness = 5`），线缆取值因此反转。
+6. picture control 的 `error` 枚举删除：其 `invalid_color_temperature`/`invalid_brightness` 项并入 `commit_result`，越界的 pending 值不再在 set_* 请求上报协议错误，而是导致 commit 失败并通过 `result` 事件反馈，接口因此不再有任何协议错误；枚举移至 requests 之前，`primary_output_error` 枚举供新增的 `primary_output_failed` 事件使用。`get_picture_control` 接受任何状态的合法 `wl_output`——无效对象 ID 仍属核心协议错误；输出有效性在 commit 时通过 `result` 事件反馈。
+
+消费者应将全局对象重新绑定为 `treeland_output_manager_v2`，改传 `wl_output` 对象而非输出名称，并按 `commit_result` 枚举解释 `result` 值；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
 
 #### `treeland-personalization-manager-v1.xml`
 

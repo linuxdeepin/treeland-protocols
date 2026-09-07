@@ -23,7 +23,7 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-foreign-toplevel-manager-unstable-v2.xml
   dde/treeland-input-manager-unstable-v1.xml
   dde/treeland-keyboard-state-notify-unstable-v1.xml
-  dde/treeland-output-manager-v1.xml
+  dde/treeland-output-manager-unstable-v2.xml
   dde/treeland-shortcut-manager-unstable-v3.xml
   dde/treeland-appearance-manager-unstable-v1.xml
   dde/treeland-virtual-output-manager-v1.xml
@@ -51,6 +51,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-app-id-resolver-v1.xml
   deprecated/treeland-capture-unstable-v1.xml
   deprecated/treeland-ddm-v1.xml
+  deprecated/treeland-output-manager-v1.xml
   deprecated/treeland-personalization-manager-v1.xml
   deprecated/treeland-prelaunch-splash-v1.xml
   deprecated/treeland-screensaver-v1.xml

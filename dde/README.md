@@ -7,7 +7,7 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 | `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | Redesigned toplevel observation and dock preview; fixes naming, member ordering, destroy placement, and description quality relative to v1 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | Per-device input configuration: pointer acceleration, send-events mode, keyboard toggle state |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | Watch keyboard modifier (caps/num lock) state changes |
-| `treeland-output-manager-v1.xml` | `treeland_output_manager_v1` | `treeland_output_manager_v1`, `treeland_output_color_control_v1` | Primary output selection, per-output color temperature and brightness control |
+| `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | Primary output designation, per-output color temperature and brightness control |
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | Global keyboard shortcut binding with key/touch/multi-touch gesture support and one-shot shortcut capture |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | Privileged user-level appearance configuration: cursor theme/size, global font, icon theme, accent color, window opacity, color scheme, titlebar height, global corner radius |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | Virtual (mirrored) output creation and management |
@@ -19,6 +19,19 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 Breaking changes are grouped by version. Under each version heading, one subsection per affected protocol explains what changed, what replaces it, and how existing consumers should adapt.
 
 ### 0.6.0
+
+#### `treeland-output-manager-v1.xml`
+
+Superseded by `treeland-output-manager-unstable-v2.xml`; the old v1 file moved to `deprecated/` unchanged. The v2 protocol renames both interfaces, normalizes member ordering, and switches primary-output identification from output names to `wl_output` objects. Wire-level differences:
+
+1. Interfaces renamed: `treeland_output_manager_v1` → `treeland_output_manager_v2` and `treeland_output_color_control_v1` → `treeland_output_picture_control_v2`; interface versions reset to 1 and the `since="2"` markers were removed.
+2. `destroy` moved to the first request on both interfaces, shifting the opcodes of all other requests by one.
+3. `set_primary_output` now takes a non-null, enabled `wl_output` object instead of an output name `string`; passing a disabled or destroyed output is rejected via a `primary_output_failed` event rather than a protocol error. The compositor no longer supports clearing the primary designation via a null argument.
+4. The `primary_output` event now carries a `wl_output` object (null only when no output is available) instead of an output name `string`, is emitted once immediately after bind, and confirms every `set_primary_output` request. When the designated primary output is disconnected or disabled, the compositor automatically selects another available output as the new primary and emits this event.
+5. The `result` event argument changed from a plain `uint` flag (1 = success, 0 = failure) to the new `commit_result` enum (`success = 0`, `failed = 1`, `unsupported = 2`, `invalid_output = 3`, `invalid_color_temperature = 4`, `invalid_brightness = 5`), so the wire values are inverted.
+6. The picture control `error` enum is removed: its `invalid_color_temperature`/`invalid_brightness` entries are merged into `commit_result`, and out-of-range pending values now fail the commit via the `result` event instead of raising a protocol error on the set_* requests, leaving the interface with no protocol errors at all; enums moved before requests, and a `primary_output_error` enum backs the new `primary_output_failed` event. `get_picture_control` accepts any valid `wl_output` regardless of state — invalid object ids remain a core protocol error; output validity is reported at commit time through the `result` event.
+
+Consumers should rebind the global as `treeland_output_manager_v2`, pass `wl_output` objects instead of output names, and interpret `result` values via the `commit_result` enum; the old v1 XML is kept installed during migration but must not be used in new code.
 
 #### `treeland-personalization-manager-v1.xml`
 
