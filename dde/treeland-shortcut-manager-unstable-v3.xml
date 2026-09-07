@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_shortcut_manager_unstable_v3">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="keyboard shortcut management">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows privileged clients to register and manage global
+        shortcuts for keyboard key sequences, touch swipe gestures, and touch
+        hold gestures. It also provides a one-shot shortcut capture facility
+        for clients that need to read the next shortcut input from the user.
+
+        Global shortcuts are managed in a per-user context. Shortcuts for
+        different users are isolated and will not interfere with each other.
+        This behavior is transparent to clients of this interface.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_shortcut_manager_v3" version="1">
+        <description summary="global shortcut manager">
+            A singleton global that manages global shortcut bindings for
+            key sequences, swipe gestures, and hold gestures.
+
+            Before registering or removing bindings the client must acquire
+            exclusive control by sending the acquire request. Only one client
+            may hold the manager at a time within a given user session.
+
+            Bindings are registered via bind_key, bind_swipe_gesture, and
+            bind_hold_gesture, and removed via unbind. All of these
+            requests take effect immediately. A bind request that cannot be
+            applied is reported with a bind_failure event; successful bind
+            and unbind requests generate no event, and the client can use
+            the wl_display.sync request to confirm that earlier requests
+            have been processed.
+
+            If the client's user session is not the currently active
+            session, bind and unbind requests are deferred: they are
+            applied when that session becomes active again.
+
+            Destroying the manager object implicitly releases the
+            exclusive control acquired via acquire; no separate release
+            request is needed.
+
+            The capture_next_shortcut request is independent of acquire and
+            may be sent at any time.
+        </description>
+
+        <enum name="direction">
+            <description summary="swipe gesture direction">
+                Cardinal directions used to specify the direction of a swipe
+                gesture binding. The value 0 is reserved and must not be used
+                as a direction argument.
+            </description>
+            <entry name="down"  value="1" summary="swipe towards the bottom of the screen" />
+            <entry name="left"  value="2" summary="swipe towards the left of the screen" />
+            <entry name="up"    value="3" summary="swipe towards the top of the screen" />
+            <entry name="right" value="4" summary="swipe towards the right of the screen" />
+        </enum>
+
+        <enum name="action">
+            <description summary="compositor actions assignable to a shortcut">
+                Actions that the compositor executes when a shortcut with this
+                action is activated.
+
+                The notify action is special: instead of performing a
+                compositor-side operation, the compositor emits an activated
+                event on this interface so the client can respond.
+            </description>
+            <entry name="notify"                 value="0"  summary="emit an activated event to the client" />
+            <entry name="workspace_1"            value="1"  summary="switch to workspace 1" />
+            <entry name="workspace_2"            value="2"  summary="switch to workspace 2" />
+            <entry name="workspace_3"            value="3"  summary="switch to workspace 3" />
+            <entry name="workspace_4"            value="4"  summary="switch to workspace 4" />
+            <entry name="workspace_5"            value="5"  summary="switch to workspace 5" />
+            <entry name="workspace_6"            value="6"  summary="switch to workspace 6" />
+            <entry name="prev_workspace"         value="7"  summary="switch to the previous workspace" />
+            <entry name="next_workspace"         value="8"  summary="switch to the next workspace" />
+            <entry name="show_desktop"           value="9"  summary="toggle show-desktop mode" />
+            <entry name="maximize"               value="10" summary="maximize the active window" />
+            <entry name="cancel_maximize"        value="11" summary="restore the active window from maximized state" />
+            <entry name="move_window"            value="12" summary="enter window move mode for the active window" />
+            <entry name="close_window"           value="13" summary="close the active window" />
+            <entry name="show_window_menu"       value="14" summary="show the window menu for the active window" />
+            <entry name="open_multitask_view"    value="15" summary="open the multitask overview" />
+            <entry name="close_multitask_view"   value="16" summary="close the multitask overview" />
+            <entry name="toggle_multitask_view"  value="17" summary="toggle the multitask overview" />
+            <entry name="toggle_fps_display"     value="18" summary="toggle the compositor FPS overlay" />
+            <entry name="lockscreen"             value="19" summary="lock the screen" />
+            <entry name="shutdown_menu"          value="20" summary="show the shutdown/session menu" />
+            <entry name="quit"                   value="21" summary="quit the compositor" />
+            <entry name="taskswitch_enter"       value="22" summary="open the task switcher" />
+            <entry name="taskswitch_next"        value="23" summary="select the next task in the switcher" />
+            <entry name="taskswitch_prev"        value="24" summary="select the previous task in the switcher" />
+            <entry name="taskswitch_sameapp_next" value="25" summary="select the next window of the same application in the switcher" />
+            <entry name="taskswitch_sameapp_prev" value="26" summary="select the previous window of the same application in the switcher" />
+            <entry name="tile_left"              value="27" summary="tile the active window to the left half of the screen" />
+            <entry name="tile_right"             value="28" summary="tile the active window to the right half of the screen" />
+        </enum>
+
+        <enum name="keybind_flag" bitfield="true">
+            <description summary="keybinding trigger flags">
+                Flags that control when a key binding fires relative to the
+                key event lifecycle.
+
+                key_press: fires when the key is pressed.
+                key_release: fires when the key is released.
+                repeat: fires repeatedly while the key is held down
+                        (auto-repeat). Only meaningful when combined with
+                        key_press; combining with key_release causes both
+                        the press and the release auto-repeat events to fire.
+
+                Common combinations:
+                - key_press only: fires once on press; ignores repeat and release.
+                - key_press | repeat: fires on press and on every auto-repeat tick.
+                - key_press | key_release: fires on press and release;
+                  auto-repeat events are ignored.
+                - key_press | key_release | repeat: fires on press, every
+                  auto-repeat tick, and on release.
+            </description>
+            <entry name="key_press"   value="0x1" summary="trigger on key press" />
+            <entry name="key_release" value="0x2" summary="trigger on key release" />
+            <entry name="repeat"      value="0x4" summary="trigger on auto-repeat while the key is held" />
+        </enum>
+
+        <enum name="bind_error">
+            <description summary="bind request failure codes">
+                Error codes carried by the bind_failure event to describe
+                why a bind request was rejected.
+            </description>
+            <entry name="name_conflict"      value="1" summary="a binding with this name already exists" />
+            <entry name="duplicate_binding"  value="2" summary="an identical trigger-and-action combination already exists" />
+            <entry name="invalid_argument"   value="3" summary="an argument has an invalid or out-of-range value" />
+            <entry name="internal_error"     value="4" summary="an unrecoverable compositor-internal error occurred" />
+        </enum>
+
+        <enum name="error">
+            <description summary="protocol errors for this interface">
+                Error codes sent as protocol errors via wl_display.error.
+            </description>
+            <entry name="occupied"        value="1" summary="the shortcut manager is already held by another client" />
+            <entry name="not_acquired"    value="2" summary="the client sent a bind or unbind request without first acquiring the manager" />
+            <entry name="invalid_surface" value="3" summary="the surface argument is not owned by the requesting client" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the shortcut manager">
+                Destroy the shortcut manager object. If the client currently
+                holds exclusive control via acquire, that control is implicitly
+                released so another client may acquire it. Existing shortcut
+                bindings registered by this client remain active in the
+                compositor until the compositor or another client removes them.
+            </description>
+        </request>
+
+        <request name="acquire">
+            <description summary="acquire exclusive control of the shortcut manager">
+                Acquire exclusive control of the shortcut manager for this
+                client. The client must send this request before any bind_key,
+                bind_swipe_gesture, bind_hold_gesture, or unbind request.
+                Sending those requests without first acquiring is a
+                protocol error (not_acquired).
+
+                Only one client may hold the manager at a time within a given
+                user session. If another client already holds it, the
+                compositor sends a protocol error (occupied).
+
+                Exclusive control is released implicitly when the client
+                destroys the manager object.
+            </description>
+        </request>
+
+        <request name="bind_key">
+            <description summary="register a key sequence binding">
+                Register a key sequence binding. The binding takes effect
+                immediately.
+
+                The key argument uses the portable textual format of
+                QKeySequence (PortableText); see
+                https://doc.qt.io/qt-6/qkeysequence.html#toString for the
+                format specification. Only combinations that form a valid
+                shortcut can be registered; see the capture_next_shortcut
+                request for the validity rules. An invalid combination is
+                reported with bind_failure and the invalid_argument error.
+
+                The name argument must be unique among all existing bindings.
+                If a binding with the same name already exists, this request
+                is reported with bind_failure and the name_conflict error.
+
+                If a binding with the same key sequence and action already
+                exists, this request updates its flags to the new value rather
+                than failing. This upsert-on-trigger semantics
+                applies only to bind_key; bind_swipe_gesture and
+                bind_hold_gesture treat duplicate trigger-action pairs as
+                errors.
+
+                Sending this request without first acquiring is a protocol
+                error (not_acquired).
+            </description>
+            <arg name="name"   type="string" summary="unique name for this keybinding" />
+            <arg name="key"    type="string" summary="key sequence in QKeySequence portable text format" />
+            <arg name="flags"  type="uint"   enum="keybind_flag" summary="trigger conditions for this keybinding" />
+            <arg name="action" type="uint"   enum="action"       summary="compositor action to execute on activation" />
+        </request>
+
+        <request name="bind_swipe_gesture">
+            <description summary="register a swipe gesture binding">
+                Register a swipe gesture binding. The binding takes effect
+                immediately.
+
+                The name argument must be unique among all existing bindings.
+                If a binding with the same name already exists, this request
+                is reported with bind_failure and the name_conflict error.
+
+                If a binding with the same finger count, direction, and action
+                already exists, this request is reported with bind_failure
+                and the duplicate_binding error.
+
+                If direction is not one of the defined direction enum values,
+                this request is reported with bind_failure and the
+                invalid_argument error.
+
+                Sending this request without first acquiring is a protocol
+                error (not_acquired).
+            </description>
+            <arg name="name"      type="string" summary="unique name for this swipe gesture binding" />
+            <arg name="finger"    type="uint"   summary="number of fingers required for the swipe" />
+            <arg name="direction" type="uint"   enum="direction" summary="required swipe direction" />
+            <arg name="action"    type="uint"   enum="action"    summary="compositor action to execute on activation" />
+        </request>
+
+        <request name="bind_hold_gesture">
+            <description summary="register a hold gesture binding">
+                Register a hold gesture binding. The binding takes effect
+                immediately.
+
+                The name argument must be unique among all existing bindings.
+                If a binding with the same name already exists, this request
+                is reported with bind_failure and the name_conflict error.
+
+                If a binding with the same finger count and action already
+                exists, this request is reported with bind_failure and the
+                duplicate_binding error.
+
+                Sending this request without first acquiring is a protocol
+                error (not_acquired).
+            </description>
+            <arg name="name"   type="string" summary="unique name for this hold gesture binding" />
+            <arg name="finger" type="uint"   summary="number of fingers required for the hold" />
+            <arg name="action" type="uint"   enum="action" summary="compositor action to execute on activation" />
+        </request>
+
+        <request name="unbind">
+            <description summary="remove an existing binding">
+                Remove the binding identified by name. The removal takes
+                effect immediately. If no binding with the given name exists,
+                this request is silently ignored.
+
+                Sending this request without first acquiring is a protocol
+                error (not_acquired).
+            </description>
+            <arg name="name" type="string" summary="name of the binding to remove" />
+        </request>
+
+        <request name="capture_next_shortcut">
+            <description summary="start a one-shot shortcut capture">
+                Create a treeland_shortcut_capture_v3 object and start a
+                one-shot capture of the next shortcut input. This request
+                does not require acquire and does not modify existing
+                bindings.
+
+                The surface argument must be a wl_surface owned by the
+                requesting client. If it is not, the compositor sends a
+                protocol error (invalid_surface).
+
+                The compositor handles at most one capture at a time,
+                regardless of which client requested it. A capture is also
+                considered in progress until the compositor has consumed the
+                key_release of the last captured key, so that the release
+                cannot trigger a shortcut bound in the meantime. If a capture
+                is already in progress, the compositor emits failed with
+                reason busy on the newly created object immediately after
+                creation.
+
+                If the seat argument is not null, the compositor verifies
+                that the keyboard focus of that seat is on the surface. If
+                the seat argument is null, the compositor selects a seat
+                whose keyboard focus is on the surface. If no seat has
+                keyboard focus on the surface, the compositor emits failed
+                with reason not_active on the newly created object
+                immediately after creation. Clients must be prepared to
+                handle a capture object that fails immediately.
+
+                Input from seats other than the validated seat is not
+                intercepted and is processed normally. On the validated seat
+                the capture intercepts input with priority over registered
+                shortcut bindings.
+
+                While the capture is pending, input from the validated seat
+                is handled as follows. If the surface loses keyboard focus,
+                the compositor emits failed with reason aborted and lets the
+                current event continue to its new focus target. Auto-repeat
+                events are consumed silently. A pointer button or wheel
+                event terminates the capture with reason interrupted and is
+                consumed. A key_press of a pure modifier key (Ctrl, Alt,
+                Shift, and similar) is consumed silently; its key_release
+                terminates the capture with reason interrupted, unless the
+                key is the Meta (Super) key: releasing Meta with no other
+                modifier held emits captured with the shortcut "Meta". A
+                key_press of any other key terminates the capture immediately
+                on the press. If the pressed combination is a valid shortcut
+                the compositor emits captured and consumes the key_release
+                that follows; otherwise it emits failed with reason
+                interrupted. In the captured and interrupted cases the
+                triggering input event is consumed and not forwarded to any
+                client.
+
+                A valid shortcut is one of: a non-modifier key combined with
+                Ctrl, Alt, or Meta; a standalone function key (F1 to F35); a
+                standalone key such as Delete, Backspace, Pause, Print,
+                Insert, Help, Menu, or Cancel; Shift combined with Space,
+                Escape, Tab, or a navigation key (Home, End, PageUp, PageDown,
+                and arrows); a standalone media, browser, brightness, or
+                launch key; or the Meta (Super) key pressed alone. An
+                unmodified alphanumeric key and an unmodified Escape are not
+                valid shortcuts.
+            </description>
+            <arg name="surface" type="object" interface="wl_surface"
+                summary="surface used to validate keyboard focus" />
+            <arg name="seat"    type="object" interface="wl_seat" allow-null="true"
+                summary="seat to capture from, or null to capture from any available seat" />
+            <arg name="capture" type="new_id" interface="treeland_shortcut_capture_v3"
+                summary="one-shot capture object" />
+        </request>
+
+        <event name="activated">
+            <description summary="a notify-action shortcut was activated">
+                Emitted when a binding registered with action notify is
+                activated. The name argument identifies the binding by its
+                unique name. The flags argument indicates which key event
+                triggered the activation, using the keybind_flag enum values.
+            </description>
+            <arg name="name"  type="string" summary="name of the activated binding" />
+            <arg name="flags" type="uint"   enum="keybind_flag" summary="key event type that triggered activation" />
+        </event>
+
+        <event name="bind_failure">
+            <description summary="a bind request was rejected">
+                Emitted when a bind_key, bind_swipe_gesture, or
+                bind_hold_gesture request could not be applied; the rejected
+                binding has no effect. The name argument identifies the
+                rejected binding; the error argument provides the reason.
+
+                If the requesting client's session is not active, the bind
+                request is applied (and possibly rejected) only when that
+                session becomes active again, so this event may be emitted
+                long after the request was sent. Each rejected request is
+                reported separately; other bindings of the same client are
+                not affected.
+            </description>
+            <arg name="name"  type="string" summary="name of the rejected binding" />
+            <arg name="error" type="uint"   enum="bind_error" summary="reason for the failure" />
+        </event>
+    </interface>
+
+    <interface name="treeland_shortcut_capture_v3" version="1">
+        <description summary="one-shot shortcut capture object">
+            Represents a single pending request to capture the next shortcut
+            input from the user, created by
+            treeland_shortcut_manager_v3.capture_next_shortcut.
+
+            The compositor captures input once and emits at most one terminal
+            event: either captured or failed. After a terminal event is sent
+            this object becomes inert; the client should destroy it promptly.
+
+            If the client destroys this object while capture is still pending,
+            the capture is cancelled and no terminal event is sent.
+        </description>
+
+        <enum name="failed_reason">
+            <description summary="reasons a one-shot capture could not complete">
+                Describes why the compositor could not deliver a captured
+                shortcut to the client.
+            </description>
+            <entry name="busy"        value="1" summary="a capture is already in progress, or the release of the last captured key is still being consumed" />
+            <entry name="aborted"     value="2" summary="the surface lost keyboard focus while the capture was pending" />
+            <entry name="not_active"  value="3" summary="the provided surface did not have keyboard focus at the time of the request" />
+            <entry name="interrupted" value="4" summary="the first intercepted input was not a valid shortcut sequence" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the capture object">
+                Destroy this capture object. If capture is still pending,
+                destroying the object cancels it; no terminal event will be
+                sent after this request is processed.
+            </description>
+        </request>
+
+        <event name="captured">
+            <description summary="a shortcut was successfully captured">
+                Emitted when the compositor captured one shortcut input for
+                this request. The key argument carries the shortcut sequence
+                in the same QKeySequence portable text format used by
+                treeland_shortcut_manager_v3.bind_key. A capture of the Meta
+                (Super) key pressed alone is reported as the shortcut "Meta".
+
+                This is a terminal event; the object is now inert.
+            </description>
+            <arg name="key" type="string" summary="captured shortcut sequence in QKeySequence portable text format" />
+        </event>
+
+        <event name="failed">
+            <description summary="the capture could not be completed">
+                Emitted when the compositor could not deliver a captured
+                shortcut. The reason argument describes why. See the
+                failed_reason enum for details.
+
+                This is a terminal event; the object is now inert.
+            </description>
+            <arg name="reason" type="uint" enum="failed_reason" summary="reason the capture failed" />
+        </event>
+    </interface>
+
+</protocol>

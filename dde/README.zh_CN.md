@@ -8,7 +8,7 @@
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
 | `treeland-output-manager-v1.xml` | `treeland_output_manager_v1` | `treeland_output_manager_v1`, `treeland_output_color_control_v1` | 主输出选择、逐输出色温和亮度控制 |
-| `treeland-shortcut-manager-v2.xml` | `treeland_shortcut_manager_v2` | `treeland_shortcut_manager_v2`, `treeland_shortcut_capture_v1` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势 |
+| `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势及一次性快捷键捕获 |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | 虚拟（镜像）输出创建和管理 |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | 逐输出壁纸配置，支持图片/视频来源 |
@@ -72,3 +72,14 @@
 9. 描述被修正和扩充。
 
 消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v2`，从 `toplevel` 事件获取 `treeland_foreign_toplevel_handle_v2` 对象，并使用 `treeland_dock_preview_context_v2` 进行预览；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+#### `treeland-shortcut-manager-v2.xml`
+
+被 `treeland-shortcut-manager-unstable-v3.xml` 取代；旧 v2 文件原样移至 `deprecated/`。协议按 unstable 命名规范重命名，接口随新主版本重命名。与旧 `treeland_shortcut_manager_v2` 接口相比：
+
+1. 协议重命名为 `treeland_shortcut_manager_unstable_v3`；接口重命名为 `treeland_shortcut_manager_v3` 和 `treeland_shortcut_capture_v3`。
+2. 管理器接口版本从 3 重置为 1，并移除所有 `since` 属性（这些属性标记的是 v2 接口第 2、3 版新增的成员：`capture_next_shortcut`、`invalid_surface` 错误以及 `tile_left`/`tile_right` action）。
+3. `action` 枚举重新编号：所有枚举值整体前移一位（`notify` 现为 0，`tile_right` 现为 28）；未增删枚举项。
+4. 移除 commit 机制：`bind_key`、`bind_swipe_gesture`、`bind_hold_gesture` 立即生效，被拒绝的绑定通过新增的 `bind_failure` 事件逐个报告，`commit` 请求、`commit_success` 与 `commit_failure` 事件以及 `error.invalid_commit` 枚举项不复存在。`error.invalid_surface` 枚举项从 4 重编号为 3。与旧模型不同，单个绑定失败不再回滚同批次的其他绑定。
+5. 文档完善（无线缆变更）：销毁管理器对象现明确说明会隐式释放经由 `acquire` 获取的独占控制权；`capture_next_shortcut` 请求与捕获接口语义重写以对齐合成器实现（触发时机、seat/focus 校验、`busy`/`aborted` 失败条件及有效快捷键规则）。
+
+消费者应将全局对象重新绑定为 `treeland_shortcut_manager_v3`，在发送任何 bind 或 unbind 请求前先 `acquire`，并通过 `capture_next_shortcut` 创建捕获对象；旧 v2 XML 在迁移期间仍会安装，但不得用于新代码。

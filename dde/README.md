@@ -8,7 +8,7 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | Per-device input configuration: pointer acceleration, send-events mode, keyboard toggle state |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | Watch keyboard modifier (caps/num lock) state changes |
 | `treeland-output-manager-v1.xml` | `treeland_output_manager_v1` | `treeland_output_manager_v1`, `treeland_output_color_control_v1` | Primary output selection, per-output color temperature and brightness control |
-| `treeland-shortcut-manager-v2.xml` | `treeland_shortcut_manager_v2` | `treeland_shortcut_manager_v2`, `treeland_shortcut_capture_v1` | Global keyboard shortcut binding with key/touch/multi-touch gesture support |
+| `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | Global keyboard shortcut binding with key/touch/multi-touch gesture support and one-shot shortcut capture |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | Privileged user-level appearance configuration: cursor theme/size, global font, icon theme, accent color, window opacity, color scheme, titlebar height, global corner radius |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | Virtual (mirrored) output creation and management |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | Per-output wallpaper configuration with image/video sources |
@@ -72,3 +72,14 @@ Superseded by `treeland-foreign-toplevel-manager-unstable-v2.xml`; the old v1 fi
 9. The description was corrected and expanded.
 
 Consumers should rebind the global as `treeland_foreign_toplevel_manager_v2`, obtain `treeland_foreign_toplevel_handle_v2` objects from the `toplevel` event, and use `treeland_dock_preview_context_v2` for previews; the old v1 XML is kept installed during migration but must not be used in new code.
+#### `treeland-shortcut-manager-v2.xml`
+
+Superseded by `treeland-shortcut-manager-unstable-v3.xml`; the old v2 file moved to `deprecated/` unchanged. The protocol was renamed to follow the unstable naming convention, and the interfaces were renamed to match the new major version. Compared to the old `treeland_shortcut_manager_v2` interface:
+
+1. The protocol was renamed to `treeland_shortcut_manager_unstable_v3`; the interfaces were renamed to `treeland_shortcut_manager_v3` and `treeland_shortcut_capture_v3`.
+2. The manager interface version was reset from 3 to 1 and all `since` attributes were removed (they marked members added across v2 interface versions 2 and 3: `capture_next_shortcut`, the `invalid_surface` error, and the `tile_left`/`tile_right` actions).
+3. The `action` enum was renumbered: every entry shifted down by one (`notify` is now 0, `tile_right` is now 28); no entries were added or removed.
+4. The commit mechanism was removed: `bind_key`, `bind_swipe_gesture`, and `bind_hold_gesture` take effect immediately, a rejected bind is reported per binding via the new `bind_failure` event, and the `commit` request, the `commit_success` and `commit_failure` events, and the `error.invalid_commit` entry no longer exist. The `error.invalid_surface` entry was renumbered from 4 to 3. Unlike the old model, one failing binding no longer rolls back the other bindings of the same batch.
+5. Documentation was refined (no wire change): destroying the manager object is now documented to implicitly release the exclusive control acquired via `acquire`, and the `capture_next_shortcut` request and the capture interface semantics were rewritten to match the compositor implementation (trigger timing, seat/focus validation, the `busy`/`aborted` failure conditions, and the valid-shortcut rules).
+
+Consumers should rebind the global as `treeland_shortcut_manager_v3`, send `acquire` before any bind or unbind request, and create capture objects via `capture_next_shortcut`; the old v2 XML is kept installed during migration but must not be used in new code.
