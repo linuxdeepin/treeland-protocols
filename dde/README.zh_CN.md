@@ -4,7 +4,7 @@
 
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
-| `treeland-foreign-toplevel-manager-v1.xml` | `treeland_foreign_toplevel_manager_v1` | `treeland_foreign_toplevel_manager_v1`, `treeland_foreign_toplevel_handle_v1`, `treeland_dock_preview_context_v1` | 顶层窗口观察、激活、状态管理和 Dock 预览 |
+| `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | 重新设计的顶层窗口观察和 Dock 预览；修正了命名、成员顺序、destroy 位置和描述质量 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
 | `treeland-output-manager-v1.xml` | `treeland_output_manager_v1` | `treeland_output_manager_v1`, `treeland_output_color_control_v1` | 主输出选择、逐输出色温和亮度控制 |
@@ -56,3 +56,19 @@
 7. 描述被修正和扩充。
 
 消费者应将全局对象重新绑定为 `treeland_show_desktop_v1`，发送 `set_show_desktop_state` 请求切换模式，监听 `show_desktop_state` 观察合成器驱动的变化；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+
+#### `treeland-foreign-toplevel-manager-v1.xml`
+
+被 `treeland-foreign-toplevel-manager-unstable-v2.xml` 取代；旧 v1 文件已移至 `deprecated/`。协议被重新设计，修正了命名、成员顺序并改进了描述。与旧 `treeland_foreign_toplevel_manager_v1` 接口相比：
+
+1. 命名修正：文件名和协议名添加 `unstable`；三个接口升级为 `_v2`。
+2. 三个接口的 `destroy` 析构请求均位于第一个请求位置（管理器接口为新增，另两个接口为位置前移）。
+3. 枚举移至请求之前。
+4. 事件移至请求之后。
+5. `finished` 事件从析构事件改为普通事件，且 `stop` 请求不再禁止一切后续请求。合成器不再自动销毁管理器对象；客户端须显式发送 `destroy`，建议先 `stop` 并等待 `finished`。
+6. `set_rectangle` 请求重命名为 `set_icon_geometry`，`invalid_rectangle` 错误枚举项重命名为 `invalid_geometry`。
+7. Dock 预览 `show` 请求的 `surfaces` 参数重命名为 `identifiers`，以反映其携带的是 uint32 顶层窗口标识符而非 wl_surface 对象。
+8. 管理器接口新增 `error` 枚举，含 `invalid_surface`，当传入 `get_dock_preview_context` 的 `relative_surface` 不是调用客户端拥有的有效 wl_surface 时触发。
+9. 描述被修正和扩充。
+
+消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v2`，从 `toplevel` 事件获取 `treeland_foreign_toplevel_handle_v2` 对象，并使用 `treeland_dock_preview_context_v2` 进行预览；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
