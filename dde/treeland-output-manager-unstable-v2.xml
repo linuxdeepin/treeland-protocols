@@ -42,7 +42,7 @@
             primary output has been designated.
         </description>
 
-        <enum name="primary_output_error">
+        <enum name="primary_output_failed_reason">
             <description summary="reasons a set_primary_output request was rejected">
                 Reasons returned by the primary_output_failed event.
             </description>
@@ -130,10 +130,10 @@
             <description summary="a set_primary_output request was rejected">
                 Emitted when a set_primary_output request cannot be applied,
                 indicating that the primary output designation is unchanged.
-                The error identifies why the request was rejected: the provided
-                output was disabled or no longer available.
+                The reason identifies why the request was rejected: the
+                provided output was disabled or no longer available.
             </description>
-            <arg name="error" type="uint" enum="primary_output_error"
+            <arg name="reason" type="uint" enum="primary_output_failed_reason"
                 summary="why the set_primary_output request was rejected" />
         </event>
     </interface>
@@ -159,14 +159,26 @@
             invalid_output result.
         </description>
 
+        <enum name="error">
+            <description summary="fatal protocol errors raised by set requests">
+                Raised by the compositor as a fatal protocol error when a
+                set_color_temperature or set_brightness request carries a
+                value outside its valid range. The connection is terminated
+                and no further requests are processed on this object.
+            </description>
+            <entry name="invalid_color_temperature" value="0"
+                summary="the color temperature is outside the valid range [1000, 20000]" />
+            <entry name="invalid_brightness" value="1"
+                summary="the brightness is outside the valid range [0.0, 100.0]" />
+        </enum>
+
         <enum name="commit_result">
             <description summary="result of a commit request">
                 Indicates whether the preceding commit request was applied
-                successfully, and if not, whether it failed because a pending
-                value is outside its valid range, because the output does not
-                support the requested adjustment, because the associated
-                output is no longer available, or for another transient or
-                unknown reason.
+                successfully, and if not, whether it failed because the output
+                does not support the requested adjustment, because the
+                associated output is no longer available, or for another
+                transient or unknown reason.
             </description>
             <entry name="success" value="0"
                 summary="all pending settings were applied successfully" />
@@ -176,10 +188,6 @@
                 summary="the output does not support the requested adjustment, for example when its hardware cannot apply color temperature changes; settings remain unchanged" />
             <entry name="invalid_output" value="3"
                 summary="the associated output is destroyed or not recognized; settings remain unchanged" />
-            <entry name="invalid_color_temperature" value="4"
-                summary="the pending color temperature is outside the valid range [1000, 20000]; settings remain unchanged" />
-            <entry name="invalid_brightness" value="5"
-                summary="the pending brightness is outside the valid range [0.0, 100.0]; settings remain unchanged" />
         </enum>
 
         <request name="destroy" type="destructor">
@@ -199,8 +207,10 @@
                 is not applied until the client sends a commit request.
 
                 Valid range is [1000, 20000] Kelvin. A value outside this
-                range is stored in the pending state but causes the next
-                commit to fail with the invalid_color_temperature result.
+                range is rejected immediately with the
+                invalid_color_temperature protocol error, terminating the
+                connection; nothing is stored in the pending state and no
+                commit is required to clear the request.
 
                 Multiple calls before commit replace the pending value;
                 only the last value is applied.
@@ -215,8 +225,9 @@
                 applied until the client sends a commit request.
 
                 Valid range is [0.0, 100.0]. A value outside this range is
-                stored in the pending state but causes the next commit to
-                fail with the invalid_brightness result.
+                rejected immediately with the invalid_brightness protocol
+                error, terminating the connection; nothing is stored in the
+                pending state and no commit is required to clear the request.
 
                 Multiple calls before commit replace the pending value;
                 only the last value is applied.
@@ -239,13 +250,11 @@
                 changing any value.
 
                 A failed commit reports its cause through the result event.
-                The compositor checks the pending values first: a color
-                temperature outside [1000, 20000] fails with
-                invalid_color_temperature, and a brightness outside [0.0, 100.0]
-                fails with invalid_brightness. The failure is otherwise caused
-                by the output: it does not support the requested adjustment
-                (unsupported, retrying the same settings is unlikely to
-                succeed), it has been destroyed or is no longer recognized
+                Range validation of pending values is performed at set_*
+                time and never reaches a commit; a commit therefore only
+                fails because of the output: it does not support the requested
+                adjustment (unsupported, retrying the same settings is unlikely
+                to succeed), it has been destroyed or is no longer recognized
                 (invalid_output), or the commit could not be applied for a
                 transient or unknown reason (failed). In every failure case the
                 applied settings remain unchanged.
@@ -257,11 +266,11 @@
                 Emitted by the compositor in response to every commit request,
                 including commits with no pending changes, to indicate whether
                 the settings were applied. Besides the failed, unsupported,
-                and invalid_output causes, the invalid_color_temperature and
-                invalid_brightness results indicate that a pending value is
-                outside its valid range. After a successful commit, a
-                color_temperature or brightness event is emitted for each
-                value that actually changed.
+                and invalid_output causes, no other result value is defined.
+                Out-of-range pending values are rejected at set_* time with a
+                fatal protocol error and never produce a commit result. After
+                a successful commit, a color_temperature or brightness event
+                is emitted for each value that actually changed.
             </description>
             <arg name="result" type="uint" enum="commit_result"
                 summary="whether the commit succeeded or failed" />

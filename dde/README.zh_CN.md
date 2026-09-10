@@ -29,8 +29,8 @@
 2. 两个接口的 `destroy` 移至首个请求，其余请求的操作码整体后移一位。
 3. `set_primary_output` 参数由输出名称 `string` 改为不可为 null 且已启用的 `wl_output` 对象；传已禁用或已销毁的输出将通过 `primary_output_failed` 事件拒绝而非协议错误。不再支持通过传 null 清除主屏指定。
 4. `primary_output` 事件参数由输出名称 `string` 改为 `wl_output` 对象（仅当无可用输出时为 null），绑定时立即发送一次，并确认每一次 `set_primary_output` 请求。当被指定的主屏被拔出或禁用时，合成器自动选择另一个可用输出作为新主屏并发送该事件。
-5. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为新增的 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`，`invalid_color_temperature = 4`，`invalid_brightness = 5`），线缆取值因此反转。
-6. picture control 的 `error` 枚举删除：其 `invalid_color_temperature`/`invalid_brightness` 项并入 `commit_result`，越界的 pending 值不再在 set_* 请求上报协议错误，而是导致 commit 失败并通过 `result` 事件反馈，接口因此不再有任何协议错误；枚举移至 requests 之前，`primary_output_error` 枚举供新增的 `primary_output_failed` 事件使用。`get_picture_control` 接受任何状态的合法 `wl_output`——无效对象 ID 仍属核心协议错误；输出有效性在 commit 时通过 `result` 事件反馈。
+5. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为新增的 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`），线缆取值因此反转。
+6. picture control 的 `error` 枚举在重命名后的 `treeland_output_picture_control_v2` 接口上保留；其 `invalid_color_temperature`/`invalid_brightness` 项名称不变，但因接口版本重置，值由 1/2 重置为 0/1，`set_*` 越界即致命协议错误的行为不变。`commit_result` 因此只承载成功与输出相关的失败原因（不含范围校验项）；枚举移至 requests 之前，`primary_output_failed_reason` 枚举供新增的 `primary_output_failed` 事件使用。`get_picture_control` 接受任何状态的合法 `wl_output`——无效对象 ID 仍属核心协议错误；输出有效性在 commit 时通过 `result` 事件反馈。
 
 消费者应将全局对象重新绑定为 `treeland_output_manager_v2`，改传 `wl_output` 对象而非输出名称，并按 `commit_result` 枚举解释 `result` 值；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
 
