@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_output_mirror_manager_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="manage output mirroring (copy mode) groups">
+        This protocol lets a privileged client such as the DDE display settings
+        panel organize physical outputs into mirroring groups: one source
+        output whose rendered content is duplicated to one or more mirror
+        outputs, so that several screens show the same desktop. This is the
+        "copy mode" of the compositor, as opposed to the default "extension"
+        mode where each output shows an independent desktop region.
+
+        The protocol exposes a singleton manager global that creates and
+        tracks treeland_output_mirror_group_v1 objects. Each group designates
+        a single source output and an ordered list of mirror outputs, all
+        referenced by their wl_output objects. An output may belong to at most
+        one group at a time. A group drives copy mode while it has both a
+        source and at least one mirror; a group with no source or no mirrors
+        is inert and the affected outputs behave as normal extension outputs.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
+    <interface name="treeland_output_mirror_manager_v1" version="1">
+        <description summary="manager for output mirror groups">
+            A singleton global that creates treeland_output_mirror_group_v1
+            objects and broadcasts the set of existing groups to bound clients.
+
+            When a client binds this interface, the compositor immediately
+            emits one group_added event for each group that already exists,
+            handing the client a live group object for each of them. When any
+            client creates a new group, every other bound client receives a
+            group_added event for it; when a group is dissolved, every bound
+            client receives a group_removed event. Clients therefore never
+            need to poll for the group set and must not assume it stays
+            consistent between events.
+
+            The protocol is intended for a single privileged client such as
+            the DDE display settings panel. Multiple clients may bind
+            concurrently for observation, but only one client is expected to
+            drive configuration; concurrent conflicting edits from several
+            clients are not supported and may fail with fatal protocol errors.
+        </description>
+
+        <enum name="error">
+            <description summary="fatal manager protocol errors">
+                Raised as fatal protocol errors on the manager object.
+            </description>
+            <entry name="invalid_name" value="0"
+                summary="the group name is empty, not valid UTF-8, contains a NUL byte, or is rejected by the compositor" />
+            <entry name="name_exists" value="1"
+                summary="a group with the requested name already exists" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager object">
+                Destroy the treeland_output_mirror_manager_v1 object and
+                release the client's binding to the manager global.
+
+                Existing treeland_output_mirror_group_v1 objects are not
+                affected and remain valid until they are destroyed or the
+                compositor dissolves the group. The client must destroy each
+                group object separately; the compositor does not cascade
+                destruction from the manager.
+            </description>
+        </request>
+
+        <request name="create_group">
+            <description summary="create a new output mirror group">
+                Create a new, initially empty treeland_output_mirror_group_v1
+                object. The new group has no source and no mirrors; the client
+                configures it afterwards with set_source and add_output on the
+                returned object. Copy mode engages once the group has both a
+                source and at least one mirror.
+
+                The name identifies the group in group_added and group_removed
+                events and must be unique among existing groups. It must be a
+                non-empty UTF-8 string and must not contain a NUL byte. The
+                compositor may reject names it considers too long with the
+                invalid_name error. An empty name, a name that is not valid
+                UTF-8, or a name containing a NUL byte is rejected with the
+                invalid_name error. A name that already identifies an existing
+                group is rejected with the name_exists error.
+
+                These name checks are deterministic at request time, so the
+                compositor raises them as fatal protocol errors on the manager
+                object and does not create the group object.
+
+                On success the compositor broadcasts a group_added event
+                carrying a new group object to every other bound client; the
+                calling client receives its group object only as the new_id
+                return value of this request and does not receive a
+                group_added event for it.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_mirror_group_v1"
+                summary="the new mirror group object" />
+            <arg name="name" type="string"
+                summary="unique UTF-8 name for the group" />
+        </request>
+
+        <event name="group_added">
+            <description summary="a mirror group was created">
+                Emitted when a mirror group is created by any client. Each
+                bound client receives this event once per existing group
+                immediately after binding the manager, and again whenever a
+                new group is created, except for the client that created the
+                group, which receives the group object as the new_id return
+                value of create_group instead.
+
+                The id argument is a fresh treeland_output_mirror_group_v1
+                object bound to the group; the compositor sends the initial
+                source and output_added state of the group on it immediately
+                after this event. The client may destroy the object if it does
+                not need to observe or drive that group; doing so does not
+                dissolve the group.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_mirror_group_v1"
+                summary="a group object bound to the new group" />
+            <arg name="name" type="string"
+                summary="the name of the new group" />
+        </event>
+
+        <event name="group_removed">
+            <description summary="a mirror group was dissolved">
+                Emitted when a mirror group is dissolved, whether because a
+                client sent the dissolve request or because the compositor
+                removed it as a whole. Every bound client receives this event
+                for the group; any group objects that client holds for it
+                receive a removed event and must be destroyed afterwards.
+            </description>
+            <arg name="name" type="string"
+                summary="the name of the dissolved group" />
+        </event>
+    </interface>
+
+    <interface name="treeland_output_mirror_group_v1" version="1">
+        <description summary="an output mirroring group">
+            Represents one mirroring group: a single source wl_output whose
+            rendered content is duplicated to an ordered list of mirror
+            wl_outputs. The group is created empty by
+            treeland_output_mirror_manager_v1.create_group, or handed to an
+            observing client by the manager group_added event.
+
+            Object model. The group keeps two disjoint sets of outputs: a
+            source (zero or one) and an ordered list of mirrors (zero or more).
+            An output may belong to at most one group; an output that is
+            already the source or a mirror of another group is rejected with
+            the output_in_use error. The client builds the group incrementally
+            with set_source and add_output, in any order. Copy mode is engaged
+            on the affected outputs while the group has both a source and at
+            least one mirror; a group with no source or no mirrors is inert and
+            those outputs behave as normal extension outputs.
+
+            Initial state. Immediately after the group object is created,
+            whether by create_group or group_added, the compositor sends the
+            current state on the new object: one source event (with a null
+            output when the group has no source) followed by one output_added
+            event for each mirror in list order. Subsequent state changes are
+            reported by further source, output_added, and output_removed
+            events.
+
+            Multiple objects per group. Several group objects may be bound to
+            the same underlying group, for example one from create_group and
+            others from group_added to observing clients. All of them observe
+            the same state and receive the same change events. Destroying one
+            group object only releases that client's handle; it does not
+            dissolve the group or affect other handles.
+
+            Dissolving a group. To tear down copy mode and remove the group,
+            a client sends the dissolve request. The compositor exits copy
+            mode, emits a removed event to every group object bound to this
+            group and a group_removed event on the manager, and the group no
+            longer exists. After the removed event the object is inert; the
+            only valid request on it is destroy, and any other request is
+            rejected with the already_dissolved error.
+
+            Hardware removal. When a member output is unplugged or disabled
+            the compositor updates the group automatically. If a mirror is
+            removed the compositor emits output_removed for it. If the source
+            is removed and one or more mirrors remain, the first remaining
+            mirror becomes the new source: the compositor emits
+            output_removed for that output (it leaves the mirror set) followed
+            by a source event for it. If the source is removed and no mirrors
+            remain, the compositor emits a source event with a null output.
+        </description>
+
+        <enum name="error">
+            <description summary="fatal group protocol errors">
+                Raised as fatal protocol errors on the group object.
+            </description>
+            <entry name="invalid_output" value="0"
+                summary="the provided output is null, disabled, destroyed, or not a recognized enabled wl_output" />
+            <entry name="duplicate_output" value="1"
+                summary="the output is already the source or a mirror of this group" />
+            <entry name="output_in_use" value="2"
+                summary="the output is the source or a mirror of another mirror group" />
+            <entry name="not_in_group" value="3"
+                summary="the output is not a member of this group" />
+            <entry name="already_dissolved" value="4"
+                summary="the group has been dissolved; only destroy may be sent" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the group object">
+                Destroy this treeland_output_mirror_group_v1 object and
+                release the client's handle on the group. The group itself is
+                not affected: copy mode continues, other handles remain valid,
+                and the compositor does not emit group_removed. The client uses
+                the dissolve request to tear down the group as a whole.
+
+                It is safe to destroy a group object that has already received
+                the removed event.
+            </description>
+        </request>
+
+        <request name="set_source">
+            <description summary="designate the source output">
+                Set the given output as the source of the group, replacing any
+                current source. The previous source, if any, is removed from
+                the group and becomes a normal extension output again.
+
+                The output must be a valid, enabled wl_output that is not
+                already a member of this or another group. A null, disabled,
+                or destroyed output is rejected with the invalid_output error.
+                An output that is already the source or a mirror of this group
+                is rejected with the duplicate_output error; to promote a
+                current mirror to the source, first remove it with
+                remove_output and then set it with set_source. An output that
+                belongs to another group is rejected with the output_in_use
+                error.
+
+                If the group already has mirrors, setting the source engages or
+                updates copy mode immediately. The compositor confirms the new
+                source by emitting a source event.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the output to designate as the source" />
+        </request>
+
+        <request name="add_output">
+            <description summary="add a mirror output">
+                Append the given output to the end of the group's mirror list.
+                The output must be a valid, enabled wl_output that is not
+                already a member of this or another group. A null, disabled, or
+                destroyed output is rejected with the invalid_output error. An
+                output already in this group is rejected with the
+                duplicate_output error. An output in another group is
+                rejected with the output_in_use error.
+
+                If the group already has a source, adding a mirror engages or
+                extends copy mode immediately. The compositor confirms by
+                emitting an output_added event. Sources and mirrors may be set
+                in any order; copy mode engages once both are present.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the output to add as a mirror" />
+        </request>
+
+        <request name="remove_output">
+            <description summary="remove a member output">
+                Remove the given output from the group. The output must be a
+                current member of this group; otherwise the compositor raises
+                the not_in_group error.
+
+                If the output is a mirror, the compositor emits an
+                output_removed event for it. If the group then has a source but
+                no mirrors, copy mode exits while the source remains set.
+
+                If the output is the source, the source is cleared and the
+                compositor emits a source event with a null output; the mirrors
+                are unchanged and copy mode exits. This client-driven removal
+                does not auto-select a successor; to promote a mirror, call
+                set_source on it afterwards. Hardware-driven removal of the
+                source, by contrast, does auto-select a successor as described
+                in the interface description.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the member output to remove" />
+        </request>
+
+        <request name="dissolve">
+            <description summary="dissolve the group and exit copy mode">
+                Tear down the group: exit copy mode, remove the group from the
+                manager, and release the affected outputs. The compositor emits
+                a removed event to every group object bound to this group and a
+                group_removed event on the manager to every bound client.
+
+                After the removed event the group object is inert; the only
+                request the client may send on it is destroy. Any other
+                request is rejected with the already_dissolved error. If the
+                group was already dissolved, sending dissolve again is also
+                rejected with already_dissolved.
+            </description>
+        </request>
+
+        <event name="source">
+            <description summary="current source output of the group">
+                Reports the current source output of the group. It is emitted
+                once immediately after the group object is created, with a
+                null output when the group has no source, and again whenever
+                the source changes: because a client called set_source or
+                removed the source, or because the source output was unplugged
+                or disabled and a successor was selected or none remained.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                allow-null="true"
+                summary="the current source output, or null when the group has no source" />
+        </event>
+
+        <event name="output_added">
+            <description summary="a mirror output was added">
+                Reports that an output was appended to the mirror list. It is
+                emitted once for each existing mirror, in list order,
+                immediately after the group object is created, and again
+                whenever a client adds a mirror with add_output.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the mirror output that was added" />
+        </event>
+
+        <event name="output_removed">
+            <description summary="a mirror output was removed">
+                Reports that an output left the mirror list. It is emitted when
+                a client removes a mirror with remove_output, when a mirror
+                output is unplugged or disabled, or when a mirror is promoted
+                to the source because the previous source was removed and a
+                successor had to be selected.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the mirror output that was removed" />
+        </event>
+
+        <event name="removed">
+            <description summary="the group was dissolved">
+                Emitted to every group object bound to the group when the group
+                is dissolved, whether because a client sent the dissolve
+                request or because the compositor removed the group as a whole.
+                After this event the object is inert and the client must
+                destroy it. No further state events are emitted on the object.
+            </description>
+        </event>
+    </interface>
+</protocol>
