@@ -42,6 +42,8 @@
         <enum name="error">
             <entry name="layer_shell_extension_exists" value="0"
                 summary="the wl_surface already has a layer shell extension object bound"/>
+            <entry name="wl_surface_invalid" value="1"
+                summary="the get_layer_shell_extension_object wl_surface argument is invalid"/>
         </enum>
 
         <request name="destroy" type="destructor">
@@ -125,6 +127,8 @@
                 summary="edges is not a valid resize_edge value"/>
             <entry name="inactive" value="3"
                 summary="the compositor cannot take over the resize right now (no container, surface not layer, animation running, or seat refused the takeover)"/>
+            <entry name="bad_surface" value="4"
+                summary="the surface is invalid or has been destroyed"/>
         </enum>
 
         <request name="destroy" type="destructor">
