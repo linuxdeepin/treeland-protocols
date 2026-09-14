@@ -23,14 +23,12 @@
         such a uuid is only stable while the device remains connected to
         the same connector.
 
-        Clients obtain a uuid for a wl_output object via get_uuid on this
-        protocol. A companion protocol, treeland-output-uuid-head-unstable-v1,
-        provides the same uuid for a zwlr_output_head_v1 object; both entry
-        points return the same uuid for the same physical output device.
-        The wlr-output-management head is advertised even while the output
-        is disabled, so the head variant lets clients identify an output
-        that has no live wl_output global; get_uuid is more convenient when
-        the client already holds a wl_output.
+        Clients obtain a uuid for a wl_output via get_uuid on this
+        protocol, or for a zwlr_output_head_v1 via the companion
+        treeland-output-uuid-head-unstable-v1 protocol; both entry points
+        return the same uuid for the same physical output device. The head
+        variant can identify an output that is disabled and has no live
+        wl_output global.
 
         Clients must treat the uuid as opaque: they must not parse it,
         derive meaning from its contents, or present it to users.
@@ -50,15 +48,10 @@
     <interface name="treeland_output_uuid_manager_v1" version="1">
         <description summary="factory for output uuid objects from wl_output">
             A singleton global that creates treeland_output_uuid_v1 objects
-            from wl_output objects.
-
-            The client binds wl_output globals through the wl_registry, then
-            calls get_uuid for each output it wants to identify. The
-            compositor reports the uuid in the initial uuid event on the
-            returned object.
-
-            Multiple uuid objects may be created for the same output at
-            the same time; each object reports the uuid independently.
+            from wl_output objects. The client calls get_uuid for each output
+            it wants to identify; the compositor reports the uuid in the
+            initial uuid event on the returned object. Multiple uuid objects
+            may be created for the same output; each reports independently.
         </description>
 
         <request name="destroy" type="destructor">
@@ -77,12 +70,7 @@
                 Create a treeland_output_uuid_v1 object for the given
                 wl_output. The output may be in any state, including disabled:
                 the uuid identifies the physical device regardless of its
-                enabled state. The compositor emits the initial uuid event
-                on the new object immediately after this request.
-
-                The output must be a live wl_output resource. An invalid or
-                destroyed object id, or an object of another type, is
-                rejected by the core protocol (wl_display.invalid_object).
+                enabled state.
 
                 For an output that is currently disabled and has no live
                 wl_output global, the client should use the companion
@@ -123,10 +111,9 @@
 
         <request name="destroy" type="destructor">
             <description summary="destroy the output uuid object">
-                Destroy this treeland_output_uuid_v1 object. Only this
-                object is affected; the uuid of the output itself does not
-                change, and other objects, including other uuid objects for
-                the same output, are not affected.
+                Destroy this object. Only this object is affected; the uuid
+                of the output and other uuid objects for the same output
+                are unchanged.
             </description>
         </request>
 

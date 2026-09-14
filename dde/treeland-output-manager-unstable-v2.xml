@@ -60,12 +60,10 @@
 
         <enum name="error">
             <description summary="fatal manager protocol errors">
-                Raised as fatal protocol errors on the manager object. The
-                uuid of an output is never empty; an empty uuid string is
-                always a client error.
+                Raised as fatal protocol errors on the manager object.
             </description>
             <entry name="invalid_uuid" value="0"
-                summary="the provided uuid is empty" />
+                summary="the provided uuid is empty, or does not identify a connected output the compositor recognizes" />
         </enum>
 
         <request name="destroy" type="destructor">
@@ -108,12 +106,16 @@
                 allows the client to adjust the color temperature and
                 brightness of that output.
 
-                For any non-empty uuid this request always succeeds without
-                a protocol error, regardless of the output state — enabled,
-                disabled, unknown to the compositor, or no longer connected.
-                An empty uuid is rejected with the invalid_uuid fatal
-                protocol error. If the uuid does not identify a live enabled
-                output, subsequent commits fail with the invalid_output
+                The uuid must identify a currently connected output, in any
+                state (enabled or disabled). An empty uuid, or a uuid that
+                does not identify a connected output the compositor
+                recognizes, is rejected with the invalid_uuid fatal error.
+                This check is deterministic at request time, so the compositor
+                raises it on the manager object and does not create the
+                picture control object.
+
+                For an output that was valid at creation but later becomes
+                unavailable, subsequent commits fail with the invalid_output
                 result.
 
                 Multiple picture control objects may exist for the same output at
@@ -180,7 +182,8 @@
 
             Clients should destroy this object when the output identified
             by its uuid is removed; otherwise subsequent commits fail with
-            the invalid_output result.
+            the invalid_output result. (A uuid rejected at creation never
+            produces a picture control object; see get_picture_control.)
         </description>
 
         <enum name="error">
