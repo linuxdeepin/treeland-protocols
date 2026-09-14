@@ -291,13 +291,17 @@
         <request name="place_below">
             <description summary="restack the sub-surface">
                 Places this sub-surface just below the reference
-                identified by sibling_token.  The same values are
-                accepted as in place_above, except that the empty
-                string sentinel is not valid and triggers an
-                invalid_sibling event.
+                identified by sibling_token.  The same sibling_token
+                values are accepted as in place_above, except that an
+                empty string is a sentinel meaning "place at the very
+                bottom of the sibling stack".
+
+                If the sibling_token does not identify a valid
+                target, the request is ignored and an
+                invalid_sibling event is emitted.
             </description>
             <arg name="sibling_token" type="string"
-                 summary="a surface_token; empty string is not valid for place_below"/>
+                 summary="a surface_token or empty string for bottom"/>
         </request>
 
         <event name="invalid_sibling">
