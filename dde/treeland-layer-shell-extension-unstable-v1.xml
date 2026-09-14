@@ -117,9 +117,11 @@
                 begin_resize is rejected (no resize starts) when the serial is
                 stale (bad_serial), the edges value is not a valid resize_edge
                 (bad_edges), or the compositor cannot take over the resize
-                right now (inactive). The compositor then emits
-                resize_rejected with the reason; an accepted request instead
-                emits resizing(1).
+                right now (inactive). It is also rejected when the associated
+                surface is invalid or has been destroyed (bad_surface), or
+                the seat is invalid or has been destroyed (bad_seat). The
+                compositor then emits resize_rejected with the reason; an
+                accepted request instead emits resizing(1).
             </description>
             <entry name="bad_serial" value="1"
                 summary="serial does not match a recent pointer button press on the seat"/>
@@ -129,6 +131,8 @@
                 summary="the compositor cannot take over the resize right now (no container, surface not layer, animation running, or seat refused the takeover)"/>
             <entry name="bad_surface" value="4"
                 summary="the surface is invalid or has been destroyed"/>
+            <entry name="bad_seat" value="5"
+                summary="the seat is invalid or has been destroyed"/>
         </enum>
 
         <request name="destroy" type="destructor">
@@ -161,7 +165,9 @@
                 the standard layer-surface configure events. On a rejected
                 request it emits resize_rejected with a resize_error reason;
                 in that case no resize starts and resizing is never emitted
-                for this request.
+                for this request. A request on a destroyed surface or with a
+                destroyed seat is also rejected, with resize_error.bad_surface
+                or resize_error.bad_seat respectively.
 
                 The min/max size arguments bound this resize only: they apply
                 while this drag is active and are not a persistent property
