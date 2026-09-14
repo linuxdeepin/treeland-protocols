@@ -49,6 +49,23 @@ Recommended interface order:
 
 Within one interface, keep enums before requests, and keep requests before events. Existing Treeland files vary, but new or updated protocol work should follow this ordering.
 
+### since-version monotonicity (wayland-scanner constraint)
+
+`wayland-scanner` requires the effective `since` of interface members to be non-decreasing in **document order**, counting both requests and events together. A member without an explicit `since` defaults to `1` (it does *not* inherit the previous member's value). If a v1 member without `since` appears after a `since="2"` member, the scanner emits:
+
+```
+warning: since version not increasing
+```
+
+This is a tool-enforced hard constraint, not a style preference. Upstream `wayland-protocols` does not obey "all requests before all events"; it interleaves them (e.g. `linux-dmabuf-v1` puts the `format` event between requests) specifically to keep the since sequence monotonic.
+
+When the two rules conflict, **since-version monotonicity wins over "requests before events"**. Concretely, if a v1 event would land after a `since="2"` request, either:
+
+- move the v1 event before the `since="2"` request (preferred — upstream does this), or
+- as a last resort, add an explicit `since="1"` to the v1 member. This contradicts the "never write `since="1"`" rule below, so prefer the first option whenever possible.
+
+Never solve this by bumping a v1 member to `since="2"` — that is semantically wrong.
+
 ## 4. Description quality
 
 Descriptions should answer:
@@ -150,7 +167,8 @@ Before considering the XML finished, check:
 - destructor requests are marked `type="destructor"`
 - enums, if present, appear before requests
 - if an interface has a destroy request, it is the first request
-- requests appear before events
+- requests appear before events (unless since-version monotonicity requires interleaving — see section 3)
+- since sequence of requests and events is non-decreasing in document order; `wayland-scanner` emits no "since version not increasing" warning
 - object lifetime constraints are documented
 - event ordering constraints are documented where required
 - all enum references resolve correctly (short format for same-interface, fully-qualified `interface.enum` for cross-interface)
