@@ -27,6 +27,8 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-shortcut-manager-unstable-v3.xml
   dde/treeland-appearance-manager-unstable-v1.xml
   dde/treeland-output-mirror-manager-unstable-v1.xml
+  dde/treeland-output-uuid-unstable-v1.xml
+  dde/treeland-output-uuid-head-unstable-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml
   dde/treeland-show-desktop-unstable-v1.xml
   dde/treeland-layer-shell-extension-unstable-v1.xml

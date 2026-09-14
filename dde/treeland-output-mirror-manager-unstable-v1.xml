@@ -16,10 +16,13 @@
         The protocol exposes a singleton manager global that creates and
         tracks treeland_output_mirror_group_v1 objects. Each group designates
         a single source output and an ordered list of mirror outputs, all
-        referenced by their wl_output objects. An output may belong to at most
-        one group at a time. A group drives copy mode while it has both a
-        source and at least one mirror; a group with no source or no mirrors
-        is inert and the affected outputs behave as normal extension outputs.
+        addressed by opaque uuid strings. Clients obtain the uuid of an
+        output from the treeland-output-uuid-unstable-v1 protocol. An output
+        may belong to at most one group at a time. A group drives copy mode
+        while it has both a source and at least one mirror; a group with no
+        source or no mirrors is inert and the affected outputs behave as
+        normal extension outputs. An empty uuid represents the absence of a
+        source; output uuids are never empty.
 
         The terms "must", "must not", "should", and "may" in this document are
         to be interpreted as described in RFC 2119.
@@ -147,26 +150,30 @@
 
     <interface name="treeland_output_mirror_group_v1" version="1">
         <description summary="an output mirroring group">
-            Represents one mirroring group: a single source wl_output whose
-            rendered content is duplicated to an ordered list of mirror
-            wl_outputs. The group is created empty by
+            Represents one mirroring group: a single source output,
+            identified by its uuid, whose rendered content is duplicated to
+            an ordered list of mirror outputs, each identified by its uuid.
+            The group is created empty by
             treeland_output_mirror_manager_v1.create_group, or handed to an
             observing client by the manager group_added event.
 
             Object model. The group keeps two disjoint sets of outputs: a
             source (zero or one) and an ordered list of mirrors (zero or more).
-            An output may belong to at most one group; an output that is
-            already the source or a mirror of another group is rejected with
-            the output_in_use error. The client builds the group incrementally
-            with set_source and add_output, in any order. Copy mode is engaged
-            on the affected outputs while the group has both a source and at
-            least one mirror; a group with no source or no mirrors is inert and
-            those outputs behave as normal extension outputs.
+            Each output is identified by the uuid obtained from the
+            treeland-output-uuid-unstable-v1 protocol; an output uuid is
+            never empty. An output may belong to at most one group; an output
+            that is already the source or a mirror of another group is
+            rejected with the output_in_use error. The client builds the group
+            incrementally with set_source and add_output, in any order. Copy
+            mode is engaged on the affected outputs while the group has both a
+            source and at least one mirror; a group with no source or no
+            mirrors is inert and those outputs behave as normal extension
+            outputs.
 
             Initial state. Immediately after the group object is created,
             whether by create_group or group_added, the compositor sends the
-            current state on the new object: one source event (with a null
-            output when the group has no source) followed by one output_added
+            current state on the new object: one source event (with an empty
+            uuid when the group has no source) followed by one output_added
             event for each mirror in list order. Subsequent state changes are
             reported by further source, output_added, and output_removed
             events.
@@ -193,7 +200,7 @@
             mirror becomes the new source: the compositor emits
             output_removed for that output (it leaves the mirror set) followed
             by a source event for it. If the source is removed and no mirrors
-            remain, the compositor emits a source event with a null output.
+            remain, the compositor emits a source event with an empty uuid.
         </description>
 
         <enum name="error">
@@ -201,7 +208,7 @@
                 Raised as fatal protocol errors on the group object.
             </description>
             <entry name="invalid_output" value="0"
-                summary="the provided output is null, disabled, destroyed, or not a recognized enabled wl_output" />
+                summary="no enabled output with the provided uuid is currently connected" />
             <entry name="duplicate_output" value="1"
                 summary="the output is already the source or a mirror of this group" />
             <entry name="output_in_use" value="2"
@@ -227,13 +234,15 @@
 
         <request name="set_source">
             <description summary="designate the source output">
-                Set the given output as the source of the group, replacing any
-                current source. The previous source, if any, is removed from
-                the group and becomes a normal extension output again.
+                Set the output identified by the given uuid as the source of
+                the group, replacing any current source. The previous source,
+                if any, is removed from the group and becomes a normal
+                extension output again.
 
-                The output must be a valid, enabled wl_output that is not
-                already a member of this or another group. A null, disabled,
-                or destroyed output is rejected with the invalid_output error.
+                The uuid must identify a currently connected, enabled output
+                that is not already a member of this or another group. If no
+                enabled output with this uuid is currently connected, the
+                compositor rejects the request with the invalid_output error.
                 An output that is already the source or a mirror of this group
                 is rejected with the duplicate_output error; to promote a
                 current mirror to the source, first remove it with
@@ -245,49 +254,50 @@
                 updates copy mode immediately. The compositor confirms the new
                 source by emitting a source event.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                summary="the output to designate as the source" />
+            <arg name="uuid" type="string"
+                summary="uuid of the output to designate as the source" />
         </request>
 
         <request name="add_output">
             <description summary="add a mirror output">
-                Append the given output to the end of the group's mirror list.
-                The output must be a valid, enabled wl_output that is not
-                already a member of this or another group. A null, disabled, or
-                destroyed output is rejected with the invalid_output error. An
-                output already in this group is rejected with the
-                duplicate_output error. An output in another group is
-                rejected with the output_in_use error.
+                Append the output identified by the given uuid to the end of
+                the group's mirror list. The uuid must identify a currently
+                connected, enabled output that is not already a member of this
+                or another group. If no enabled output with this uuid is
+                currently connected, the compositor rejects the request with
+                the invalid_output error. An output already in this group is
+                rejected with the duplicate_output error. An output in another
+                group is rejected with the output_in_use error.
 
                 If the group already has a source, adding a mirror engages or
                 extends copy mode immediately. The compositor confirms by
                 emitting an output_added event. Sources and mirrors may be set
                 in any order; copy mode engages once both are present.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                summary="the output to add as a mirror" />
+            <arg name="uuid" type="string"
+                summary="uuid of the output to add as a mirror" />
         </request>
 
         <request name="remove_output">
             <description summary="remove a member output">
-                Remove the given output from the group. The output must be a
-                current member of this group; otherwise the compositor raises
-                the not_in_group error.
+                Remove the output identified by the given uuid from the group.
+                The output must be a current member of this group; otherwise
+                the compositor raises the not_in_group error.
 
                 If the output is a mirror, the compositor emits an
                 output_removed event for it. If the group then has a source but
                 no mirrors, copy mode exits while the source remains set.
 
                 If the output is the source, the source is cleared and the
-                compositor emits a source event with a null output; the mirrors
+                compositor emits a source event with an empty uuid; the mirrors
                 are unchanged and copy mode exits. This client-driven removal
                 does not auto-select a successor; to promote a mirror, call
                 set_source on it afterwards. Hardware-driven removal of the
                 source, by contrast, does auto-select a successor as described
                 in the interface description.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                summary="the member output to remove" />
+            <arg name="uuid" type="string"
+                summary="uuid of the member output to remove" />
         </request>
 
         <request name="dissolve">
@@ -307,16 +317,16 @@
 
         <event name="source">
             <description summary="current source output of the group">
-                Reports the current source output of the group. It is emitted
-                once immediately after the group object is created, with a
-                null output when the group has no source, and again whenever
-                the source changes: because a client called set_source or
-                removed the source, or because the source output was unplugged
-                or disabled and a successor was selected or none remained.
+                Reports the uuid of the current source output of the group. It
+                is emitted once immediately after the group object is created,
+                with an empty uuid when the group has no source, and again
+                whenever the source changes: because a client called set_source
+                or removed the source, or because the source output was
+                unplugged or disabled and a successor was selected or none
+                remained.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                allow-null="true"
-                summary="the current source output, or null when the group has no source" />
+            <arg name="uuid" type="string"
+                summary="uuid of the current source output, or empty when the group has no source" />
         </event>
 
         <event name="output_added">
@@ -326,8 +336,8 @@
                 immediately after the group object is created, and again
                 whenever a client adds a mirror with add_output.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                summary="the mirror output that was added" />
+            <arg name="uuid" type="string"
+                summary="uuid of the mirror output that was added" />
         </event>
 
         <event name="output_removed">
@@ -338,8 +348,8 @@
                 to the source because the previous source was removed and a
                 successor had to be selected.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                summary="the mirror output that was removed" />
+            <arg name="uuid" type="string"
+                summary="uuid of the mirror output that was removed" />
         </event>
 
         <event name="removed">
