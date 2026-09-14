@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_xwindow_control_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="XWayland window placement control for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged DDE client such as the dock or
+        shell to place XWayland windows on the compositor: moving an
+        XWayland window identified by its X11 window ID to a position
+        relative to another surface.
+
+        The compositor should reject bind attempts from non-privileged
+        clients.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_xwindow_control_v1" version="1">
+        <description summary="XWayland window placement control">
+            A global that exposes XWayland window placement actions to a
+            privileged DDE client.
+
+            The compositor should reject bind attempts from non-privileged
+            clients.
+
+            This interface is stateless: each request is an independent
+            one-shot action. The compositor does not send events on this
+            interface; set_xwindow_position_relative reports its result
+            through a per-request wl_callback.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the xwindow control object">
+                Destroy the treeland_xwindow_control_v1 object.
+
+                This request does not alter any window position;
+                placements already applied remain in effect.
+            </description>
+        </request>
+
+        <request name="set_xwindow_position_relative">
+            <description summary="move an XWayland window relative to a surface">
+                Request that the compositor move the XWayland window
+                identified by the X11 window ID wid so that its top-left
+                point is placed at the anchor surface's top-left point
+                offset by (dx, dy).
+
+                Once the compositor has finished processing, it sends the
+                done event to the callback and destroys the callback. The
+                callback data is 0 when the move succeeded, and 1 when it
+                failed, for example because no XWayland window with the
+                given wid is currently mapped or the anchor surface is
+                invalid.
+
+                The compositor may apply the new position asynchronously.
+            </description>
+            <arg name="callback" type="new_id" interface="wl_callback" summary="callback that receives the result" />
+            <arg name="wid" type="uint" summary="X11 window ID" />
+            <arg name="anchor" type="object" interface="wl_surface" summary="the reference surface" />
+            <arg name="dx" type="fixed" summary="horizontal offset from the anchor top-left point" />
+            <arg name="dy" type="fixed" summary="vertical offset from the anchor top-left point" />
+        </request>
+    </interface>
+</protocol>

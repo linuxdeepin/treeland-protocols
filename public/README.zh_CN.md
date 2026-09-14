@@ -4,13 +4,24 @@
 
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
-| `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker`, `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1`, `treeland_multitaskview_v1`, `treeland_window_picker_v1`, `treeland_lockscreen_v1` | DDE Shell 集成：surface 角色、重叠检测、活跃事件、多任务视图、窗口选取、锁屏 |
+| `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker`, `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1`, `treeland_multitaskview_v1`, `treeland_window_picker_v1`, `treeland_lockscreen_v1` | DDE Shell 集成：surface 角色、重叠检测、活跃事件、多任务视图、窗口选取、锁屏；`set_xwindow_position_relative` 请求已废弃且不可用，由 `dde/treeland-xwindow-control-unstable-v1.xml` 取代 |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | 查询与订阅用户级外观设置：光标主题/大小、字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、圆角 |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | 逐窗口服务端装饰（SSD）定制：圆角、阴影、边框、标题栏可见性；需先经 xdg-decoration 申请 SSD |
 
 ## 破坏性变更
 
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
+
+### 0.7.0
+
+#### `treeland-dde-shell-v1.xml`
+
+管理器的 `set_xwindow_position_relative` 请求现标注为已废弃且不可用：请求无任何效果，也不会创建任何回调。文件暂保留原位；整个 `treeland-dde-shell` 协议计划在未来版本彻底移除。
+
+它由 `dde/` 下一个新的独立协议取代：
+- `treeland-xwindow-control-unstable-v1.xml`（`treeland_xwindow_control_v1`）：XWayland 窗口定位——`set_xwindow_position_relative` 请求，结果经 `wl_callback` 回报，线缆语义不变。
+
+消费者应改绑新的全局对象；已废弃请求不得用于新代码。
 
 ### 0.6.0
 

@@ -67,14 +67,10 @@
 
         <request name="set_xwindow_position_relative">
             <description summary="Move a XWayland surface to a position relative to a wl_surface">
-                Move the top-left point of a XWayland surface
-                specified with Window ID, to a position that has
-                (dx, dy) offset from the top-left point of a wl_surface
-
-                Once the server finished process it send "done" to the
-                callback. The callback data 0 means no error occured,
-                1 means something went wrong and the move cannot be
-                done.
+                Deprecated: this request is non-functional and has no
+                effect. Superseded by the set_xwindow_position_relative
+                request of the treeland_xwindow_control_v1 global of the
+                treeland-xwindow-control-unstable-v1 protocol.
             </description>
             <arg name="callback" type="new_id" interface="wl_callback"/>
             <arg name="wid" type="uint" summary="X11 window ID"/>
