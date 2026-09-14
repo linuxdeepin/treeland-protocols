@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_output_uuid_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="stable uuid identity for outputs">
+        This protocol lets clients obtain a stable uuid for each output,
+        identifying the physical output device behind it. The uuid is an
+        opaque, non-empty UTF-8 string that remains stable across sessions
+        and output reconnections, so clients and the compositor can persist
+        per-output settings and restore them after a restart. Other
+        treeland protocols, such as treeland_output_manager_v2 and
+        treeland_output_mirror_group_v1, address outputs by these uuids.
+
+        The uuid is unique among the currently connected outputs: the
+        compositor must ensure that no two connected outputs report the
+        same uuid at the same time. The compositor derives the uuid from
+        the persistent identity of the device, for example the make, model,
+        and serial reported in its EDID. When no persistent device identity
+        is available, the compositor may derive the uuid from the connector;
+        such a uuid is only stable while the device remains connected to
+        the same connector.
+
+        Clients obtain a uuid for a wl_output object via get_uuid on this
+        protocol. A companion protocol, treeland-output-uuid-head-unstable-v1,
+        provides the same uuid for a zwlr_output_head_v1 object; both entry
+        points return the same uuid for the same physical output device.
+        The wlr-output-management head is advertised even while the output
+        is disabled, so the head variant lets clients identify an output
+        that has no live wl_output global; get_uuid is more convenient when
+        the client already holds a wl_output.
+
+        Clients must treat the uuid as opaque: they must not parse it,
+        derive meaning from its contents, or present it to users.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
+    <interface name="treeland_output_uuid_manager_v1" version="1">
+        <description summary="factory for output uuid objects from wl_output">
+            A singleton global that creates treeland_output_uuid_v1 objects
+            from wl_output objects.
+
+            The client binds wl_output globals through the wl_registry, then
+            calls get_uuid for each output it wants to identify. The
+            compositor reports the uuid in the initial uuid event on the
+            returned object.
+
+            Multiple uuid objects may be created for the same output at
+            the same time; each object reports the uuid independently.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager object">
+                Destroy the treeland_output_uuid_manager_v1 object and
+                release the client's binding to the manager global.
+
+                Existing treeland_output_uuid_v1 objects created through
+                this manager are not affected and must be destroyed
+                separately by the client.
+            </description>
+        </request>
+
+        <request name="get_uuid">
+            <description summary="create a uuid object for a wl_output">
+                Create a treeland_output_uuid_v1 object for the given
+                wl_output. The output may be in any state, including disabled:
+                the uuid identifies the physical device regardless of its
+                enabled state. The compositor emits the initial uuid event
+                on the new object immediately after this request.
+
+                The output must be a live wl_output resource. An invalid or
+                destroyed object id, or an object of another type, is
+                rejected by the core protocol (wl_display.invalid_object).
+
+                For an output that is currently disabled and has no live
+                wl_output global, the client should use the companion
+                treeland-output-uuid-head-unstable-v1 protocol with the
+                corresponding zwlr_output_head_v1 instead.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_uuid_v1"
+                summary="the new output uuid object" />
+            <arg name="output" type="object" interface="wl_output"
+                summary="the output to identify" />
+        </request>
+    </interface>
+
+    <interface name="treeland_output_uuid_v1" version="1" frozen="true">
+        <description summary="uuid identity of one output">
+            Represents the uuid identity of the output it was created for,
+            obtained from treeland_output_uuid_manager_v1.get_uuid or from
+            the companion treeland-output-uuid-head-unstable-v1 protocol.
+            The compositor emits the uuid event once immediately after the
+            object is created, and again whenever the uuid of the output
+            changes, for example when a persistent device identity becomes
+            available after an initial connector-based fallback.
+
+            The object is not tied to the lifetime of the wl_output global:
+            when the output is unplugged and its wl_output global is
+            destroyed, this object remains valid and the last reported uuid
+            remains the identity of the physical device, which may
+            reappear later with the same uuid. The client should destroy
+            this object when it no longer needs the mapping.
+
+            Note, because treeland_output_uuid_v1 objects are created from
+            multiple independent factory interfaces —
+            treeland_output_uuid_manager_v1 on this protocol and
+            treeland_output_uuid_head_manager_v1 on the companion
+            treeland-output-uuid-head-unstable-v1 protocol — the
+            treeland_output_uuid_v1 interface is frozen at version 1.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the output uuid object">
+                Destroy this treeland_output_uuid_v1 object. Only this
+                object is affected; the uuid of the output itself does not
+                change, and other objects, including other uuid objects for
+                the same output, are not affected.
+            </description>
+        </request>
+
+        <event name="uuid">
+            <description summary="current uuid of the output">
+                Reports the current uuid of the output. It is emitted once
+                immediately after the object is created, and again whenever
+                the compositor determines a different uuid for the output.
+            </description>
+            <arg name="uuid" type="string"
+                summary="opaque uuid identifying the physical output" />
+        </event>
+    </interface>
+</protocol>
