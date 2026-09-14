@@ -36,12 +36,12 @@ Before drafting or reviewing, read:
 - Keep each protocol narrow in scope. If a request starts needing unrelated policy or multiple roles, split the protocol.
 - Prefer clear object lifetimes over implicit state machines.
 - Use `new_id` only when the compositor is creating a protocol object for the client.
-- Within one interface, prefer the order: `description -> enum -> destroy request -> other requests -> events`.
+- Within one interface, prefer the order: `description -> enum -> destroy request -> other requests -> events`. This is a style preference only; when it conflicts with since-version monotonicity (see rules reference section 3), interleave requests and events as needed, as upstream `wayland-protocols` does.
 - Interface descriptions should state the interface purpose and briefly describe the expected workflow when it is not obvious.
 - Manager-style interfaces should provide an explicit `destroy` request.
 - If an interface has a destroy-style request, place it as the first request in that interface.
 - Use `type="destructor"` on explicit destroy requests.
-- Keep all requests before all events inside one interface.
+- Keep all requests before all events inside one interface, unless a v1 event would land after a `since="2"` request and drop the since counter — in that case move the v1 event earlier rather than adding `since="1"` (see rules reference section 3).
 - Request descriptions should document any required call scenarios, preconditions, and ordering constraints.
 - Put protocol errors in `enum name="error"` when clients can violate required rules.
 - Avoid XML comments for protocol semantics. Put normative and behavioral information in `<description>` blocks. If a short comment is needed for maintenance, keep it non-semantic.
@@ -57,3 +57,4 @@ Before finishing:
 - ensure enum references follow the short-format (same-interface) vs fully-qualified (cross-interface) convention — see rules reference section 7
 - ensure nullable object args explicitly use `allow-null="true"`
 - ensure destroy ordering constraints are documented wherever misuse would be a protocol error
+- run `wayland-scanner private-code <file> /dev/null` and fix any warnings, in particular "since version not increasing" (see rules reference section 3)
