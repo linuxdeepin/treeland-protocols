@@ -38,7 +38,13 @@
 
         <request name="get_treeland_dde_active">
             <description summary="create a new dde active">
-                Create a new dde active for a given seat.
+                Deprecated: this request is non-functional. The created
+                object's requests have no effect and no events are ever
+                emitted.
+
+                Superseded by the treeland_active_notify_manager_v1
+                global of the treeland-active-notify-unstable-v1
+                protocol.
             </description>
             <arg name="id" type="new_id" interface="treeland_dde_active_v1"/>
             <arg name="seat" type="object" interface="wl_seat" summary="seat associated with the dde_active"/>
