@@ -34,6 +34,14 @@
 
 消费者应将全局对象重新绑定为 `treeland_compositor_action_v1` 并触发 `show_desktop` 动作；旧 XML 在迁移期间仍会安装，但不得用于新代码。
 
+#### `treeland-dde-shell-v1.xml`
+
+DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协议。每个替代品均为独立的特权全局对象；消费者应改绑新的全局对象，停止使用已废弃的 dde-shell 接口。
+
+- `treeland_dde_active_v1`（含其创建请求 `get_treeland_dde_active`）已不可用，由 `treeland-active-notify-unstable-v1.xml`（`treeland_active_notify_manager_v1` / `treeland_active_notify_v1`）取代：`get_active_notify` 创建按 Seat 限定的通知对象，其 `activity_enter`/`activity_leave` 事件携带 `reason` 枚举（由 `active_in`/`active_out` 更名；鼠标跟踪左键状态，滚轮为逐事件脉冲），并新增 `start_drag`/`drop`/`drag_cancelled` 生命周期事件。
+- `treeland_window_overlap_checker`（含其创建请求 `get_window_overlap_checker`）已不可用，由 `treeland-window-overlap-checker-unstable-v1.xml`（`treeland_window_overlap_checker_manager_v1` / `treeland_window_overlap_checker_v1`）取代：checker 接口补上 `_v1` 后缀，设区域请求由 `update` 更名为 `set_region`，含显式 `anchor` 枚举与 `invalid_anchor`/`invalid_size` 错误，并新增 `output_removed` 覆盖输出生命周期。
+- `treeland_multitaskview_v1` 和 `treeland_lockscreen_v1`（含其创建请求）在废弃期间仍可用，由 `treeland-compositor-action-unstable-v1.xml`（`treeland_compositor_action_v1`）的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
+
 ### 0.6.0
 
 #### `treeland-output-manager-v1.xml`
