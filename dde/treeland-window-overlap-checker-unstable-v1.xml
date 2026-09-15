@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
         with any xdg-shell toplevel window, for example to implement smart
         panel hiding.
 
-        The compositor should reject bind attempts from non-privileged
+        The compositor must reject bind attempts from non-privileged
         clients.
 
         The terms "must", "must not", "should", and "may" in this document
@@ -33,7 +33,7 @@ SPDX-License-Identifier: MIT
             one region; clients monitoring several regions create
             several checkers.
 
-            The compositor should reject bind attempts from non-privileged
+            The compositor must reject bind attempts from non-privileged
             clients.
         </description>
 
@@ -71,6 +71,17 @@ SPDX-License-Identifier: MIT
             the region against the current window layout and send the
             matching enter or leave event; afterwards it should send
             these events only when the overlap state changes.
+
+            The checker is associated with the wl_output passed to the
+            last set_region request. When that output is destroyed the
+            compositor sends the output_removed event; the checker then
+            becomes inert: it has no monitored region and sends no
+            further enter or leave events. The checker object itself is
+            not destroyed by output removal; the client may call
+            set_region again with another wl_output to resume
+            monitoring, or call destroy to release it. The compositor
+            must not send enter, leave, or output_removed after
+            output_removed until the next successful set_region.
         </description>
 
         <enum name="anchor">
@@ -113,6 +124,11 @@ SPDX-License-Identifier: MIT
                 unknown anchor value and invalid_size when width or
                 height is not positive.
 
+                The output becomes the output associated with the
+                checker, replacing any previous one; it may be a
+                different output from a previous call (rebinding), for
+                example after the previous output was removed.
+
                 After this request the compositor should evaluate the
                 current overlap state and send the matching enter or
                 leave event.
@@ -136,6 +152,21 @@ SPDX-License-Identifier: MIT
                 Sent when the registered region stops overlapping all
                 xdg-shell toplevel windows, and after a set_region
                 request while the region is currently clear.
+            </description>
+        </event>
+
+        <event name="output_removed">
+            <description summary="the associated output has been destroyed">
+                Sent when the wl_output passed to the last set_region
+                request has been destroyed by the compositor. The
+                checker then becomes inert: it has no monitored region
+                and sends no further enter or leave events.
+
+                The checker object itself is not destroyed; the client
+                may call set_region again with another wl_output to
+                resume monitoring, or call destroy to release it. The
+                compositor must not send this event more than once
+                without an intervening successful set_region.
             </description>
         </event>
     </interface>
