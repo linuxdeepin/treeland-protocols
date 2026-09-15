@@ -67,7 +67,7 @@ SPDX-License-Identifier: MIT
             set_region is called; the client must call set_region again
             whenever the monitored panel moves or resizes.
 
-            After each set_region request the compositor should evaluate
+            After each set_region request the compositor must evaluate
             the region against the current window layout and send the
             matching enter or leave event; afterwards it should send
             these events only when the overlap state changes.
@@ -82,6 +82,13 @@ SPDX-License-Identifier: MIT
             monitoring, or call destroy to release it. The compositor
             must not send enter, leave, or output_removed after
             output_removed until the next successful set_region.
+
+            The client may release the wl_output proxy passed to
+            set_region at any time after the request returns; the
+            compositor holds its own reference and the checker remains
+            associated with that output until either the output is
+            destroyed (triggering output_removed) or a subsequent
+            set_region rebinds to a different output.
         </description>
 
         <enum name="anchor">
@@ -91,6 +98,14 @@ SPDX-License-Identifier: MIT
                 full output width and is height units thick; for left and
                 right it spans the full output height and is width units
                 thick.
+
+                The dimension along the anchored edge is ignored: for
+                top and bottom the compositor uses the full output width
+                regardless of the width argument, and for left and right
+                it uses the full output height regardless of the height
+                argument. Only the thickness dimension matters — height
+                for top/bottom, width for left/right — and it must be
+                positive; the compositor raises invalid_size otherwise.
             </description>
             <entry name="top" value="0" summary="strip along the top edge of the output" />
             <entry name="bottom" value="1" summary="strip along the bottom edge of the output" />
@@ -129,7 +144,7 @@ SPDX-License-Identifier: MIT
                 different output from a previous call (rebinding), for
                 example after the previous output was removed.
 
-                After this request the compositor should evaluate the
+                After this request the compositor must evaluate the
                 current overlap state and send the matching enter or
                 leave event.
             </description>
