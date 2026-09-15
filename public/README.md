@@ -5,7 +5,6 @@ For general application developers. Installed via `TREELAND_PROTOCOL_XML_FILES`.
 | File | Protocol | Interfaces | Purpose |
 |------|----------|-----------|---------|
 | `treeland-window-transition-unstable-v1.xml` | `treeland_window_transition_unstable_v1` | `treeland_window_transition_manager_v1`, `treeland_window_transition_rect_v1` | Window open/close transition relative to a rectangle, with optional source image |
-| `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker` (deprecated), `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1` (deprecated), `treeland_multitaskview_v1` (deprecated), `treeland_window_picker_v1`, `treeland_lockscreen_v1` (deprecated) | DDE shell integration: surface roles, overlap detection, active events, multitask view, window picker, lockscreen; the `treeland_dde_active_v1` and `treeland_window_overlap_checker` interfaces and the `set_xwindow_position_relative` request are deprecated and non-functional, superseded by `dde/treeland-active-notify-unstable-v1.xml`, `dde/treeland-window-overlap-checker-unstable-v1.xml`, and `dde/treeland-xwindow-control-unstable-v1.xml`; the `treeland_multitaskview_v1` and `treeland_lockscreen_v1` interfaces (with their creating requests) are deprecated but still functional, superseded by the actions of `dde/treeland-compositor-action-unstable-v1.xml` |
 | `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`, `treeland_dde_shell_surface_v2` | DDE shell surface role: turn a wl_surface into a shell surface rendered below the wlr-layer-shell layer stack at the workspace overlay level, position it in global coordinates or auto-place it below the cursor, and declare switcher/dock-preview/multitask-view listing preferences via a skip bitfield |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | Query and observe user-level appearance settings: cursor theme/size, fonts, icon theme, accent color, window opacity, color scheme, titlebar height, corner radius |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | Per-window server-side decoration (SSD) customization by applications: corner radius, shadow, border, titlebar visibility; requires xdg-decoration SSD |
@@ -17,7 +16,19 @@ Breaking changes are grouped by version. Under each version heading, one subsect
 
 #### `treeland-dde-shell-v1.xml`
 
-The manager request `set_xwindow_position_relative` and the `treeland_dde_active_v1` and `treeland_window_overlap_checker` interfaces (with their creating manager requests `get_treeland_dde_active` and `get_window_overlap_checker`) are now documented as deprecated and non-functional: they have no effect and no events are ever emitted (their `destroy` requests remain functional so clients can release the objects). The file itself stays in place for now; the whole `treeland-dde-shell` protocol is slated for removal in a future release.
+The whole file is now deprecated and moved to `deprecated/`. It is superseded by `treeland-dde-shell-unstable-v2.xml` (in `public/`, reduced to the surface role functionality) together with the dedicated protocols listed above; the `treeland_window_picker_v1` interface is removed without a replacement, and a dedicated window-picking protocol may be designed in the future.
+
+Wire-level differences between v1 and v2:
+
+1. Only the surface role is carried over. The manager exposes just `get_shell_surface` with a new `already_shell_surface` error; the factory requests for the superseded interfaces (`get_window_overlap_checker`, `get_treeland_dde_active`, `get_treeland_multitaskview`, `get_treeland_window_picker`, `get_treeland_lockscreen`) and the `set_xwindow_position_relative` request are not carried over.
+2. The `role` enum is renumbered to 0-based: `overlay` changes from 1 to 0, and its semantics are stated precisely (above normal toplevels, below layer-shell surfaces).
+3. The three skip requests (`set_skip_switcher`, `set_skip_dock_preview`, `set_skip_muti_task_view`, the latter also fixing the "muti" typo) are merged into a single `set_skip_flags` request taking a `skip_flag` bitfield (`switcher` 0x1, `dock_preview` 0x2, `multitask_view` 0x4).
+4. `set_auto_placement` takes an `int` y_offset (v1 used `uint`), and the mutual exclusivity of the placement requests (`set_surface_position` vs `set_auto_placement`, most recent wins) is now specified.
+5. The v2 globals must reject binds from non-privileged clients.
+
+Consumers should rebind as `treeland_dde_shell_manager_v2`, recreate shell surfaces through `get_shell_surface`, switch to `set_skip_flags`, and treat `overlay` as 0; window-picker consumers have no replacement and must drop the functionality. The old XML is kept installed during migration but must not be used in new code.
+
+The manager request `set_xwindow_position_relative` and the `treeland_dde_active_v1` and `treeland_window_overlap_checker` interfaces (with their creating manager requests `get_treeland_dde_active` and `get_window_overlap_checker`) are documented as deprecated and non-functional: they have no effect and no events are ever emitted (their `destroy` requests remain functional so clients can release the objects).
 
 They are superseded by three new independent protocols in `dde/`:
 - `treeland-xwindow-control-unstable-v1.xml` (`treeland_xwindow_control_v1`): XWayland window placement — the `set_xwindow_position_relative` request with `wl_callback` result feedback, unchanged wire semantics.

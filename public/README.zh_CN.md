@@ -5,7 +5,6 @@
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
 | `treeland-window-transition-unstable-v1.xml` | `treeland_window_transition_unstable_v1` | `treeland_window_transition_manager_v1`, `treeland_window_transition_rect_v1` | 相对某个矩形的窗口打开/关闭转场，可附带源图像 |
-| `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker`（已废弃）, `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1`（已废弃）, `treeland_multitaskview_v1`（已废弃）, `treeland_window_picker_v1`, `treeland_lockscreen_v1`（已废弃） | DDE Shell 集成：surface 角色、重叠检测、活跃事件、多任务视图、窗口选取、锁屏；`treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口及 `set_xwindow_position_relative` 请求已废弃且不可用，由 `dde/treeland-active-notify-unstable-v1.xml`、`dde/treeland-window-overlap-checker-unstable-v1.xml` 和 `dde/treeland-xwindow-control-unstable-v1.xml` 取代；`treeland_multitaskview_v1` 和 `treeland_lockscreen_v1` 接口（含其创建请求）已废弃但仍可用，由 `dde/treeland-compositor-action-unstable-v1.xml` 的动作取代 |
 | `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`、`treeland_dde_shell_surface_v2` | DDE Shell surface 角色：将 wl_surface 转为在 wlr-layer-shell 层叠之下、工作区 overlay 层渲染的 shell surface，支持全局坐标定位或光标下方自动放置，并通过 skip 位域声明任务切换器/dock 预览/多任务视图的列表偏好 |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | 查询与订阅用户级外观设置：光标主题/大小、字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、圆角 |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | 逐窗口服务端装饰（SSD）定制：圆角、阴影、边框、标题栏可见性；需先经 xdg-decoration 申请 SSD |
@@ -18,7 +17,19 @@
 
 #### `treeland-dde-shell-v1.xml`
 
-管理器的 `set_xwindow_position_relative` 请求及 `treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口（含其创建请求 `get_treeland_dde_active`、`get_window_overlap_checker`）现标注为已废弃且不可用：请求无任何效果，也不会发出任何事件（`destroy` 请求仍然可用，客户端可借此释放对象）。文件暂保留原位；整个 `treeland-dde-shell` 协议计划在未来版本彻底移除。
+整个文件现已废弃并移至 `deprecated/`。由 `treeland-dde-shell-unstable-v2.xml`（在 `public/`，仅保留 surface 角色功能）连同上述专用协议取代；`treeland_window_picker_v1` 接口无替代直接移除，未来可能设计专用协议。
+
+v1 与 v2 的线缆级差异：
+
+1. 仅保留 surface 角色。管理器只暴露 `get_shell_surface` 并新增 `already_shell_surface` 错误；被取代接口的工厂请求（`get_window_overlap_checker`、`get_treeland_dde_active`、`get_treeland_multitaskview`、`get_treeland_window_picker`、`get_treeland_lockscreen`）及 `set_xwindow_position_relative` 请求不再保留。
+2. `role` 枚举改为 0 基编号：`overlay` 由 1 改为 0，且语义明确化（高于普通顶层窗口、低于 layer-shell surface）。
+3. 三个 skip 请求（`set_skip_switcher`、`set_skip_dock_preview`、`set_skip_muti_task_view`，最后一个同时修正 "muti" 拼写错误）合并为单一的 `set_skip_flags` 请求，携带 `skip_flag` 位域（`switcher` 0x1、`dock_preview` 0x2、`multitask_view` 0x4）。
+4. `set_auto_placement` 的 y_offset 改为 `int`（v1 为 `uint`），并明确两种放置请求（`set_surface_position` 与 `set_auto_placement`）的互斥关系（最近发送的请求生效）。
+5. v2 全局对象必须拒绝非特权客户端绑定。
+
+消费者应改绑为 `treeland_dde_shell_manager_v2`，通过 `get_shell_surface` 重建 shell surface，改用 `set_skip_flags`，并将 `overlay` 视为 0；窗口选取消费者无替代，须移除该功能。旧 XML 在迁移期间仍会安装，但不得用于新代码。
+
+管理器的 `set_xwindow_position_relative` 请求及 `treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口（含其创建请求 `get_treeland_dde_active`、`get_window_overlap_checker`）已标注废弃且不可用：请求无任何效果，也不会发出任何事件（`destroy` 请求仍然可用，客户端可借此释放对象）。
 
 二者由 `dde/` 下三个新的独立协议取代：
 - `treeland-xwindow-control-unstable-v1.xml`（`treeland_xwindow_control_v1`）：XWayland 窗口定位——`set_xwindow_position_relative` 请求，结果经 `wl_callback` 回报，线缆语义不变。
