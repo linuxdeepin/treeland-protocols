@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_output_group_manager_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="manage output mirroring (copy mode) groups">
+        This protocol lets a privileged client such as the DDE display settings
+        panel organize physical outputs into mirroring groups: one source
+        output whose rendered content is duplicated to one or more mirror
+        outputs, so that several screens show the same desktop. This is the
+        "copy mode" of the compositor, as opposed to the default "extension"
+        mode where each output shows an independent desktop region.
+
+        The protocol exposes a singleton manager global that creates and
+        tracks treeland_output_group_v1 objects. Each group designates
+        a single source output and an ordered list of mirror outputs, all
+        addressed by opaque uuid strings. While copy mode is engaged the
+        compositor exposes a wl_output global only for the source output;
+        mirror outputs have no wl_output, so their uuids must be obtained
+        from the treeland-output-uuid-head-unstable-v1 protocol rather than
+        treeland-output-uuid-unstable-v1 (see treeland_output_group_v1 for
+        details). An output may belong to at most one group at a time. A
+        group drives copy mode while it has both a source and at least one
+        mirror; a group with no source or no mirrors is inert, the affected
+        outputs get their wl_output back, and they behave as normal
+        extension outputs. An empty uuid represents the absence of a
+        source; output uuids are never empty.
+
+        The compositor persists the set of groups and their configuration
+        (name, configured source uuid, and configured mirror uuid list)
+        across compositor restarts and restores them on startup, so groups
+        survive reboots and reappear as group_added events on bind; this
+        lets a privileged client configure mirroring once and have it
+        reapply automatically later. An output must be connected and
+        enabled when it is first added to a group (via create_group,
+        set_source, or add_output); once configured it is kept across
+        unplug/replug and compositor restart and auto-resumes when the
+        output returns. The name never changes; the configured source and
+        mirror list persist until a client changes them with set_source,
+        add_output, remove_output, or dissolve.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
+    <interface name="treeland_output_group_manager_v1" version="1">
+        <description summary="manager for output groups">
+            A singleton global that creates treeland_output_group_v1
+            objects and broadcasts the set of existing groups to bound clients.
+
+            On bind the compositor emits one group_added event per existing
+            group, followed by a single groups_done event, so the client can
+            distinguish the initial dump of pre-existing groups from later
+            group_added events for groups created after the bind. When any
+            client creates a group every other bound client receives
+            group_added for it, and when a group is dissolved every bound
+            client receives group_removed. Clients therefore never poll for
+            the group set; they may also obtain a group object for a known
+            name at any time with the get_group request.
+
+            Multiple privileged clients such as the DDE display settings
+            panel may bind and use the protocol concurrently. Requests from
+            all clients are applied in arrival order; an output claimed by
+            one group is rejected for another with the non-fatal
+            output_in_use failure, so concurrent edits never terminate a
+            connection and clients may retry or adjust.
+        </description>
+
+        <enum name="error">
+            <description summary="fatal manager protocol errors">
+                Raised as fatal protocol errors on the manager object.
+            </description>
+            <entry name="invalid_source" value="0"
+                summary="the non-empty source uuid does not identify a connected enabled output" />
+            <entry name="invalid_name" value="1"
+                summary="the name is empty, or no group with that name currently exists" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager object">
+                Destroy the treeland_output_group_manager_v1 object and
+                release the client's binding to the manager global.
+
+                Existing treeland_output_group_v1 objects are not
+                affected and remain valid until they are destroyed or the
+                compositor dissolves the group. The client must destroy each
+                group object separately; the compositor does not cascade
+                destruction from the manager.
+            </description>
+        </request>
+
+        <request name="create_group">
+            <description summary="create a new output group">
+                Create a new treeland_output_group_v1 object with the
+                given initial source output. An empty source creates
+                a group with no source; the client adds mirrors afterwards
+                with add_output and may change the source with set_source.
+                Copy mode engages once the group has both a source and at
+                least one mirror.
+
+                The compositor assigns a unique name to the new group; names
+                are chosen by the compositor, not by clients. The client
+                learns the name from the name event, which the compositor
+                emits on the new group object before any other event. The
+                name identifies the group in the manager's group_removed
+                event. A non-empty source that does not identify a connected
+                enabled output is rejected with the invalid_source fatal
+                error. This check is deterministic, so the compositor raises
+                it on the manager object and does not create the group.
+
+                On success the compositor broadcasts a group_added event
+                carrying a new group object to every other bound client; the
+                caller receives its group object only as the new_id return
+                value and does not get a group_added event for it.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_group_v1"
+                summary="the new group object" />
+            <arg name="source" type="string"
+                summary="uuid of the initial source output, or empty for no source" />
+        </request>
+
+        <request name="get_group">
+            <description summary="get a group object by name">
+                Create a new treeland_output_group_v1 object bound to the
+                existing group with the given name, for example a group
+                created by another client or one whose object the client
+                has since destroyed. On success the compositor sends the initial state of
+                the group on the new object: one name event, then one source
+                event, followed by one outputs event carrying the full
+                mirror list in list order.
+
+                The name is the compositor-assigned name reported by the
+                name event on group objects. An empty name, or a name that
+                does not identify an existing group at the time the request
+                is processed, is rejected with the invalid_name fatal error
+                and no object is created; note that a group may have been
+                dissolved between the group_removed event and this request.
+                This lookup is deterministic, so the compositor raises the
+                error on the manager object.
+
+                The returned object is an independent handle: destroying it
+                does not dissolve the group, and several clients may hold
+                objects bound to the same group at the same time.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_group_v1"
+                summary="a new group object bound to the named group" />
+            <arg name="name" type="string"
+                summary="the compositor-assigned name of the group" />
+        </request>
+
+        <event name="group_added">
+            <description summary="an output group was created">
+                Emitted when an output group is created by any client. Each
+                bound client receives this event once per existing group on
+                bind, and again whenever a new group is created — except for
+                the client that created the group, which receives the group
+                object as the new_id return value of create_group instead.
+
+                The id argument is a fresh group object; the compositor sends
+                the initial name, source, and outputs state of the group
+                on it immediately after this event. The client may destroy the
+                object if it does not need to observe that group; doing so
+                does not dissolve the group.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_group_v1"
+                summary="a group object bound to the new group" />
+        </event>
+
+        <event name="groups_done">
+            <description summary="initial group dump is complete">
+                Emitted exactly once, after the compositor has finished
+                sending the bind-time group_added events, and the initial
+                state on each group object they carry, for all groups that
+                existed when the client bound. A client receiving this event
+                knows it has seen the complete initial set and that any
+                later group_added is for a group created after the bind.
+            </description>
+        </event>
+
+        <event name="group_removed">
+            <description summary="an output group was dissolved">
+                Emitted when an output group is dissolved, whether because a
+                client sent the dissolve request or because the compositor
+                removed it as a whole. Every bound client receives this event
+                for the group; any group objects that client holds for it
+                receive a removed event and must be destroyed afterwards.
+            </description>
+            <arg name="name" type="string"
+                summary="the name of the dissolved group" />
+        </event>
+    </interface>
+
+    <interface name="treeland_output_group_v1" version="1">
+        <description summary="an output mirroring group">
+            Represents one mirroring group: a source output, identified by
+            its uuid, whose content is duplicated to an ordered list of
+            mirror outputs, each identified by its uuid. Output uuids are
+            never empty; an empty uuid in events represents the absence of
+            a source.
+
+            While the group has both a source and at least one mirror, the
+            compositor exposes a wl_output global only for the source
+            output. Mirror outputs have no wl_output while copy mode is
+            engaged, so clients cannot use wl_output-based protocols
+            (including treeland-output-uuid-unstable-v1, which requires a
+            wl_output) to identify them; they must instead obtain mirror
+            uuids from the treeland-output-uuid-head-unstable-v1 protocol,
+            which resolves a zwlr_output_head_v1 to the same uuid. A
+            configured mirror only loses its wl_output while copy mode is
+            actually engaged; while the group is inert (no effective source
+            or no effective mirrors) the mirror retains its wl_output and
+            behaves as a normal extension output. When copy mode exits —
+            the last mirror is removed, the source is cleared, or the group
+            is dissolved — the affected outputs become normal extension
+            outputs again and their wl_output globals come back.
+
+            The group keeps a configured source (zero or one) and a
+            configured mirror list (zero or more), set by the client with
+            set_source, add_output, and remove_output. The source and outputs
+            events report the effective runtime state, not the configured
+            state: a configured source or mirror whose output is currently
+            unplugged or disabled is absent from those events but remains in
+            the persisted configuration, so copy mode auto-resumes when the
+            output comes back. An output may belong to at most one group at
+            a time; one already in another group fails with the
+            output_in_use failure. Copy mode is engaged while the group has
+            both an effective source and at least one effective mirror;
+            otherwise the group is inert and the affected outputs behave as
+            normal extension outputs.
+
+            Requests that cannot be applied because of transient output state
+            (e.g. an output unplugged between get_uuid and the request) are
+            reported via a non-fatal operation_failed event; the group is
+            unchanged and the client may retry. Only already_dissolved —
+            sending any request other than destroy on a dissolved group — is
+            a fatal protocol error.
+
+            On creation the compositor sends the current state: one name
+            event carrying the compositor-assigned group name, then one
+            source event (empty uuid if no source), followed by one outputs
+            event carrying the full mirror list. Later changes are
+            reported by further source and outputs events; the name never
+            changes.
+
+            Several group objects may be bound to the same group, for example
+            one from create_group, one from get_group, and others from
+            group_added; they all observe the same state. Destroying one
+            object only releases that client's handle. The dissolve request tears down the group as a
+            whole, emitting removed to every bound group object and
+            group_removed on the manager. After removed the object is inert:
+            only destroy is valid, and anything else is rejected with the
+            already_dissolved error.
+
+            When a member output is unplugged or disabled the compositor
+            updates the effective runtime state without dissolving the group
+            and without changing the persisted configuration: an unavailable
+            mirror is dropped from the outputs event, and if the source
+            becomes unavailable its source event is emitted with an empty
+            uuid — unavailable outputs cannot serve as source, so the
+            compositor does not auto-promote a mirror. When the output comes
+            back (replugged or re-enabled) the compositor re-evaluates and
+            resumes automatically: the source event regains its configured
+            uuid and the outputs event regains the mirror, without any client
+            action. If all of a group's outputs are unavailable the source
+            event is empty and the outputs count is zero, but the group
+            remains and is restored once any output returns. Client-driven
+            remove_output, by contrast, removes the output from the
+            persisted configuration.
+        </description>
+
+        <enum name="error">
+            <description summary="fatal group protocol errors">
+                Raised as fatal protocol errors on the group object.
+            </description>
+            <entry name="already_dissolved" value="0"
+                summary="the group has been dissolved; only destroy may be sent" />
+        </enum>
+
+        <enum name="failure">
+            <description summary="non-fatal operation failures">
+                Returned by the operation_failed event when a set_source,
+                add_output, or remove_output request cannot be applied.
+                These reflect transient or dynamic output state (e.g. an
+                output unplugged between get_uuid and the request), not a
+                protocol violation; the client may retry or adjust and the
+                connection is not terminated.
+            </description>
+            <entry name="invalid_output" value="0"
+                summary="no enabled output with the provided uuid is currently connected" />
+            <entry name="duplicate_output" value="1"
+                summary="the output is already the source or a mirror of this group" />
+            <entry name="output_in_use" value="2"
+                summary="the output is the source or a mirror of another group" />
+            <entry name="not_in_group" value="3"
+                summary="the output is not a member of this group" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the group object">
+                Destroy this group object and release the client's handle.
+                The group itself is not affected: copy mode continues, other
+                handles remain valid, and the compositor does not emit
+                group_removed. Use dissolve to tear down the group as a whole.
+                It is safe to destroy an object that has already received the
+                removed event.
+            </description>
+        </request>
+
+        <request name="set_source">
+            <description summary="designate the source output">
+                Set the output identified by the given uuid as the configured
+                source of the group, replacing any current configured source.
+                The previous source, if available, becomes a normal extension
+                output again.
+
+                If the request cannot be applied, the compositor emits an
+                operation_failed event and the group is unchanged:
+                invalid_output if the uuid does not identify a connected
+                enabled output, duplicate_output if the output is already
+                in this group (to promote a current mirror to the source,
+                remove it first with remove_output), or output_in_use if the
+                output belongs to another group.
+
+                If the group already has mirrors, this engages or updates copy
+                mode immediately. The compositor confirms the new source by
+                emitting a source event.
+            </description>
+            <arg name="uuid" type="string"
+                summary="uuid of the output to designate as the source" />
+        </request>
+
+        <request name="add_output">
+            <description summary="add a mirror output">
+                Append the output identified by the given uuid to the end of
+                the group's mirror list.
+
+                If the request cannot be applied, the compositor emits an
+                operation_failed event and the group is unchanged:
+                invalid_output if the uuid does not identify a connected
+                enabled output, duplicate_output if the output is already in
+                this group, or output_in_use if it belongs to another group.
+
+                If the group already has a source, this engages or extends
+                copy mode immediately, confirmed by an outputs event carrying
+                the updated mirror list. Sources and mirrors may be set in
+                any order; copy mode engages once both are present.
+            </description>
+            <arg name="uuid" type="string"
+                summary="uuid of the output to add as a mirror" />
+        </request>
+
+        <request name="remove_output">
+            <description summary="remove a member output">
+                Remove the output identified by the given uuid from the
+                configured membership of the group. If the output is not a
+                configured member, the compositor emits an operation_failed
+                event with not_in_group and the group is unchanged; this
+                covers an output that was never added as well as one whose
+                configuration was already removed.
+
+                If the output is a configured mirror (whether currently
+                available or not), an outputs event carrying the updated
+                effective mirror list is emitted; if the group then has an
+                effective source but no effective mirrors, copy mode exits
+                while the source remains set.
+
+                If the output is the configured source (whether currently
+                available or not), the configured source is cleared and a
+                source event with an empty uuid is emitted; the mirrors are
+                unchanged and copy mode exits. This does not auto-select a
+                successor; to promote a mirror, call set_source on it.
+            </description>
+            <arg name="uuid" type="string"
+                summary="uuid of the member output to remove" />
+        </request>
+
+        <request name="dissolve">
+            <description summary="dissolve the group and exit copy mode">
+                Tear down the group: exit copy mode, remove it from the
+                manager, and release the affected outputs. The configured
+                source and mirror list are discarded and the group is not
+                restored on compositor restart. The compositor emits removed
+                to every group object bound to this group and group_removed
+                on the manager. After removed the object is inert; only
+                destroy is valid, and anything else — including dissolve
+                again — is rejected with already_dissolved.
+            </description>
+        </request>
+
+        <event name="name">
+            <description summary="the compositor-assigned name of the group">
+                Reports the name the compositor assigned to this group.
+                Emitted exactly once on each group object, before any other
+                event, so the creator of the group learns its name without a
+                group_added event. The name is unique among existing groups
+                and never changes; it identifies the group in the manager's
+                group_removed event and is the name accepted by the
+                manager's get_group request.
+            </description>
+            <arg name="name" type="string"
+                summary="the compositor-assigned name of the group" />
+        </event>
+
+        <event name="source">
+            <description summary="current effective source output of the group">
+                Reports the uuid of the current effective source output:
+                the configured source if its output is currently connected
+                and enabled, or an empty uuid when the configured source is
+                unavailable (unplugged or disabled) or when no source is
+                configured. Emitted once on creation and again whenever the
+                effective source changes, including when an unavailable
+                source comes back or an available one goes away; the
+                configured source is restored automatically on return.
+            </description>
+            <arg name="uuid" type="string"
+                summary="uuid of the current effective source output, or empty when none is available" />
+        </event>
+
+        <event name="outputs">
+            <description summary="the full mirror output list of the group">
+                Reports the complete ordered list of effective mirror
+                outputs of the group: the configured mirrors whose outputs
+                are currently connected and enabled. Emitted once on
+                creation with the current effective mirror list, and again
+                whenever that list changes: after a successful add_output
+                or remove_output of a mirror, when a mirror is unplugged,
+                disabled, re-enabled, or replugged. Each emission carries the
+                full effective list, replacing any previously known list, so
+                the client replaces its state instead of applying deltas.
+
+                The uuids argument contains the concatenation of count
+                uuids, one per mirror, in list order. All output uuids have
+                the same length, so each uuid is the array size in bytes
+                divided by count, and parsing needs no separators: the
+                client reads count fixed-length uuids back to back. The
+                count argument always matches the number of uuids in the
+                array; a client may use it to validate the array size. The
+                list order follows the order in which mirrors were added;
+                unavailable mirrors are filtered out without shifting the
+                relative order of the others. The source output, if any, is
+                not part of the list and is reported separately by the source
+                event; a count of zero means the group currently has no
+                effective mirrors.
+            </description>
+            <arg name="count" type="uint"
+                summary="number of mirror outputs in the list" />
+            <arg name="uuids" type="array"
+                summary="concatenation of count same-length mirror output uuids, in list order" />
+        </event>
+
+        <event name="removed">
+            <description summary="the group was dissolved">
+                Emitted to every group object bound to the group when the
+                group is dissolved. After this event the object is inert and
+                the client must destroy it.
+            </description>
+        </event>
+
+        <event name="operation_failed">
+            <description summary="a set_source, add_output, or remove_output request failed">
+                Emitted when a set_source, add_output, or remove_output
+                request cannot be applied because of a transient or dynamic
+                output state, such as an output being unplugged between
+                get_uuid and the request. The code identifies the failure
+                cause; the uuid is the output the client passed to the
+                failing request. The group state is unchanged and the client
+                may retry or adjust. This is not a protocol error and the
+                connection is not terminated.
+            </description>
+            <arg name="code" type="uint" enum="failure"
+                summary="why the request failed" />
+            <arg name="uuid" type="string"
+                summary="the uuid the client passed to the failing request" />
+        </event>
+    </interface>
+</protocol>

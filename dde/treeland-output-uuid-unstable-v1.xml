@@ -12,7 +12,7 @@
         and output reconnections, so clients and the compositor can persist
         per-output settings and restore them after a restart. Other
         treeland protocols, such as treeland_output_manager_v2 and
-        treeland_output_mirror_group_v1, address outputs by these uuids.
+        treeland_output_group_v1, address outputs by these uuids.
 
         The uuid is unique among the currently connected outputs: the
         compositor must ensure that no two connected outputs report the
@@ -122,6 +122,10 @@
                 Reports the current uuid of the output. It is emitted once
                 immediately after the object is created, and again whenever
                 the compositor determines a different uuid for the output.
+                All uuids have the same fixed length, so consumers may rely
+                on the byte length of one uuid to parse concatenations of
+                several, for example in the outputs event of the
+                treeland-output-group-manager-unstable-v1 protocol.
             </description>
             <arg name="uuid" type="string"
                 summary="opaque uuid identifying the physical output" />
