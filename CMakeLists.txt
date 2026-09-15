@@ -30,7 +30,6 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-appearance-manager-unstable-v1.xml
   dde/treeland-virtual-output-manager-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml
-  dde/treeland-show-desktop-unstable-v1.xml
   dde/treeland-layer-shell-extension-unstable-v1.xml
   dde/treeland-xwindow-control-unstable-v1.xml
   dde/treeland-active-notify-unstable-v1.xml
@@ -61,6 +60,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-personalization-manager-v1.xml
   deprecated/treeland-prelaunch-splash-v1.xml
   deprecated/treeland-screensaver-v1.xml
+  deprecated/treeland-show-desktop-unstable-v1.xml
   deprecated/treeland-shortcut-manager-v1.xml
   deprecated/treeland-shortcut-manager-v2.xml
   deprecated/treeland-wallpaper-color-v1.xml

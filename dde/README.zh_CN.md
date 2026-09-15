@@ -13,7 +13,6 @@
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | 虚拟（镜像）输出创建和管理 |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | 逐输出壁纸配置，支持图片/视频来源 |
-| `treeland-show-desktop-unstable-v1.xml` | `treeland_show_desktop_unstable_v1` | `treeland_show_desktop_v1` | 显示桌面模式控制：请求模式切换并观察合成器驱动的状态变化 |
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | 合成器驱动的 layer-shell 表面交互式缩放（dock / 侧边栏 / 状态栏）：begin_resize 携带 seat+serial 与单次尺寸限制，及拒绝原因 |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland 窗口定位：将 XWayland 窗口（按 X11 窗口 ID）移动到相对另一 surface 的位置，结果经 wl_callback 回报 |
 | `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`、`treeland_active_notify_v1` | Seat 活跃通知：订阅按 Seat 限定的指针按键/滚轮进入/离开活跃状态及拖拽/放下的生命周期事件 |
@@ -28,6 +27,16 @@
 #### `treeland-appearance-manager-unstable-v1.xml`
 
 `set_accent_color` 请求移除了 `a`（alpha）参数。活动色现为不透明 RGB 三元组 `r, g, b`（每个为 `[0, 255]` 范围内的 `uint`）；alpha 通道不再上线缆传输。消费者须停止发送末尾的 `a` 参数，且不得从该请求推断活动色不透明度；不透明度不在活动色设置范围内。
+
+#### `treeland-show-desktop-unstable-v1.xml`
+
+已废弃并移至 `deprecated/`；由 `treeland-compositor-action-unstable-v1.xml`（在 `dde/`）中 `treeland_compositor_action_v1` 全局对象的 `show_desktop` 动作取代。线缆级差异：
+
+1. 替代方案是一次性的 fire-and-forget 触发：`show_desktop` 动作切换显示桌面模式，合成器不发送任何确认；而 `set_show_desktop_state` 请求显式切换到 `show` 或 `normal`，并由 `show_desktop_state` 事件确认每一次状态变化。
+2. 状态观察无直接替代：新协议不携带任何事件，曾通过 `show_desktop_state`（含绑定时发送的初始状态）跟踪模式的客户端将失去该反馈，只能将触发视为尽力而为。
+3. 替代全局对象为特权接口：仅允许由合成器授权的 DDE 客户端绑定 `treeland_compositor_action_v1`，而 `treeland_show_desktop_v1` 可由常规 shell 客户端绑定。
+
+消费者应将全局对象重新绑定为 `treeland_compositor_action_v1` 并触发 `show_desktop` 动作；旧 XML 在迁移期间仍会安装，但不得用于新代码。
 
 ### 0.6.0
 
