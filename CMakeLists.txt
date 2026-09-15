@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25.0)
 
-project(TreelandProtocols VERSION 0.6.0 LANGUAGES NONE)
+project(TreelandProtocols VERSION 0.7.0 LANGUAGES NONE)
 
 # https://gitlab.kitware.com/cmake/cmake/-/work_items/23461
 # Suppress GNUInstallDirs warning for LANGUAGES NONE projects
@@ -13,8 +13,8 @@ include(CMakePackageConfigHelpers)
 
 # Public protocol XML files (for general application developers)
 set(TREELAND_PROTOCOL_XML_FILES
-  public/treeland-dde-shell-v1.xml
   public/treeland-window-transition-unstable-v1.xml
+  public/treeland-dde-shell-unstable-v2.xml
   public/treeland-appearance-unstable-v1.xml
   public/treeland-decoration-unstable-v1.xml
 )
@@ -26,12 +26,14 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-keyboard-state-notify-unstable-v1.xml
   dde/treeland-output-manager-unstable-v2.xml
   dde/treeland-shortcut-manager-unstable-v3.xml
+  dde/treeland-compositor-action-unstable-v1.xml
   dde/treeland-appearance-manager-unstable-v1.xml
   dde/treeland-virtual-output-manager-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml
-  dde/treeland-show-desktop-unstable-v1.xml
   dde/treeland-layer-shell-extension-unstable-v1.xml
   dde/treeland-xwindow-control-unstable-v1.xml
+  dde/treeland-active-notify-unstable-v1.xml
+  dde/treeland-window-overlap-checker-unstable-v1.xml
 )
 
 # Internal protocol XML files (Treeland-specific, not for general app developers)
@@ -58,6 +60,8 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-personalization-manager-v1.xml
   deprecated/treeland-prelaunch-splash-v1.xml
   deprecated/treeland-screensaver-v1.xml
+  deprecated/treeland-dde-shell-v1.xml
+  deprecated/treeland-show-desktop-unstable-v1.xml
   deprecated/treeland-shortcut-manager-v1.xml
   deprecated/treeland-shortcut-manager-v2.xml
   deprecated/treeland-wallpaper-color-v1.xml

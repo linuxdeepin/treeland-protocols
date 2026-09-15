@@ -9,16 +9,38 @@
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
 | `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制 |
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势及一次性快捷键捕获 |
+| `treeland-compositor-action-unstable-v1.xml` | `treeland_compositor_action_unstable_v1` | `treeland_compositor_action_v1` | 特权客户端一次性触发与当前窗口无关的合成器动作：工作区切换、显示桌面、多任务视图、屏幕缩放、FPS 覆盖层、锁屏、关机菜单、用户切换；窗口级与任务切换动作被有意排除，仅作为 `treeland_shortcut_manager_v3` 中的快捷键保留 |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | 虚拟（镜像）输出创建和管理 |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | 逐输出壁纸配置，支持图片/视频来源 |
-| `treeland-show-desktop-unstable-v1.xml` | `treeland_show_desktop_unstable_v1` | `treeland_show_desktop_v1` | 显示桌面模式控制：请求模式切换并观察合成器驱动的状态变化 |
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | 合成器驱动的 layer-shell 表面交互式缩放（dock / 侧边栏 / 状态栏）：begin_resize 携带 seat+serial 与单次尺寸限制，及拒绝原因 |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland 窗口定位：将 XWayland 窗口（按 X11 窗口 ID）移动到相对另一 surface 的位置，结果经 wl_callback 回报 |
+| `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`、`treeland_active_notify_v1` | Seat 活跃通知：订阅按 Seat 限定的指针按键/滚轮进入/离开活跃状态及拖拽/放下的生命周期事件 |
+| `treeland-window-overlap-checker-unstable-v1.xml` | `treeland_window_overlap_checker_unstable_v1` | `treeland_window_overlap_checker_manager_v1`、`treeland_window_overlap_checker_v1` | 窗口重叠监测：注册沿输出边缘的区域并订阅与 xdg-shell 顶层窗口重叠/解除重叠的 enter/leave 事件 |
 
 ## 破坏性变更
 
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
+
+### 0.7.0
+
+#### `treeland-show-desktop-unstable-v1.xml`
+
+已废弃并移至 `deprecated/`；由 `treeland-compositor-action-unstable-v1.xml`（在 `dde/`）中 `treeland_compositor_action_v1` 全局对象的 `show_desktop` 动作取代。线缆级差异：
+
+1. 替代方案是一次性的 fire-and-forget 触发：`show_desktop` 动作切换显示桌面模式，合成器不发送任何确认；而 `set_show_desktop_state` 请求显式切换到 `show` 或 `normal`，并由 `show_desktop_state` 事件确认每一次状态变化。
+2. 状态观察无直接替代：新协议不携带任何事件，曾通过 `show_desktop_state`（含绑定时发送的初始状态）跟踪模式的客户端将失去该反馈，只能将触发视为尽力而为。
+3. 替代全局对象为特权接口：仅允许由合成器授权的 DDE 客户端绑定 `treeland_compositor_action_v1`，而 `treeland_show_desktop_v1` 可由常规 shell 客户端绑定。
+
+消费者应将全局对象重新绑定为 `treeland_compositor_action_v1` 并触发 `show_desktop` 动作；旧 XML 在迁移期间仍会安装，但不得用于新代码。
+
+#### `treeland-dde-shell-v1.xml`
+
+DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协议。每个替代品均为独立的特权全局对象；消费者应改绑新的全局对象，停止使用已废弃的 dde-shell 接口。
+
+- `treeland_dde_active_v1`（含其创建请求 `get_treeland_dde_active`）已不可用，由 `treeland-active-notify-unstable-v1.xml`（`treeland_active_notify_manager_v1` / `treeland_active_notify_v1`）取代：`get_active_notify` 创建按 Seat 限定的通知对象，其 `activity_enter`/`activity_leave` 事件携带 `reason` 枚举（由 `active_in`/`active_out` 更名；鼠标跟踪左键状态，滚轮为逐事件脉冲），并新增 `start_drag`/`drop`/`drag_cancelled` 生命周期事件。
+- `treeland_window_overlap_checker`（含其创建请求 `get_window_overlap_checker`）已不可用，由 `treeland-window-overlap-checker-unstable-v1.xml`（`treeland_window_overlap_checker_manager_v1` / `treeland_window_overlap_checker_v1`）取代：checker 接口补上 `_v1` 后缀，设区域请求由 `update` 更名为 `set_region`，含显式 `anchor` 枚举与 `invalid_anchor`/`invalid_size` 错误，并新增 `output_removed` 覆盖输出生命周期。
+- `treeland_multitaskview_v1` 和 `treeland_lockscreen_v1`（含其创建请求）在废弃期间仍可用，由 `treeland-compositor-action-unstable-v1.xml`（`treeland_compositor_action_v1`）的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
 
 ### 0.6.0
 

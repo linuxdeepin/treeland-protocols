@@ -9,16 +9,38 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | Watch keyboard modifier (caps/num lock) state changes |
 | `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | Primary output designation, per-output color temperature and brightness control |
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | Global keyboard shortcut binding with key/touch/multi-touch gesture support and one-shot shortcut capture |
+| `treeland-compositor-action-unstable-v1.xml` | `treeland_compositor_action_unstable_v1` | `treeland_compositor_action_v1` | One-shot privileged triggering of window-independent compositor actions: workspace switching, show-desktop, multitask overview, screen zoom, FPS overlay, lockscreen, shutdown menu, user switch; window-level and task-switch actions are intentionally excluded and remain only as shortcuts in `treeland_shortcut_manager_v3` |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | Privileged user-level appearance configuration: cursor theme/size, global font, icon theme, accent color, window opacity, color scheme, titlebar height, global corner radius |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | Virtual (mirrored) output creation and management |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | Per-output wallpaper configuration with image/video sources |
-| `treeland-show-desktop-unstable-v1.xml` | `treeland_show_desktop_unstable_v1` | `treeland_show_desktop_v1` | Show-desktop mode control: request mode transitions and observe compositor-driven state changes |
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | Compositor-driven interactive resize for layer-shell surfaces (dock / side bar / status bar): begin_resize with seat+serial, per-resize size limits, and rejection reasons |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland window placement: move an XWayland window (by X11 window ID) to a position relative to another surface, with wl_callback result feedback |
+| `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`, `treeland_active_notify_v1` | Seat activity notification: observe pointer button/wheel enter/leave activity and drag/drop lifecycle events scoped to a seat |
+| `treeland-window-overlap-checker-unstable-v1.xml` | `treeland_window_overlap_checker_unstable_v1` | `treeland_window_overlap_checker_manager_v1`, `treeland_window_overlap_checker_v1` | Window overlap monitoring: register an edge-anchored region on an output and observe enter/leave overlap events with xdg-shell toplevels |
 
 ## Breaking changes
 
 Breaking changes are grouped by version. Under each version heading, one subsection per affected protocol explains what changed, what replaces it, and how existing consumers should adapt.
+
+### 0.7.0
+
+#### `treeland-show-desktop-unstable-v1.xml`
+
+Deprecated and moved to `deprecated/`; superseded by the `show_desktop` action of the `treeland_compositor_action_v1` global of `treeland-compositor-action-unstable-v1.xml` (in `dde/`). Wire-level differences:
+
+1. The replacement is a one-shot fire-and-forget trigger: the `show_desktop` action toggles show-desktop mode and the compositor sends no confirmation, whereas `set_show_desktop_state` requested an explicit transition to `show` or `normal` and the `show_desktop_state` event confirmed every state change.
+2. State observation has no direct replacement: the new protocol carries no events, so clients that tracked the mode via `show_desktop_state` (including the initial state sent on bind) lose that feedback and must treat triggering as best-effort.
+3. The replacement global is privileged: only the DDE clients allowed by the compositor may bind `treeland_compositor_action_v1`, whereas `treeland_show_desktop_v1` was bound by regular shell clients.
+
+Consumers should rebind the global as `treeland_compositor_action_v1` and trigger the `show_desktop` action; the old XML is kept installed during migration but must not be used in new code.
+
+#### `treeland-dde-shell-v1.xml`
+
+The DDE-shell protocol interfaces consumed by DDE components are split into dedicated `dde/` protocols. Each replacement is an independent privileged global; consumers should bind the new globals and stop using the deprecated dde-shell interfaces.
+
+- `treeland_dde_active_v1` (and its `get_treeland_dde_active` manager request) is non-functional and superseded by `treeland-active-notify-unstable-v1.xml` (`treeland_active_notify_manager_v1` / `treeland_active_notify_v1`): `get_active_notify` creates a per-seat notifier whose `activity_enter`/`activity_leave` events carry a `reason` enum (renamed from `active_in`/`active_out`; mouse tracks the left-button state, wheel is a per-event pulse), plus `start_drag`/`drop`/`drag_cancelled` lifecycle events.
+- `treeland_window_overlap_checker` (and its `get_window_overlap_checker` manager request) is non-functional and superseded by `treeland-window-overlap-checker-unstable-v1.xml` (`treeland_window_overlap_checker_manager_v1` / `treeland_window_overlap_checker_v1`): the checker interface gains the `_v1` suffix, the region request is renamed from `update` to `set_region` with an explicit `anchor` enum and `invalid_anchor`/`invalid_size` errors, and `output_removed` covers output lifetime.
+- `treeland_multitaskview_v1` and `treeland_lockscreen_v1` (with their creating requests) remain functional during the deprecation period and are superseded by the corresponding actions (`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` and `lockscreen`/`shutdown_menu`/`show_user_switch`) of `treeland-compositor-action-unstable-v1.xml` (`treeland_compositor_action_v1`).
 
 ### 0.6.0
 

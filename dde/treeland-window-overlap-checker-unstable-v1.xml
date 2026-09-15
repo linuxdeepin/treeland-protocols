@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_window_overlap_checker_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="window overlap monitoring for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged DDE client such as the dock to
+        monitor whether a region anchored to an edge of an output overlaps
+        with any xdg-shell toplevel window, for example to implement smart
+        panel hiding.
+
+        The compositor must reject bind attempts from non-privileged
+        clients.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_window_overlap_checker_manager_v1" version="1">
+        <description summary="factory for window overlap checkers">
+            A global that creates treeland_window_overlap_checker_v1
+            objects for privileged DDE clients. Each checker monitors
+            one region; clients monitoring several regions create
+            several checkers.
+
+            The compositor must reject bind attempts from non-privileged
+            clients.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroy the treeland_window_overlap_checker_manager_v1
+                object. Checkers created through this manager are not
+                affected.
+            </description>
+        </request>
+
+        <request name="get_window_overlap_checker">
+            <description summary="create a new overlap checker">
+                Create a new treeland_window_overlap_checker_v1 object
+                that monitors one region.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_window_overlap_checker_v1" summary="the new overlap checker object" />
+        </request>
+    </interface>
+
+    <interface name="treeland_window_overlap_checker_v1" version="1">
+        <description summary="overlap monitor for an edge-anchored region">
+            A checker object monitors whether a rectangular region
+            anchored to an edge of an output overlaps with any xdg-shell
+            toplevel window.
+
+            The client registers the monitored region with the
+            set_region request and the compositor reports transitions
+            between the overlapped and clear states with the enter and
+            leave events. The recorded region only changes when
+            set_region is called; the client must call set_region again
+            whenever the monitored panel moves or resizes.
+
+            After each set_region request the compositor must evaluate
+            the region against the current window layout and send the
+            matching enter or leave event; afterwards it should send
+            these events only when the overlap state changes.
+
+            The checker is associated with the wl_output passed to the
+            last set_region request. When that output is destroyed the
+            compositor sends the output_removed event; the checker then
+            becomes inert: it has no monitored region and sends no
+            further enter or leave events. The checker object itself is
+            not destroyed by output removal; the client may call
+            set_region again with another wl_output to resume
+            monitoring, or call destroy to release it. The compositor
+            must not send enter, leave, or output_removed after
+            output_removed until the next successful set_region.
+
+            The client may release the wl_output proxy passed to
+            set_region at any time after the request returns; the
+            compositor holds its own reference and the checker remains
+            associated with that output until either the output is
+            destroyed (triggering output_removed) or a subsequent
+            set_region rebinds to a different output.
+        </description>
+
+        <enum name="anchor">
+            <description summary="output edge the region is anchored to">
+                The registered region is a strip along the anchored edge
+                of the output: for top and bottom the strip spans the
+                full output width and is height units thick; for left and
+                right it spans the full output height and is width units
+                thick.
+
+                The dimension along the anchored edge is ignored: for
+                top and bottom the compositor uses the full output width
+                regardless of the width argument, and for left and right
+                it uses the full output height regardless of the height
+                argument. Only the thickness dimension matters — height
+                for top/bottom, width for left/right — and it must be
+                positive; the compositor raises invalid_size otherwise.
+            </description>
+            <entry name="top" value="0" summary="strip along the top edge of the output" />
+            <entry name="bottom" value="1" summary="strip along the bottom edge of the output" />
+            <entry name="left" value="2" summary="strip along the left edge of the output" />
+            <entry name="right" value="3" summary="strip along the right edge of the output" />
+        </enum>
+
+        <enum name="error">
+            <description summary="overlap checker errors">
+                Errors raised by the treeland_window_overlap_checker_v1
+                interface.
+            </description>
+            <entry name="invalid_anchor" value="0" summary="anchor is not one of the enum values" />
+            <entry name="invalid_size" value="1" summary="width or height is not positive" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the overlap checker">
+                Destroy the treeland_window_overlap_checker_v1 object.
+                The compositor stops monitoring the region registered
+                with this checker.
+            </description>
+        </request>
+
+        <request name="set_region">
+            <description summary="set the monitored region">
+                Set the monitored region on the given output, or
+                re-register it when the monitored panel moves or
+                resizes. The region geometry is described by the anchor
+                enum; the compositor raises invalid_anchor for an
+                unknown anchor value and invalid_size when width or
+                height is not positive.
+
+                The output becomes the output associated with the
+                checker, replacing any previous one; it may be a
+                different output from a previous call (rebinding), for
+                example after the previous output was removed.
+
+                After this request the compositor must evaluate the
+                current overlap state and send the matching enter or
+                leave event.
+            </description>
+            <arg name="width" type="int" summary="width of the registered region" />
+            <arg name="height" type="int" summary="height of the registered region" />
+            <arg name="anchor" type="uint" enum="anchor" summary="output edge the region is anchored to" />
+            <arg name="output" type="object" interface="wl_output" summary="the output whose edge anchors the region" />
+        </request>
+
+        <event name="enter">
+            <description summary="the region is overlapped">
+                Sent when the registered region begins to overlap any
+                xdg-shell toplevel window, and after a set_region
+                request while the region is currently overlapped.
+            </description>
+        </event>
+
+        <event name="leave">
+            <description summary="the region is no longer overlapped">
+                Sent when the registered region stops overlapping all
+                xdg-shell toplevel windows, and after a set_region
+                request while the region is currently clear.
+            </description>
+        </event>
+
+        <event name="output_removed">
+            <description summary="the associated output has been destroyed">
+                Sent when the wl_output passed to the last set_region
+                request has been destroyed by the compositor. The
+                checker then becomes inert: it has no monitored region
+                and sends no further enter or leave events.
+
+                The checker object itself is not destroyed; the client
+                may call set_region again with another wl_output to
+                resume monitoring, or call destroy to release it. The
+                compositor must not send this event more than once
+                without an intervening successful set_region.
+            </description>
+        </event>
+    </interface>
+</protocol>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_active_notify_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="seat activity notification for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged DDE client such as the dock or shell
+        to observe seat activity that the compositor detects: pointer button
+        and wheel activity, and drag and drop lifecycle events, scoped to a
+        given seat.
+
+        The compositor must reject bind attempts from non-privileged
+        clients.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_active_notify_manager_v1" version="1">
+        <description summary="factory for seat activity notifiers">
+            A global that creates treeland_active_notify_v1 objects for
+            privileged DDE clients. Each notifier reports activity for
+            one seat; clients observing several seats create several
+            notifiers.
+
+            The compositor must reject bind attempts from non-privileged
+            clients.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroy the treeland_active_notify_manager_v1 object.
+                Notifiers created through this manager are not affected.
+            </description>
+        </request>
+
+        <request name="get_active_notify">
+            <description summary="create a new seat activity notifier">
+                Create a new treeland_active_notify_v1 object that
+                reports activity for the given seat. The seat must be a
+                valid, current wl_seat.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_active_notify_v1" summary="the new activity notifier object" />
+            <arg name="seat" type="object" interface="wl_seat" summary="the seat to observe" />
+        </request>
+    </interface>
+
+    <interface name="treeland_active_notify_v1" version="1">
+        <description summary="seat activity notifier">
+            A notifier object reports seat activity that the compositor
+            detects. Activity is reported as enter/leave events tagged
+            with the source that triggered them.
+
+            The mouse and wheel sources have different semantics:
+
+            For mouse, enter and leave report the aggregate state of
+            the left pointer button only. activity_enter is sent when
+            the left button is pressed, activity_leave when it is
+            released. Other pointer buttons do not generate these
+            events. The compositor sends enter and leave as matched
+            pairs: it must not send a second enter before the matching
+            leave, nor a leave when the left button is not pressed.
+
+            For wheel, enter and leave are discrete per-event pulses,
+            not a persistent state. activity_enter is sent for each
+            wheel event whose angle delta is positive, and
+            activity_leave for each whose angle delta is negative; the
+            compositor may send several enter (or several leave) events
+            in a row without an intervening opposite event. Clients
+            must treat each wheel event independently and must not
+            infer a lasting state from a single enter or leave.
+
+            The start_drag, drop, and drag_cancelled events report the
+            lifecycle of a drag and drop operation on the seat.
+            start_drag is sent when the operation begins. Exactly one
+            terminal event follows each start_drag: drop when the
+            operation completes with a successful drop, or
+            drag_cancelled when the operation ends without a drop
+            (for example because the drag was cancelled or the source
+            destroyed). No further drag events are sent after the
+            terminal event until the next start_drag.
+        </description>
+
+        <enum name="reason">
+            <description summary="activity source">
+                The input source that triggered an activity event. Used
+                by the activity_enter and activity_leave events. See the
+                interface description for the per-source semantics.
+            </description>
+            <entry name="mouse" value="0" summary="left pointer button activity" />
+            <entry name="wheel" value="1" summary="pointer wheel activity" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the activity notifier">
+                Destroy the treeland_active_notify_v1 object. The
+                compositor stops reporting activity for the seat bound
+                to this notifier.
+            </description>
+        </request>
+
+        <event name="activity_enter">
+            <description summary="an activity source became active">
+                For mouse, sent when the left pointer button is
+                pressed. For wheel, sent for each wheel event whose
+                angle delta is positive; the compositor may send
+                several in a row without an intervening activity_leave.
+                See the interface description for the per-source
+                semantics.
+            </description>
+            <arg name="reason" type="uint" enum="reason" summary="the activity source" />
+        </event>
+
+        <event name="activity_leave">
+            <description summary="an activity source became inactive">
+                For mouse, sent when the left pointer button is
+                released. For wheel, sent for each wheel event whose
+                angle delta is negative; the compositor may send
+                several in a row without an intervening activity_enter.
+                See the interface description for the per-source
+                semantics.
+            </description>
+            <arg name="reason" type="uint" enum="reason" summary="the activity source" />
+        </event>
+
+        <event name="start_drag">
+            <description summary="a drag operation started">
+                Sent when a drag and drop operation starts on the seat
+                bound to this notifier. Exactly one terminal event
+                (drop or drag_cancelled) follows each start_drag.
+            </description>
+        </event>
+
+        <event name="drop">
+            <description summary="a drag operation completed with a drop">
+                Terminal event for a drag and drop operation that
+                completes with a successful drop on the seat bound to
+                this notifier. No further drag events are sent after
+                drop until the next start_drag.
+            </description>
+        </event>
+
+        <event name="drag_cancelled">
+            <description summary="a drag operation ended without a drop">
+                Terminal event for a drag and drop operation that ends
+                without a drop, for example because the drag was
+                cancelled or the drag source destroyed. No further drag
+                events are sent after drag_cancelled until the next
+                start_drag.
+            </description>
+        </event>
+    </interface>
+</protocol>
