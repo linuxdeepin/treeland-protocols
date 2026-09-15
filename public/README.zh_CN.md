@@ -5,7 +5,7 @@
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
 | `treeland-window-transition-unstable-v1.xml` | `treeland_window_transition_unstable_v1` | `treeland_window_transition_manager_v1`, `treeland_window_transition_rect_v1` | 相对某个矩形的窗口打开/关闭转场，可附带源图像 |
-| `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker`（已废弃）, `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1`（已废弃）, `treeland_multitaskview_v1`, `treeland_window_picker_v1`, `treeland_lockscreen_v1` | DDE Shell 集成：surface 角色、重叠检测、活跃事件、多任务视图、窗口选取、锁屏；`treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口及 `set_xwindow_position_relative` 请求已废弃且不可用，由 `dde/treeland-active-notify-unstable-v1.xml`、`dde/treeland-window-overlap-checker-unstable-v1.xml` 和 `dde/treeland-xwindow-control-unstable-v1.xml` 取代 |
+| `treeland-dde-shell-v1.xml` | `treeland_dde_shell_v1` | `treeland_dde_shell_manager_v1`, `treeland_window_overlap_checker`（已废弃）, `treeland_dde_shell_surface_v1`, `treeland_dde_active_v1`（已废弃）, `treeland_multitaskview_v1`（已废弃）, `treeland_window_picker_v1`, `treeland_lockscreen_v1`（已废弃） | DDE Shell 集成：surface 角色、重叠检测、活跃事件、多任务视图、窗口选取、锁屏；`treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口及 `set_xwindow_position_relative` 请求已废弃且不可用，由 `dde/treeland-active-notify-unstable-v1.xml`、`dde/treeland-window-overlap-checker-unstable-v1.xml` 和 `dde/treeland-xwindow-control-unstable-v1.xml` 取代；`treeland_multitaskview_v1` 和 `treeland_lockscreen_v1` 接口（含其创建请求）已废弃但仍可用，由 `dde/treeland-compositor-action-unstable-v1.xml` 的动作取代 |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | 查询与订阅用户级外观设置：光标主题/大小、字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、圆角 |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | 逐窗口服务端装饰（SSD）定制：圆角、阴影、边框、标题栏可见性；需先经 xdg-decoration 申请 SSD |
 
@@ -23,6 +23,8 @@
 - `treeland-xwindow-control-unstable-v1.xml`（`treeland_xwindow_control_v1`）：XWayland 窗口定位——`set_xwindow_position_relative` 请求，结果经 `wl_callback` 回报，线缆语义不变。
 - `treeland-active-notify-unstable-v1.xml`（`treeland_active_notify_manager_v1`、`treeland_active_notify_v1`）：Seat 活跃通知——`get_active_notify` 请求创建按 Seat 限定的通知对象，其 `activity_enter`/`activity_leave` 事件携带 `reason` 枚举（由 `active_in`/`active_out` 更名；鼠标跟踪左键状态，滚轮为逐事件脉冲），并新增 `start_drag`/`drop`/`drag_cancelled` 生命周期事件（后者覆盖拖拽取消）。
 - `treeland-window-overlap-checker-unstable-v1.xml`（`treeland_window_overlap_checker_manager_v1`、`treeland_window_overlap_checker_v1`）：窗口重叠监测——沿输出边缘的区域注册（`set_region`）与 `enter`/`leave` 状态事件及显式错误回报；checker 接口由 `treeland_window_overlap_checker` 更名并补上 `_v1` 后缀，设区域请求由 `update` 更名为 `set_region`。
+
+`treeland_multitaskview_v1` 和 `treeland_lockscreen_v1` 接口（含其创建请求 `get_treeland_multitaskview`、`get_treeland_lockscreen`）现标注为已废弃但仍可用，由新的特权协议 `dde/treeland-compositor-action-unstable-v1.xml` 的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
 
 消费者应改绑新的全局对象，不得在新代码中使用已废弃的请求与接口。
 

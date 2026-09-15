@@ -60,7 +60,12 @@
 
         <request name="get_treeland_multitaskview">
             <description summary="create a new multitaskview context">
-                Create a new multitaskview context for toggle.
+                Deprecated: superseded by the open_multitask_view,
+                close_multitask_view, and toggle_multitask_view actions of
+                the treeland_compositor_action_v1 global of the
+                treeland-compositor-action-unstable-v1 protocol. This
+                request remains functional during the deprecation period
+                but must not be used in new code.
             </description>
             <arg name="id" type="new_id" interface="treeland_multitaskview_v1"/>
         </request>
@@ -74,7 +79,12 @@
 
         <request name="get_treeland_lockscreen">
             <description summary="create a new lockscreen context">
-                Create a new lockscreen context for toggle.
+                Deprecated: superseded by the lockscreen, shutdown_menu,
+                and show_user_switch actions of the
+                treeland_compositor_action_v1 global of the
+                treeland-compositor-action-unstable-v1 protocol. This
+                request remains functional during the deprecation period
+                but must not be used in new code.
             </description>
             <arg name="id" type="new_id" interface="treeland_lockscreen_v1"/>
         </request>
@@ -310,6 +320,13 @@
     <interface name="treeland_multitaskview_v1" version="1">
         <description summary="multitaskview context interface">
             An interface used to control multitaskview.
+
+            Deprecated: superseded by the open_multitask_view,
+            close_multitask_view, and toggle_multitask_view actions of the
+            treeland_compositor_action_v1 global of the
+            treeland-compositor-action-unstable-v1 protocol. The interface
+            remains functional during the deprecation period but must not
+            be used in new code.
         </description>
 
         <request name="destroy" type="destructor">
@@ -354,6 +371,12 @@
     <interface name="treeland_lockscreen_v1" version="1">
         <description summary="lockscreen interface">
             An interface used to operate lockscreen.
+
+            Deprecated: superseded by the lockscreen, shutdown_menu, and
+            show_user_switch actions of the treeland_compositor_action_v1
+            global of the treeland-compositor-action-unstable-v1 protocol.
+            The interface remains functional during the deprecation period
+            but must not be used in new code.
         </description>
 
         <request name="destroy" type="destructor">
