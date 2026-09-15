@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_compositor_action_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="compositor action triggering for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged DDE client such as the dock, the
+        shutdown applet, or the greeter to trigger compositor actions
+        directly, without registering a keyboard or gesture shortcut.
+
+        This protocol is independent of treeland_shortcut_manager_v3 and of
+        any other Treeland protocol. The action values defined here form
+        their own value space: they are not aligned with, and must not be
+        assumed to match, the action enum of the shortcut manager. The
+        compositor maps them to internal actions through its own table, and
+        future versions of either protocol may add, renumber, or remove
+        entries without regard to the other.
+
+        Following the split used by KWin, this protocol exposes only actions
+        that are independent of the currently active window and of an
+        in-progress keyboard task-switching sequence: workspace switching,
+        show-desktop, the multitask overview, screen zoom, the FPS overlay,
+        and session-level actions (lock, shutdown menu, user switch). Actions
+        that act on the currently active window (maximize, minimize, close,
+        move, resize, show the window menu, snap tiling, and moving a window
+        across workspaces) and the task-switch stepping actions depend on
+        implicit runtime state (the active window or an ongoing Alt-Tab-like
+        sequence) and are not exposed here; they remain available only as
+        keyboard or gesture shortcuts registered through
+        treeland_shortcut_manager_v3. Exposing those window-level actions as
+        a directly callable interface would let a background client manipulate
+        a window chosen by keyboard focus rather than by explicit reference,
+        which is the same reason KWin keeps them behind kglobalaccel instead
+        of offering them on its DBus interface.
+
+        The compositor must reject bind attempts from non-privileged
+        clients.
+
+        This interface is stateless: each request is an independent one-shot
+        action. The compositor does not send events in response to these
+        requests; clients that need to observe the resulting session state
+        should use the appropriate session or idle protocols instead.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_compositor_action_v1" version="1">
+        <description summary="compositor action trigger">
+            A global that exposes compositor actions to a privileged
+            DDE client.
+
+            The compositor must reject bind attempts from non-privileged
+            clients.
+
+            Only window-independent actions are exposed here; actions
+            that target the currently active window or step an in-progress
+            task switch are not part of this interface and must be triggered
+            as shortcuts through treeland_shortcut_manager_v3. See the
+            protocol-level description for the rationale.
+
+            All actions are triggered with the trigger request, which takes
+            an action argument.
+
+            The compositor should ignore an action it cannot perform, for
+            example locking while a lock screen is already active; clients
+            must not assume an action has taken effect.
+
+            The shutdown-menu actions show the shutdown and session menu;
+            they differ only in which menu button receives the default
+            keyboard focus. shutdown_menu expresses no preference; the
+            power_off, reboot, suspend, hibernate, and log_out entries
+            request focus on the matching button. Showing the menu does not
+            perform the power action itself; the compositor or greeter
+            carries out the chosen action after the user confirms.
+        </description>
+
+        <enum name="action">
+            <description summary="compositor actions">
+                Shell actions exposed through the trigger request, limited
+                to those independent of the currently active window.
+
+                The values are specific to this protocol. They are not
+                aligned with the action enum of
+                treeland_shortcut_manager_v3, and clients must not build any
+                mapping between the two enums.
+
+                Actions that target the currently active window (maximize,
+                minimize, close, move, resize, show the window menu, snap
+                tiling, and moving a window across workspaces) and the
+                task-switch stepping actions are not part of this enum; they
+                depend on the active window or an in-progress switching
+                sequence and are reachable only as shortcuts via
+                treeland_shortcut_manager_v3.
+
+                Values 25-30 (show_user_switch and the focused shutdown-menu
+                actions) have no counterpart in the shortcut manager because
+                they are triggered by a shell client rather than a keyboard
+                shortcut. The focused shutdown-menu entries behave like
+                shutdown_menu but request default focus on the matching
+                button.
+            </description>
+            <!-- workspace switching -->
+            <entry name="workspace_1"              value="1"  summary="switch to workspace 1" />
+            <entry name="workspace_2"              value="2"  summary="switch to workspace 2" />
+            <entry name="workspace_3"              value="3"  summary="switch to workspace 3" />
+            <entry name="workspace_4"              value="4"  summary="switch to workspace 4" />
+            <entry name="workspace_5"              value="5"  summary="switch to workspace 5" />
+            <entry name="workspace_6"              value="6"  summary="switch to workspace 6" />
+            <entry name="workspace_7"              value="7"  summary="switch to workspace 7" />
+            <entry name="workspace_8"              value="8"  summary="switch to workspace 8" />
+            <entry name="workspace_9"              value="9"  summary="switch to workspace 9" />
+            <entry name="workspace_10"             value="10" summary="switch to workspace 10" />
+            <entry name="workspace_11"             value="11" summary="switch to workspace 11" />
+            <entry name="workspace_12"             value="12" summary="switch to workspace 12" />
+            <entry name="prev_workspace"           value="13" summary="switch to the previous workspace" />
+            <entry name="next_workspace"           value="14" summary="switch to the next workspace" />
+            <!-- show desktop / multitask -->
+            <entry name="show_desktop"              value="15" summary="toggle show-desktop mode" />
+            <entry name="open_multitask_view"      value="16" summary="open the multitask overview" />
+            <entry name="close_multitask_view"     value="17" summary="close the multitask overview" />
+            <entry name="toggle_multitask_view"    value="18" summary="toggle the multitask overview" />
+            <!-- screen zoom -->
+            <entry name="zoom_in"                   value="19" summary="zoom in the screen" />
+            <entry name="zoom_out"                  value="20" summary="zoom out the screen" />
+            <entry name="zoom_reset"                value="21" summary="reset the screen zoom level" />
+            <!-- system / misc -->
+            <entry name="toggle_fps_display"        value="22" summary="toggle the compositor FPS overlay" />
+            <entry name="lockscreen"               value="23" summary="lock the screen" />
+            <entry name="shutdown_menu"            value="24" summary="show the shutdown/session menu with no default-focus preference" />
+            <!-- protocol-specific (no shortcut counterpart) -->
+            <entry name="show_user_switch"          value="25" summary="show the user switch UI" />
+            <!-- focused shutdown-menu variants: behave like shutdown_menu but request default focus on the matching button -->
+            <entry name="shutdown_menu_power_off"   value="26" summary="show the shutdown/session menu, focusing the power-off button" />
+            <entry name="shutdown_menu_reboot"      value="27" summary="show the shutdown/session menu, focusing the reboot button" />
+            <entry name="shutdown_menu_suspend"     value="28" summary="show the shutdown/session menu, focusing the suspend button" />
+            <entry name="shutdown_menu_hibernate"   value="29" summary="show the shutdown/session menu, focusing the hibernate button" />
+            <entry name="shutdown_menu_log_out"      value="30" summary="show the shutdown/session menu, focusing the log-out button" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the compositor action object">
+                Destroy the treeland_compositor_action_v1 object. This request
+                does not alter any compositor, shell, or session state.
+            </description>
+        </request>
+
+        <request name="trigger">
+            <description summary="trigger a compositor action">
+                Trigger the compositor action identified by the action argument.
+                The compositor should ignore the request when the action
+                cannot be performed, for example locking while a lock
+                screen is already active, or showing the shutdown menu while
+                a lock screen is already active. Clients must not assume
+                the action has taken effect.
+
+                The shutdown-menu actions show the menu; they do not perform
+                the power action itself.
+            </description>
+            <arg name="action" type="uint" enum="action" summary="the compositor action to trigger" />
+        </request>
+    </interface>
+</protocol>
