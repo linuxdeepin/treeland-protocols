@@ -13,7 +13,6 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | Privileged user-level appearance configuration: cursor theme/size, global font, icon theme, accent color, window opacity, color scheme, titlebar height, global corner radius |
 | `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | Virtual (mirrored) output creation and management |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | Per-output wallpaper configuration with image/video sources |
-| `treeland-show-desktop-unstable-v1.xml` | `treeland_show_desktop_unstable_v1` | `treeland_show_desktop_v1` | Show-desktop mode control: request mode transitions and observe compositor-driven state changes |
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | Compositor-driven interactive resize for layer-shell surfaces (dock / side bar / status bar): begin_resize with seat+serial, per-resize size limits, and rejection reasons |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland window placement: move an XWayland window (by X11 window ID) to a position relative to another surface, with wl_callback result feedback |
 | `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`, `treeland_active_notify_v1` | Seat activity notification: observe pointer button/wheel enter/leave activity and drag/drop lifecycle events scoped to a seat |
@@ -22,6 +21,18 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 ## Breaking changes
 
 Breaking changes are grouped by version. Under each version heading, one subsection per affected protocol explains what changed, what replaces it, and how existing consumers should adapt.
+
+### 0.7.0
+
+#### `treeland-show-desktop-unstable-v1.xml`
+
+Deprecated and moved to `deprecated/`; superseded by the `show_desktop` action of the `treeland_compositor_action_v1` global of `treeland-compositor-action-unstable-v1.xml` (in `dde/`). Wire-level differences:
+
+1. The replacement is a one-shot fire-and-forget trigger: the `show_desktop` action toggles show-desktop mode and the compositor sends no confirmation, whereas `set_show_desktop_state` requested an explicit transition to `show` or `normal` and the `show_desktop_state` event confirmed every state change.
+2. State observation has no direct replacement: the new protocol carries no events, so clients that tracked the mode via `show_desktop_state` (including the initial state sent on bind) lose that feedback and must treat triggering as best-effort.
+3. The replacement global is privileged: only the DDE clients allowed by the compositor may bind `treeland_compositor_action_v1`, whereas `treeland_show_desktop_v1` was bound by regular shell clients.
+
+Consumers should rebind the global as `treeland_compositor_action_v1` and trigger the `show_desktop` action; the old XML is kept installed during migration but must not be used in new code.
 
 ### 0.6.0
 
