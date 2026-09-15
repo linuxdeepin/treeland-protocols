@@ -16,6 +16,7 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | Compositor-driven interactive resize for layer-shell surfaces (dock / side bar / status bar): begin_resize with seat+serial, per-resize size limits, and rejection reasons |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland window placement: move an XWayland window (by X11 window ID) to a position relative to another surface, with wl_callback result feedback |
 | `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`, `treeland_active_notify_v1` | Seat activity notification: observe pointer button/wheel enter/leave activity and drag/drop lifecycle events scoped to a seat |
+| `treeland-window-overlap-checker-unstable-v1.xml` | `treeland_window_overlap_checker_unstable_v1` | `treeland_window_overlap_checker_manager_v1`, `treeland_window_overlap_checker_v1` | Window overlap monitoring: register an edge-anchored region on an output and observe enter/leave overlap events with xdg-shell toplevels |
 
 ## Breaking changes
 
