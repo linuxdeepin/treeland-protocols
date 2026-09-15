@@ -22,8 +22,8 @@
         <request name="get_window_overlap_checker">
             <description summary="create a window overlap checker">
                 Deprecated: this request is non-functional. The created
-                object's requests have no effect and no events are ever
-                emitted.
+                object never emits events, and its requests have no
+                effect apart from destroy.
 
                 Superseded by the treeland_window_overlap_checker_manager_v1
                 global of the treeland-window-overlap-checker-unstable-v1
@@ -47,8 +47,8 @@
         <request name="get_treeland_dde_active">
             <description summary="create a new dde active">
                 Deprecated: this request is non-functional. The created
-                object's requests have no effect and no events are ever
-                emitted.
+                object never emits events, and its requests have no
+                effect apart from destroy.
 
                 Superseded by the treeland_active_notify_manager_v1
                 global of the treeland-active-notify-unstable-v1
@@ -102,9 +102,9 @@
 
     <interface name="treeland_window_overlap_checker" version="1">
         <description summary="A window overlap checker">
-            Deprecated: this interface is non-functional. All requests
-            have no effect and no events are ever emitted. New code must
-            not use it.
+            Deprecated: this interface is non-functional. Apart from
+            the destroy request, all requests have no effect and no
+            events are ever emitted. New code must not use it.
 
             Superseded by the treeland_window_overlap_checker_manager_v1
             global of the treeland-window-overlap-checker-unstable-v1
@@ -265,7 +265,15 @@
 
     <interface name="treeland_dde_active_v1" version="1">
         <description summary="metadata interface">
-            An interface used to monitor special events.
+            Deprecated: this interface is non-functional. Apart from
+            the destroy request, all requests have no effect and no
+            events are ever emitted. New code must not use it.
+
+            Superseded by the treeland_active_notify_manager_v1 global of
+            the treeland-active-notify-unstable-v1 protocol.
+
+            This interface will be removed along with the whole protocol
+            in a future release.
         </description>
 
         <request name="destroy" type="destructor">
