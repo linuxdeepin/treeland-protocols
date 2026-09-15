@@ -7,10 +7,12 @@
 | `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | 重新设计的顶层窗口观察和 Dock 预览；修正了命名、成员顺序、destroy 位置和描述质量 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
-| `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制 |
+| `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制；输出按 uuid 寻址 |
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势及一次性快捷键捕获 |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
-| `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | 虚拟（镜像）输出创建和管理 |
+| `treeland-output-uuid-unstable-v1.xml` | `treeland_output_uuid_unstable_v1` | `treeland_output_uuid_manager_v1`、`treeland_output_uuid_v1`（frozen） | `wl_output` 的稳定不透明 uuid 身份；该 uuid 与 head 变体共享，供其他输出协议消费 |
+| `treeland-output-uuid-head-unstable-v1.xml` | `treeland_output_uuid_head_unstable_v1` | `treeland_output_uuid_head_manager_v1` | `treeland-output-uuid-unstable-v1` 的配套协议：从 `zwlr_output_head_v1`（wlr-output-management）获取同一个 `treeland_output_uuid_v1` 对象，涵盖无存活 `wl_output` 的禁用输出 |
+| `treeland-output-mirror-manager-unstable-v1.xml` | `treeland_output_mirror_manager_unstable_v1` | `treeland_output_mirror_manager_v1`, `treeland_output_mirror_group_v1` | 输出镜像（复制模式）分组管理：指定一个源输出并镜像到一个或多个镜像输出，按 uuid 寻址，采用 registry 模式枚举 |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | 逐输出壁纸配置，支持图片/视频来源 |
 | `treeland-show-desktop-unstable-v1.xml` | `treeland_show_desktop_unstable_v1` | `treeland_show_desktop_v1` | 显示桌面模式控制：请求模式切换并观察合成器驱动的状态变化 |
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | 合成器驱动的 layer-shell 表面交互式缩放（dock / 侧边栏 / 状态栏）：begin_resize 携带 seat+serial 与单次尺寸限制，及拒绝原因 |
@@ -20,20 +22,36 @@
 
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
 
-### 0.6.0
+### 0.7.0
 
 #### `treeland-output-manager-v1.xml`
 
-被 `treeland-output-manager-unstable-v2.xml` 取代；旧 v1 文件原样移至 `deprecated/`。v2 协议重命名了两个接口，规范了成员排序，并将主屏标识从输出名称改为 `wl_output` 对象。线缆级差异：
+被 `treeland-output-manager-unstable-v2.xml` 取代；旧 v1 文件原样移至 `deprecated/`。v2 协议重命名两个接口、规范成员排序，并改用来自新增 `treeland-output-uuid-unstable-v1` 协议的不透明 uuid 字符串寻址输出，替代输出名称或 `wl_output` 对象。线缆级差异：
 
-1. 接口重命名：`treeland_output_manager_v1` → `treeland_output_manager_v2`，`treeland_output_color_control_v1` → `treeland_output_picture_control_v2`；接口版本重置为 1，移除了 `since="2"` 标记。
+1. 接口重命名：`treeland_output_manager_v1` → `treeland_output_manager_v2`，`treeland_output_color_control_v1` → `treeland_output_picture_control_v2`；接口版本重置为 1。
 2. 两个接口的 `destroy` 移至首个请求，其余请求的操作码整体后移一位。
-3. `set_primary_output` 参数由输出名称 `string` 改为不可为 null 且已启用的 `wl_output` 对象；传已禁用或已销毁的输出将通过 `primary_output_failed` 事件拒绝而非协议错误。不再支持通过传 null 清除主屏指定。
-4. `primary_output` 事件参数由输出名称 `string` 改为 `wl_output` 对象（仅当无可用输出时为 null），绑定时立即发送一次，并确认每一次 `set_primary_output` 请求。当被指定的主屏被拔出或禁用时，合成器自动选择另一个可用输出作为新主屏并发送该事件。
-5. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为新增的 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`），线缆取值因此反转。
-6. picture control 的 `error` 枚举在重命名后的 `treeland_output_picture_control_v2` 接口上保留；其 `invalid_color_temperature`/`invalid_brightness` 项名称不变，但因接口版本重置，值由 1/2 重置为 0/1，`set_*` 越界即致命协议错误的行为不变。`commit_result` 因此只承载成功与输出相关的失败原因（不含范围校验项）；枚举移至 requests 之前，`primary_output_failed_reason` 枚举供新增的 `primary_output_failed` 事件使用。`get_picture_control` 接受任何状态的合法 `wl_output`——无效对象 ID 仍属核心协议错误；输出有效性在 commit 时通过 `result` 事件反馈。
+3. `set_primary_output` 参数改为 `string uuid`（替代输出名称或 `wl_output` 对象）；空 uuid 为致命错误 `error.invalid_uuid`，无已连接已启用输出的 uuid 以 `primary_output_failed` 事件拒绝（原因 `invalid_output`）。
+4. `primary_output` 事件携带 `string uuid`（无主屏时为空），替代输出名称或 `wl_output` 对象，绑定时发送一次，并确认每一次 `set_primary_output` 请求。
+5. `get_picture_control` 参数改为 `string uuid`；空 uuid 或无合成器已识别的已连接输出的 uuid 为致命错误 `error.invalid_uuid`（不创建对象，故初始状态契约成立）。
+6. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`），线缆取值反转。
 
-消费者应将全局对象重新绑定为 `treeland_output_manager_v2`，改传 `wl_output` 对象而非输出名称，并按 `commit_result` 枚举解释 `result` 值；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_output_manager_v2`，从 `treeland_output_uuid_manager_v1.get_uuid` 获取输出 uuid，改传 uuid 字符串而非输出名称或 `wl_output` 对象，并按 `commit_result` 枚举解释 `result` 值。
+
+#### `treeland-virtual-output-manager-v1.xml`
+
+被 `treeland-output-mirror-manager-unstable-v1.xml` 取代；旧 v1 文件原样移至 `deprecated/`。协议围绕基于 uuid 的输出身份（而非输出名字符串）重新设计，显式区分源/镜像，采用 registry 模式枚举，并完整定义了对象生命周期。线缆级差异：
+
+1. 协议与接口重命名：`treeland_virtual_output_manager_v1` → `treeland_output_mirror_manager_unstable_v1`，接口 `treeland_virtual_output_manager_v1` → `treeland_output_mirror_manager_v1`、`treeland_virtual_output_v1` → `treeland_output_mirror_group_v1`；接口版本重置为 1。
+2. 输出身份由名称改为 uuid：移除 `create_virtual_output` 的 `name`、`outputs` `string`/`array` 参数、`virtual_output_list` 事件的 `names` `array` 参数以及 `outputs` 事件的 `outputs` `array` 参数。新 `create_group` 请求接收组名 `name` `string` 与初始源 uuid `string`（空表示无源），因此组创建时即已设置源，观察者不会看到空源组；镜像通过 `add_output` 添加，源通过 `set_source` 更改。输出在组的 `set_source`、`add_output`、`remove_output` 请求及 `source`、`output_added`、`output_removed` 事件中均以 uuid 字符串引用。旧的 `outputs[0] = 源，outputs[1..] = 镜像` 位置约定改为显式的 `set_source` 请求与有序的 `add_output`/`remove_output` 镜像列表，并以 `source` 事件上报当前源 uuid（无源时为空）。不标识已连接已启用输出的非空源以新增致命管理器错误 `invalid_source` 拒绝。
+3. 枚举改为 registry 推送模型：移除 `get_virtual_output_list` 请求与 `virtual_output_list` 快照事件。绑定管理器时，合成器为每个已存在的组发送一个 `group_added` 事件（携带一个新的组对象），并在任意组创建时再次发送；组解散时发送 `group_removed`。由此消除了“先列表、再查找”的 TOCTOU 窗口。
+4. 移除 `get_virtual_output` 请求；客户端从绑定时的 `group_added` 推送或后续 `group_added` 事件获取已存在组的句柄，因此不再存在未知名称的致命错误路径。
+5. 移除逐组的 `error` 事件。失败按严重程度划分：管理器错误 `invalid_name`（空、非 UTF-8 或含 NUL 的名称）、`name_exists`（重名）为致命协议错误；组业务失败——`invalid_output`、`duplicate_output`、`output_in_use`、`not_in_group`——为非致命，通过新增的 `operation_failed` 事件（code + uuid）报告，因此 `get_uuid` 与请求之间的拔出等瞬态输出状态不会终止连接。仅 `already_dissolved`（对已解散组发送除 `destroy` 外的任何请求）仍为致命组协议错误。旧码值 `invalid_group_name`（0）、`invalid_screen_number`（1）、`invalid_output`（2）不复存在。
+6. 对象生命周期重新定义：销毁组对象（`destroy`）现在仅释放该客户端的句柄，不会解散组也不影响其他客户端；新增 `dissolve` 请求才解散组，并向所有绑定的组对象发送 `removed`、在管理器上发送 `group_removed`。旧“任意客户端销毁其 `treeland_virtual_output_v1` 对象（含经 `get_virtual_output` 获取者）即解散组”的行为已移除。初始状态现改为推送：每个组对象创建后立即发送一次 `source` 事件（无源时为空 uuid）及逐个镜像的 `output_added` 事件，客户端不再以未知状态开始。
+7. 源拔出后的后继行为保留并明确化：当源输出被拔出或禁用且仍有镜像时，第一个剩余镜像成为新源（合成器依次发送该输出的 `output_removed` 与 `source`）；而客户端主动 `remove_output` 源则清除源（发送携带空 uuid 的 `source`），不自动选择后继。
+
+消费者应将全局对象重新绑定为 `treeland_output_mirror_manager_v1`，从 `group_added` 事件（或 `create_group` 的返回值）获取 `treeland_output_mirror_group_v1` 对象，以 uuid 通过 `set_source`/`add_output`/`remove_output` 引用输出，并用 `dissolve` 而非销毁组对象来解散组；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+
+### 0.6.0
 
 #### `treeland-personalization-manager-v1.xml`
 
