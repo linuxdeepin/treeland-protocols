@@ -38,6 +38,14 @@ Deprecated and moved to `deprecated/`; superseded by the `show_desktop` action o
 
 Consumers should rebind the global as `treeland_compositor_action_v1` and trigger the `show_desktop` action; the old XML is kept installed during migration but must not be used in new code.
 
+#### `treeland-dde-shell-v1.xml`
+
+The DDE-shell protocol interfaces consumed by DDE components are split into dedicated `dde/` protocols. Each replacement is an independent privileged global; consumers should bind the new globals and stop using the deprecated dde-shell interfaces.
+
+- `treeland_dde_active_v1` (and its `get_treeland_dde_active` manager request) is non-functional and superseded by `treeland-active-notify-unstable-v1.xml` (`treeland_active_notify_manager_v1` / `treeland_active_notify_v1`): `get_active_notify` creates a per-seat notifier whose `activity_enter`/`activity_leave` events carry a `reason` enum (renamed from `active_in`/`active_out`; mouse tracks the left-button state, wheel is a per-event pulse), plus `start_drag`/`drop`/`drag_cancelled` lifecycle events.
+- `treeland_window_overlap_checker` (and its `get_window_overlap_checker` manager request) is non-functional and superseded by `treeland-window-overlap-checker-unstable-v1.xml` (`treeland_window_overlap_checker_manager_v1` / `treeland_window_overlap_checker_v1`): the checker interface gains the `_v1` suffix, the region request is renamed from `update` to `set_region` with an explicit `anchor` enum and `invalid_anchor`/`invalid_size` errors, and `output_removed` covers output lifetime.
+- `treeland_multitaskview_v1` and `treeland_lockscreen_v1` (with their creating requests) remain functional during the deprecation period and are superseded by the corresponding actions (`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` and `lockscreen`/`shutdown_menu`/`show_user_switch`) of `treeland-compositor-action-unstable-v1.xml` (`treeland_compositor_action_v1`).
+
 ### 0.6.0
 
 #### `treeland-output-manager-v1.xml`
