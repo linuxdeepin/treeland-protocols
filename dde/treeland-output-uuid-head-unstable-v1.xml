@@ -10,7 +10,10 @@
         identify outputs through wlr-output-management. It lets a client
         obtain the same stable treeland_output_uuid_v1 object from a
         zwlr_output_head_v1 instead of a wl_output, so it can identify an
-        output that is disabled and has no live wl_output global. The uuid
+        output that is disabled and has no live wl_output global, or an
+        output used as a mirror in a copy mode group of the
+        treeland-output-group-manager-unstable-v1 protocol, which likewise
+        has no wl_output. The uuid
         returned for a head is the same uuid that
         treeland_output_uuid_manager_v1.get_uuid returns for the wl_output
         of the same physical output device.
