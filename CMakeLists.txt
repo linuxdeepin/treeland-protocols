@@ -32,6 +32,7 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-show-desktop-unstable-v1.xml
   dde/treeland-layer-shell-extension-unstable-v1.xml
   dde/treeland-xwindow-control-unstable-v1.xml
+  dde/treeland-active-notify-unstable-v1.xml
 )
 
 # Internal protocol XML files (Treeland-specific, not for general app developers)

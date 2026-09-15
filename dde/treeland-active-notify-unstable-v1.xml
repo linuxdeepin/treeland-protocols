@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_active_notify_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="seat activity notification for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged DDE client such as the dock or shell
+        to observe seat activity that the compositor detects: pointer button
+        and wheel activity, and drag and drop lifecycle events, scoped to a
+        given seat.
+
+        The compositor should reject bind attempts from non-privileged
+        clients.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_active_notify_manager_v1" version="1">
+        <description summary="factory for seat activity notifiers">
+            A global that creates treeland_active_notify_v1 objects for
+            privileged DDE clients. Each notifier reports activity for
+            one seat; clients observing several seats create several
+            notifiers.
+
+            The compositor should reject bind attempts from non-privileged
+            clients.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroy the treeland_active_notify_manager_v1 object.
+                Notifiers created through this manager are not affected.
+            </description>
+        </request>
+
+        <request name="get_active_notify">
+            <description summary="create a new seat activity notifier">
+                Create a new treeland_active_notify_v1 object that
+                reports activity for the given seat. The seat must be a
+                valid, current wl_seat.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_active_notify_v1" summary="the new activity notifier object" />
+            <arg name="seat" type="object" interface="wl_seat" summary="the seat to observe" />
+        </request>
+    </interface>
+
+    <interface name="treeland_active_notify_v1" version="1">
+        <description summary="seat activity notifier">
+            A notifier object reports seat activity that the compositor
+            detects. Activity is reported as enter/leave transitions
+            tagged with the source that triggered them.
+
+            enter means the source became active (for example a pointer
+            button was pressed or a wheel was scrolled in the positive
+            direction); leave means the source became inactive (the
+            button was released or the wheel was scrolled in the negative
+            direction). The compositor sends these events only on the
+            transitions, not repeatedly while a state persists.
+
+            The start_drag and drop events report the start and end of a
+            drag and drop operation on the seat.
+        </description>
+
+        <enum name="reason">
+            <description summary="activity source">
+                The input source that triggered an activity event. Used
+                by the activity_enter and activity_leave events.
+            </description>
+            <entry name="mouse" value="0" summary="pointer button activity" />
+            <entry name="wheel" value="1" summary="pointer wheel activity" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the activity notifier">
+                Destroy the treeland_active_notify_v1 object. The
+                compositor stops reporting activity for the seat bound
+                to this notifier.
+            </description>
+        </request>
+
+        <event name="activity_enter">
+            <description summary="an activity source became active">
+                Sent when the activity source identified by reason
+                becomes active: for mouse, when a pointer button is
+                pressed; for wheel, when the wheel is scrolled in the
+                positive direction.
+            </description>
+            <arg name="reason" type="uint" enum="reason" summary="the activity source" />
+        </event>
+
+        <event name="activity_leave">
+            <description summary="an activity source became inactive">
+                Sent when the activity source identified by reason
+                becomes inactive: for mouse, when the pressed pointer
+                button is released; for wheel, when the wheel is
+                scrolled in the negative direction.
+            </description>
+            <arg name="reason" type="uint" enum="reason" summary="the activity source" />
+        </event>
+
+        <event name="start_drag">
+            <description summary="a drag operation started">
+                Sent when a drag and drop operation starts on the seat
+                bound to this notifier.
+            </description>
+        </event>
+
+        <event name="drop">
+            <description summary="a drag operation completed">
+                Sent when a drag and drop operation completes with a
+                drop on the seat bound to this notifier.
+            </description>
+        </event>
+    </interface>
+</protocol>
