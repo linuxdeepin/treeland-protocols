@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_output_uuid_head_unstable_v1">
+    <copyright><![CDATA[
+    SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+    SPDX-License-Identifier: MIT
+    ]]></copyright>
+
+    <description summary="output uuid identity from wlr output heads">
+        Companion of treeland-output-uuid-unstable-v1 for clients that
+        identify outputs through wlr-output-management. It lets a client
+        obtain the same stable treeland_output_uuid_v1 object from a
+        zwlr_output_head_v1 instead of a wl_output, so it can identify an
+        output that is disabled and has no live wl_output global, or an
+        output used as a mirror in a copy mode group of the
+        treeland-output-group-manager-unstable-v1 protocol, which likewise
+        has no wl_output. The uuid
+        returned for a head is the same uuid that
+        treeland_output_uuid_manager_v1.get_uuid returns for the wl_output
+        of the same physical output device.
+
+        The treeland_output_uuid_v1 interface, including the meaning and
+        stability of the uuid, is defined by
+        treeland-output-uuid-unstable-v1 and is not duplicated here; this
+        protocol only adds a second factory that creates the same object.
+
+        The terms "must", "must not", "should", and "may" in this document are
+        to be interpreted as described in RFC 2119.
+
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+    </description>
+
+    <interface name="treeland_output_uuid_head_manager_v1" version="1">
+        <description summary="factory for output uuid objects from wlr heads">
+            A singleton global that creates treeland_output_uuid_v1 objects
+            from zwlr_output_head_v1 objects. The client calls get_uuid for
+            each head it wants to identify; the compositor reports the uuid in
+            the initial uuid event on the returned object. Multiple uuid
+            objects may be created for the same output, whether through this
+            manager or through treeland_output_uuid_manager_v1; each reports
+            independently.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager object">
+                Destroy the treeland_output_uuid_head_manager_v1 object and
+                release the client's binding to the manager global.
+
+                Existing treeland_output_uuid_v1 objects created through
+                this manager are not affected and must be destroyed
+                separately by the client.
+            </description>
+        </request>
+
+        <request name="get_uuid">
+            <description summary="create a uuid object for a wlr output head">
+                Create a treeland_output_uuid_v1 object for the output
+                represented by the given zwlr_output_head_v1. The head may be
+                in any state, including disabled: a wlr_output_head is
+                advertised even when the output is turned off, so this request
+                can identify an output with no live wl_output global.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_output_uuid_v1"
+                summary="the new output uuid object" />
+            <arg name="head" type="object" interface="zwlr_output_head_v1"
+                summary="the wlr output head to identify" />
+        </request>
+    </interface>
+</protocol>
