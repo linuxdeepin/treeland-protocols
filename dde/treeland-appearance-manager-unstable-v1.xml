@@ -157,7 +157,6 @@
             <arg name="r" type="uint" summary="accent color red component [0, 255]" />
             <arg name="g" type="uint" summary="accent color green component [0, 255]" />
             <arg name="b" type="uint" summary="accent color blue component [0, 255]" />
-            <arg name="a" type="uint" summary="accent color alpha component [0, 255]" />
         </request>
 
         <request name="set_window_opacity">

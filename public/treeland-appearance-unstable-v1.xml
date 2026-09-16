@@ -139,7 +139,6 @@
             <arg name="r" type="uint" summary="current accent color red component [0, 255]" />
             <arg name="g" type="uint" summary="current accent color green component [0, 255]" />
             <arg name="b" type="uint" summary="current accent color blue component [0, 255]" />
-            <arg name="a" type="uint" summary="current accent color alpha component [0, 255]" />
         </event>
 
         <event name="window_opacity">

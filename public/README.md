@@ -14,6 +14,10 @@ Breaking changes are grouped by version. Under each version heading, one subsect
 
 ### 0.7.0
 
+#### `treeland-appearance-unstable-v1.xml`
+
+The `accent_color` event dropped its `a` (alpha) argument. The accent color is now reported as an opaque RGB triple `r, g, b` (each `uint` in `[0, 255]`); the alpha channel is no longer carried on the wire. Consumers must stop reading the trailing `a` argument and must not derive accent color opacity from this event; opacity is outside the scope of the accent color setting.
+
 #### `treeland-dde-shell-v1.xml`
 
 The manager request `set_xwindow_position_relative` is now documented as deprecated and non-functional: it has no effect and no callback is ever created. The file itself stays in place for now; the whole `treeland-dde-shell` protocol is slated for removal in a future release.

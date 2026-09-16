@@ -20,6 +20,12 @@
 
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
 
+### 0.7.0
+
+#### `treeland-appearance-manager-unstable-v1.xml`
+
+`set_accent_color` 请求移除了 `a`（alpha）参数。活动色现为不透明 RGB 三元组 `r, g, b`（每个为 `[0, 255]` 范围内的 `uint`）；alpha 通道不再上线缆传输。消费者须停止发送末尾的 `a` 参数，且不得从该请求推断活动色不透明度；不透明度不在活动色设置范围内。
+
 ### 0.6.0
 
 #### `treeland-output-manager-v1.xml`

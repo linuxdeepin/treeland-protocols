@@ -20,6 +20,12 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 
 Breaking changes are grouped by version. Under each version heading, one subsection per affected protocol explains what changed, what replaces it, and how existing consumers should adapt.
 
+### 0.7.0
+
+#### `treeland-appearance-manager-unstable-v1.xml`
+
+The `set_accent_color` request dropped its `a` (alpha) argument. The accent color is now an opaque RGB triple `r, g, b` (each `uint` in `[0, 255]`); the alpha channel is no longer carried on the wire. Consumers must stop sending the trailing `a` argument and must not interpret accent color opacity from this request; opacity is outside the scope of the accent color setting.
+
 ### 0.6.0
 
 #### `treeland-output-manager-v1.xml`
