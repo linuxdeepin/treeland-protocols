@@ -15,6 +15,10 @@
 
 ### 0.7.0
 
+#### `treeland-appearance-unstable-v1.xml`
+
+`accent_color` 事件移除了 `a`（alpha）参数。活动色现以不透明 RGB 三元组 `r, g, b` 上报（每个为 `[0, 255]` 范围内的 `uint`）；alpha 通道不再上线缆传输。消费者须停止读取末尾的 `a` 参数，且不得从该事件推断活动色不透明度；不透明度不在活动色设置范围内。
+
 #### `treeland-dde-shell-v1.xml`
 
 管理器的 `set_xwindow_position_relative` 请求现标注为已废弃且不可用：请求无任何效果，也不会创建任何回调。文件暂保留原位；整个 `treeland-dde-shell` 协议计划在未来版本彻底移除。
