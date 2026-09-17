@@ -14,13 +14,13 @@ include(CMakePackageConfigHelpers)
 # Public protocol XML files (for general application developers)
 set(TREELAND_PROTOCOL_XML_FILES
   public/treeland-window-transition-unstable-v1.xml
-  public/treeland-dde-shell-unstable-v2.xml
   public/treeland-appearance-unstable-v1.xml
   public/treeland-decoration-unstable-v1.xml
 )
 
 # DDE component protocol XML files
 set(TREELAND_PROTOCOL_DDE_XML_FILES
+  dde/treeland-dde-shell-unstable-v2.xml
   dde/treeland-foreign-toplevel-manager-unstable-v2.xml
   dde/treeland-input-manager-unstable-v1.xml
   dde/treeland-keyboard-state-notify-unstable-v1.xml
@@ -33,7 +33,7 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-layer-shell-extension-unstable-v1.xml
   dde/treeland-xwindow-control-unstable-v1.xml
   dde/treeland-active-notify-unstable-v1.xml
-  dde/treeland-window-overlap-checker-unstable-v1.xml
+  dde/treeland-region-watch-unstable-v1.xml
 )
 
 # Internal protocol XML files (Treeland-specific, not for general app developers)

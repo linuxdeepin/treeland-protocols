@@ -150,15 +150,17 @@ SPDX-License-Identifier: MIT
         <request name="set_auto_placement">
             <description summary="place the surface below the cursor">
                 Ask the compositor to place this surface below the current
-                cursor position: horizontally centered on the cursor and
-                vertically offset by y_offset from the bottom of the
-                cursor. The compositor may adjust the position to keep
-                the surface accessible; see the interface description.
+                cursor position: horizontally offset by x_offset from the
+                cursor center and vertically offset by y_offset from the
+                bottom of the cursor. The compositor may adjust the
+                position to keep the surface accessible; see the interface
+                description.
 
                 Sending this request switches the placement mode to
                 automatic; see the interface description for the
                 interaction with set_surface_position.
             </description>
+            <arg name="x_offset" type="int" summary="horizontal offset of the surface center from the cursor center, positive to the right" />
             <arg name="y_offset" type="int" summary="distance from the bottom of the cursor to the top of the surface" />
         </request>
 

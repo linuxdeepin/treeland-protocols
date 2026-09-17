@@ -25,8 +25,8 @@
                 object never emits events, and its requests have no
                 effect apart from destroy.
 
-                Superseded by the treeland_window_overlap_checker_manager_v1
-                global of the treeland-window-overlap-checker-unstable-v1
+                Superseded by the treeland_region_watch_manager_v1
+                global of the treeland-region-watch-unstable-v1
                 protocol.
             </description>
             <arg name="id" type="new_id" interface="treeland_window_overlap_checker" summary="the new window overlap checker object"/>
@@ -64,8 +64,7 @@
                 close_multitask_view, and toggle_multitask_view actions of
                 the treeland_compositor_action_v1 global of the
                 treeland-compositor-action-unstable-v1 protocol. This
-                request remains functional during the deprecation period
-                but must not be used in new code.
+                request must not be used in new code.
             </description>
             <arg name="id" type="new_id" interface="treeland_multitaskview_v1"/>
         </request>
@@ -83,8 +82,7 @@
                 and show_user_switch actions of the
                 treeland_compositor_action_v1 global of the
                 treeland-compositor-action-unstable-v1 protocol. This
-                request remains functional during the deprecation period
-                but must not be used in new code.
+                request must not be used in new code.
             </description>
             <arg name="id" type="new_id" interface="treeland_lockscreen_v1"/>
         </request>
@@ -116,12 +114,9 @@
             the destroy request, all requests have no effect and no
             events are ever emitted. New code must not use it.
 
-            Superseded by the treeland_window_overlap_checker_manager_v1
-            global of the treeland-window-overlap-checker-unstable-v1
+            Superseded by the treeland_region_watch_manager_v1
+            global of the treeland-region-watch-unstable-v1
             protocol.
-
-            This interface will be removed along with the whole protocol
-            in a future release.
         </description>
 
         <event name="enter">
@@ -281,9 +276,6 @@
 
             Superseded by the treeland_active_notify_manager_v1 global of
             the treeland-active-notify-unstable-v1 protocol.
-
-            This interface will be removed along with the whole protocol
-            in a future release.
         </description>
 
         <request name="destroy" type="destructor">
@@ -325,8 +317,7 @@
             close_multitask_view, and toggle_multitask_view actions of the
             treeland_compositor_action_v1 global of the
             treeland-compositor-action-unstable-v1 protocol. The interface
-            remains functional during the deprecation period but must not
-            be used in new code.
+            must not be used in new code.
         </description>
 
         <request name="destroy" type="destructor">
@@ -375,8 +366,7 @@
             Deprecated: superseded by the lockscreen, shutdown_menu, and
             show_user_switch actions of the treeland_compositor_action_v1
             global of the treeland-compositor-action-unstable-v1 protocol.
-            The interface remains functional during the deprecation period
-            but must not be used in new code.
+            The interface must not be used in new code.
         </description>
 
         <request name="destroy" type="destructor">
