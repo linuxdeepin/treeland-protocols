@@ -17,7 +17,7 @@
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland 窗口定位：将 XWayland 窗口（按 X11 窗口 ID）移动到相对另一 surface 的位置，结果经 wl_callback 回报 |
 | `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`、`treeland_active_notify_v1` | Seat 活跃通知：订阅按 Seat 限定的指针按键/滚轮进入/离开活跃状态及拖拽/放下的生命周期事件 |
 | `treeland-region-watch-unstable-v1.xml` | `treeland_region_watch_unstable_v1` | `treeland_region_watch_manager_v1`、`treeland_region_watch_v1` | 沿输出边缘的区域重叠监控：注册锚定输出边缘的区域并订阅与 xdg-shell 顶层窗口重叠/解除重叠的 enter/leave 事件 |
-| `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`、`treeland_dde_shell_surface_v2` | DDE Shell surface 角色：将 wl_surface 转为在 wlr-layer-shell 层叠之下、工作区 overlay 层渲染的 shell surface，支持全局坐标定位或光标下方自动放置，并通过 skip 位域声明任务切换器/dock 预览/多任务视图的列表偏好 |
+| `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`、`treeland_dde_shell_surface_v2` | DDE Shell surface 角色：将 wl_surface 转为在 wlr-layer-shell 层叠之下、工作区 overlay 层渲染的 shell surface，建议相对输出或光标的初始位置，并通过 skip 位域声明任务切换器/dock 预览/多任务视图的列表偏好 |
 
 ## 破坏性变更
 

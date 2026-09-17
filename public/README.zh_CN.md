@@ -27,7 +27,7 @@ v1 与 v2 的线缆级差异：
 1. 仅 surface 角色得以保留。管理器只暴露 `get_shell_surface` 并新增 `already_shell_surface` 错误；被取代接口的工厂请求（`get_window_overlap_checker`、`get_treeland_dde_active`、`get_treeland_multitaskview`、`get_treeland_window_picker`、`get_treeland_lockscreen`）及 `set_xwindow_position_relative` 请求不再保留。
 2. `role` 枚举改为 0 基编号：`overlay` 由 1 改为 0，且语义明确化（高于普通顶层窗口、低于 layer-shell surface）。
 3. 三个 skip 请求（`set_skip_switcher`、`set_skip_dock_preview`、`set_skip_muti_task_view`，最后一个同时修正 "muti" 拼写错误）合并为单一的 `set_skip_flags` 请求，携带 `skip_flag` 位域（`switcher` 0x1、`dock_preview` 0x2、`multitask_view` 0x4）。
-4. `set_auto_placement` 的 y_offset 改为 `int`（v1 为 `uint`），并明确两种放置请求（`set_surface_position` 与 `set_auto_placement`）的互斥关系（最近发送的请求生效）。
+4. 放置请求重构为两个提示（最终位置由合成器决定）：`set_position_hint` 建议相对输出（null 为主屏）的固定坐标，`set_cursor_placement_hint` 建议相对光标的位置（y_offset 为 `int`，v1 为 `uint`）。两请求的互斥关系（最近发送者生效）现已明确。
 5. v2 全局对象必须拒绝非特权客户端绑定。
 
 消费者应改绑为 `treeland_dde_shell_manager_v2`，通过 `get_shell_surface` 重建 shell surface，改用 `set_skip_flags`，并将 `overlay` 视为 0；窗口选取消费者无替代，须移除该功能。旧 XML 在迁移期间仍会安装，但不得用于新代码。

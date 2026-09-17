@@ -17,7 +17,8 @@ SPDX-License-Identifier: MIT
         This protocol lets a privileged DDE client turn a wl_surface
         into a shell surface that renders below the wlr-layer-shell
         layer stack, at the overlay level of the workspace, and position
-        it in global coordinates or auto-place it below the cursor.
+        it at coordinates relative to an output or auto-place it below
+        the cursor.
 
         The compositor must reject bind attempts from non-privileged
         clients.
@@ -83,13 +84,16 @@ SPDX-License-Identifier: MIT
             treeland_dde_shell_surface_v2.destroy() must be called before
             destroying the wl_surface object.
 
-            Positioning requests are mutually exclusive: set_surface_position
-            places the surface at fixed global coordinates, while
-            set_auto_placement asks the compositor to place the surface
-            below the cursor. The most recently sent request determines
-            the placement mode. In both modes the compositor may adjust
-            the final position to keep the surface accessible, for
-            example to keep its titlebar area within the output.
+            Positioning requests are mutually exclusive: set_position_hint
+            suggests fixed coordinates relative to an output, while
+            set_cursor_placement_hint asks the compositor to place the
+            surface relative to the cursor. The most recently sent
+            request determines the placement mode. Both requests are
+            hints for the initial placement of the surface: the
+            compositor decides the final position and may adjust it to
+            keep the surface accessible, for example to keep its
+            titlebar area within the output. Clients must not assume the
+            requested position is honored exactly.
         </description>
 
         <enum name="role">
@@ -135,30 +139,52 @@ SPDX-License-Identifier: MIT
             <arg name="role" type="uint" enum="role" summary="the rendering layer for this surface" />
         </request>
 
-        <request name="set_surface_position">
-            <description summary="place the surface at fixed global coordinates">
-                Move the surface to the given coordinates. Coordinates are
-                in the global space spanning all outputs; for example
-                50,50 on a 1920,0+1920x1080 output is 1970,50 in global
-                coordinates. The compositor may adjust the position to
-                keep the surface accessible; see the interface description.
+        <request name="set_position_hint">
+            <description summary="suggest a fixed position relative to an output">
+                Suggest a position for the surface. The coordinates are
+                relative to the origin of the given output; for example
+                50,50 suggests placing the surface 50 units right of and
+                50 units below the output's top-left corner, wherever
+                that output currently sits in the global space spanning
+                all outputs.
+
+                The output argument may be null, in which case the
+                compositor uses the primary output as the anchor.
+                Otherwise the output must be a valid, current wl_output.
+                The position is resolved at request time; the compositor
+                does not keep the output associated with this surface
+                afterwards, and the client may release the wl_output
+                proxy once the request has been sent. If the output is
+                later destroyed, the already-applied position is not
+                affected.
+
+                This request is a hint for the initial placement of the
+                surface: the compositor decides the final position and
+                may adjust it to keep the surface accessible. Clients
+                must not assume the requested position is honored
+                exactly.
             </description>
-            <arg name="x" type="int" summary="x coordinate in global space" />
-            <arg name="y" type="int" summary="y coordinate in global space" />
+            <arg name="output" type="object" interface="wl_output" allow-null="true" summary="the output whose origin anchors the coordinates, or null for the primary output" />
+            <arg name="x" type="int" summary="x coordinate relative to the output origin" />
+            <arg name="y" type="int" summary="y coordinate relative to the output origin" />
         </request>
 
-        <request name="set_auto_placement">
-            <description summary="place the surface below the cursor">
-                Ask the compositor to place this surface below the current
-                cursor position: horizontally offset by x_offset from the
-                cursor center and vertically offset by y_offset from the
-                bottom of the cursor. The compositor may adjust the
-                position to keep the surface accessible; see the interface
-                description.
+        <request name="set_cursor_placement_hint">
+            <description summary="suggest placing the surface relative to the cursor">
+                Suggest placing the surface relative to the current cursor
+                position: horizontally offset by x_offset from the cursor
+                center and vertically offset by y_offset from the bottom
+                of the cursor.
+
+                This request is a hint for the initial placement of the
+                surface: the compositor decides the final position and
+                may adjust it to keep the surface accessible. Clients
+                must not assume the requested position is honored
+                exactly.
 
                 Sending this request switches the placement mode to
-                automatic; see the interface description for the
-                interaction with set_surface_position.
+                cursor-relative; see the interface description for the
+                interaction with set_position_hint.
             </description>
             <arg name="x_offset" type="int" summary="horizontal offset of the surface center from the cursor center, positive to the right" />
             <arg name="y_offset" type="int" summary="distance from the bottom of the cursor to the top of the surface" />
