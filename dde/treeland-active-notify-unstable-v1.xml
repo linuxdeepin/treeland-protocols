@@ -58,47 +58,68 @@ SPDX-License-Identifier: MIT
     <interface name="treeland_active_notify_v1" version="1">
         <description summary="seat activity notifier">
             A notifier object reports seat activity that the compositor
-            detects. Activity is reported as enter/leave events tagged
-            with the source that triggered them.
+            detects. Activity is reported as activity_changed events
+            tagged with the source that triggered them and the new
+            activity state. Drag and drop lifecycle changes are reported
+            as drag_changed events tagged with the new drag state.
 
             The mouse and wheel sources have different semantics:
 
-            For mouse, enter and leave report the aggregate state of
-            the left pointer button only. activity_enter is sent when
-            the left button is pressed, activity_leave when it is
-            released. Other pointer buttons do not generate these
-            events. The compositor sends enter and leave as matched
-            pairs: it must not send a second enter before the matching
-            leave, nor a leave when the left button is not pressed.
+            For mouse, activity_changed reports the aggregate state of
+            the left pointer button only. It is sent with state active
+            when the left button is pressed and state inactive when it
+            is released. Other pointer buttons do not generate these
+            events. The compositor sends these events as matched pairs:
+            it must not send a state active event before the matching
+            state inactive event, nor a state inactive event when the
+            left button is not pressed.
 
-            For wheel, enter and leave are discrete per-event pulses,
-            not a persistent state. activity_enter is sent for each
-            wheel event whose angle delta is positive, and
-            activity_leave for each whose angle delta is negative; the
-            compositor may send several enter (or several leave) events
-            in a row without an intervening opposite event. Clients
-            must treat each wheel event independently and must not
-            infer a lasting state from a single enter or leave.
+            For wheel, activity_changed is a discrete per-event pulse,
+            not a persistent state. It is sent with state active for
+            each wheel event whose angle delta is positive, and state
+            inactive for each whose angle delta is negative; the
+            compositor may send several active (or several inactive)
+            events in a row without an intervening opposite state.
+            Clients must treat each wheel event independently and must
+            not infer a lasting state from a single event.
 
-            The start_drag, drop, and drag_cancelled events report the
-            lifecycle of a drag and drop operation on the seat.
-            start_drag is sent when the operation begins. Exactly one
-            terminal event follows each start_drag: drop when the
-            operation completes with a successful drop, or
-            drag_cancelled when the operation ends without a drop
+            The drag_changed event reports the lifecycle of a drag and
+            drop operation on the seat. It is sent with state started
+            when the operation begins. Exactly one terminal event
+            follows each started event: one with state dropped when the
+            operation completes with a successful drop, or one with
+            state cancelled when the operation ends without a drop
             (for example because the drag was cancelled or the source
             destroyed). No further drag events are sent after the
-            terminal event until the next start_drag.
+            terminal event until the next started event.
         </description>
 
         <enum name="reason">
             <description summary="activity source">
                 The input source that triggered an activity event. Used
-                by the activity_enter and activity_leave events. See the
-                interface description for the per-source semantics.
+                by the activity_changed event. See the interface
+                description for the per-source semantics.
             </description>
             <entry name="mouse" value="0" summary="left pointer button activity" />
             <entry name="wheel" value="1" summary="pointer wheel activity" />
+        </enum>
+
+        <enum name="activity_state">
+            <description summary="activity state">
+                The state reported by the activity_changed event. See
+                the interface description for the per-source semantics.
+            </description>
+            <entry name="inactive" value="0" summary="the activity source is inactive" />
+            <entry name="active" value="1" summary="the activity source is active" />
+        </enum>
+
+        <enum name="drag_state">
+            <description summary="drag and drop lifecycle state">
+                The state reported by the drag_changed event.
+            </description>
+            <entry name="started" value="0" summary="a drag and drop operation started" />
+            <entry name="dropped" value="1" summary="a drag and drop operation completed with a drop" />
+            <entry name="cancelled" value="2" summary="a drag and drop operation ended without a drop" />
         </enum>
 
         <request name="destroy" type="destructor">
@@ -109,55 +130,39 @@ SPDX-License-Identifier: MIT
             </description>
         </request>
 
-        <event name="activity_enter">
-            <description summary="an activity source became active">
-                For mouse, sent when the left pointer button is
-                pressed. For wheel, sent for each wheel event whose
-                angle delta is positive; the compositor may send
-                several in a row without an intervening activity_leave.
+        <event name="activity_changed">
+            <description summary="an activity source changed state">
+                For mouse, sent when the left pointer button is pressed
+                (state active) or released (state inactive). The
+                compositor sends these events as matched pairs.
+
+                For wheel, sent for each wheel event: state active when
+                the angle delta is positive, state inactive when it is
+                negative; the compositor may send several active (or
+                several inactive) events in a row without an
+                intervening opposite state.
+
                 See the interface description for the per-source
                 semantics.
             </description>
             <arg name="reason" type="uint" enum="reason" summary="the activity source" />
+            <arg name="state" type="uint" enum="activity_state" summary="the new activity state" />
         </event>
 
-        <event name="activity_leave">
-            <description summary="an activity source became inactive">
-                For mouse, sent when the left pointer button is
-                released. For wheel, sent for each wheel event whose
-                angle delta is negative; the compositor may send
-                several in a row without an intervening activity_enter.
-                See the interface description for the per-source
-                semantics.
-            </description>
-            <arg name="reason" type="uint" enum="reason" summary="the activity source" />
-        </event>
+        <event name="drag_changed">
+            <description summary="a drag and drop operation changed state">
+                Sent when the state of a drag and drop operation on the
+                seat bound to this notifier changes.
 
-        <event name="start_drag">
-            <description summary="a drag operation started">
-                Sent when a drag and drop operation starts on the seat
-                bound to this notifier. Exactly one terminal event
-                (drop or drag_cancelled) follows each start_drag.
+                A started event is followed by exactly one terminal
+                event: dropped when the operation completes with a
+                successful drop, or cancelled when the operation ends
+                without a drop (for example because the drag was
+                cancelled or the drag source destroyed). No further
+                drag events are sent after the terminal event until
+                the next started event.
             </description>
-        </event>
-
-        <event name="drop">
-            <description summary="a drag operation completed with a drop">
-                Terminal event for a drag and drop operation that
-                completes with a successful drop on the seat bound to
-                this notifier. No further drag events are sent after
-                drop until the next start_drag.
-            </description>
-        </event>
-
-        <event name="drag_cancelled">
-            <description summary="a drag operation ended without a drop">
-                Terminal event for a drag and drop operation that ends
-                without a drop, for example because the drag was
-                cancelled or the drag source destroyed. No further drag
-                events are sent after drag_cancelled until the next
-                start_drag.
-            </description>
+            <arg name="state" type="uint" enum="drag_state" summary="the new drag and drop lifecycle state" />
         </event>
     </interface>
 </protocol>
