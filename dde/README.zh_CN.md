@@ -16,7 +16,8 @@
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | 合成器驱动的 layer-shell 表面交互式缩放（dock / 侧边栏 / 状态栏）：begin_resize 携带 seat+serial 与单次尺寸限制，及拒绝原因 |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland 窗口定位：将 XWayland 窗口（按 X11 窗口 ID）移动到相对另一 surface 的位置，结果经 wl_callback 回报 |
 | `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`、`treeland_active_notify_v1` | Seat 活跃通知：订阅按 Seat 限定的指针按键/滚轮进入/离开活跃状态及拖拽/放下的生命周期事件 |
-| `treeland-window-overlap-checker-unstable-v1.xml` | `treeland_window_overlap_checker_unstable_v1` | `treeland_window_overlap_checker_manager_v1`、`treeland_window_overlap_checker_v1` | 窗口重叠监测：注册沿输出边缘的区域并订阅与 xdg-shell 顶层窗口重叠/解除重叠的 enter/leave 事件 |
+| `treeland-region-watch-unstable-v1.xml` | `treeland_region_watch_unstable_v1` | `treeland_region_watch_manager_v1`、`treeland_region_watch_v1` | 沿输出边缘的区域重叠监控：注册锚定输出边缘的区域并订阅与 xdg-shell 顶层窗口重叠/解除重叠的 enter/leave 事件 |
+| `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`、`treeland_dde_shell_surface_v2` | DDE Shell surface 角色：将 wl_surface 转为在 wlr-layer-shell 层叠之下、工作区 overlay 层渲染的 shell surface，支持全局坐标定位或光标下方自动放置，并通过 skip 位域声明任务切换器/dock 预览/多任务视图的列表偏好 |
 
 ## 破坏性变更
 
@@ -43,8 +44,9 @@
 DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协议。每个替代品均为独立的特权全局对象；消费者应改绑新的全局对象，停止使用已废弃的 dde-shell 接口。
 
 - `treeland_dde_active_v1`（含其创建请求 `get_treeland_dde_active`）已不可用，由 `treeland-active-notify-unstable-v1.xml`（`treeland_active_notify_manager_v1` / `treeland_active_notify_v1`）取代：`get_active_notify` 创建按 Seat 限定的通知对象，其 `activity_changed` 事件携带 `reason` 与 `activity_state` 枚举（由 `active_in`/`active_out` 更名；鼠标跟踪左键状态，滚轮为逐事件脉冲），并新增携带 `drag_state` 枚举（started/dropped/cancelled）的 `drag_changed` 事件。
-- `treeland_window_overlap_checker`（含其创建请求 `get_window_overlap_checker`）已不可用，由 `treeland-window-overlap-checker-unstable-v1.xml`（`treeland_window_overlap_checker_manager_v1` / `treeland_window_overlap_checker_v1`）取代：checker 接口补上 `_v1` 后缀，设区域请求由 `update` 更名为 `set_region`，含显式 `anchor` 枚举与 `invalid_anchor`/`invalid_size` 错误，并新增 `output_removed` 覆盖输出生命周期。
-- `treeland_multitaskview_v1` 和 `treeland_lockscreen_v1`（含其创建请求）在废弃期间仍可用，由 `treeland-compositor-action-unstable-v1.xml`（`treeland_compositor_action_v1`）的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
+- `treeland_window_overlap_checker`（含其创建请求 `get_window_overlap_checker`）已不可用，由 `treeland-region-watch-unstable-v1.xml`（`treeland_region_watch_manager_v1` / `treeland_region_watch_v1`）取代：watcher 接口补上 `_v1` 后缀，设区域请求由 `update` 更名为 `set_region`，含显式 `anchor` 枚举与 `invalid_anchor`/`invalid_size` 错误，并新增 `output_removed` 覆盖输出生命周期。
+- `treeland_multitaskview_v1` 和 `treeland_lockscreen_v1`（含其创建请求）由 `treeland-compositor-action-unstable-v1.xml`（`treeland_compositor_action_v1`）的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
+- `treeland_dde_shell_surface_v1`（含其创建请求 `get_shell_surface`）由 `treeland-dde-shell-unstable-v2.xml`（`treeland_dde_shell_manager_v2` / `treeland_dde_shell_surface_v2`）取代，后者位于 `dde/`；surface 角色得以保留，`role` 枚举改为 0 基编号，skip 请求合并为 `set_skip_flags` 位域。
 
 ### 0.6.0
 
@@ -121,6 +123,6 @@ DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协
 2. 管理器接口版本从 3 重置为 1，并移除所有 `since` 属性（这些属性标记的是 v2 接口第 2、3 版新增的成员：`capture_next_shortcut`、`invalid_surface` 错误以及 `tile_left`/`tile_right` action）。
 3. `action` 枚举重构并重新编号：移除 `quit` 与 `taskswitch_enter`（`quit` 不再作为快捷键暴露；任务切换器由 `taskswitch_next`/`taskswitch_prev` 动作隐式进入）；直接切换集合由 `workspace_1`..`workspace_6` 扩展为 `workspace_1`..`workspace_12`；新增 14 个动作——`minimize`、`resize_window`、`move_window_to_prev_workspace`、`move_window_to_next_workspace`、`zoom_in`/`zoom_out`/`zoom_reset`，以及贴边 snap 家族 `tile_top`/`tile_bottom`/`tile_top_left`/`tile_top_right`/`tile_bottom_left`/`tile_bottom_right`。各项按逻辑族重新分组（notify、工作区切换、窗口状态、窗口操作、跨工作区移动、显示桌面/多任务、任务切换、贴边、屏幕缩放、系统），因此所有动作值均变更；`notify` 现为 0，`shutdown_menu` 现为 45。部分新增动作未必已被所有合成器构建实现；绑定此类动作会被接受，但在实现前无效果。
 4. 移除 commit 机制：`bind_key`、`bind_swipe_gesture`、`bind_hold_gesture` 立即生效，被拒绝的绑定通过新增的 `bind_failure` 事件逐个报告，`commit` 请求、`commit_success` 与 `commit_failure` 事件以及 `error.invalid_commit` 枚举项不复存在。`error.invalid_surface` 枚举项从 4 重编号为 3。与旧模型不同，单个绑定失败不再回滚同批次的其他绑定。
-5. 文档完善（无线缆变更）：销毁管理器对象现明确说明会隐式释放经由 `acquire` 获取的独占控制权；`capture_next_shortcut` 请求与捕获接口语义重写以对齐合成器实现（触发时机、seat/focus 校验、`busy`/`aborted` 失败条件及有效快捷键规则）。
+5. 文档完善（无线缆变更）：销毁管理器对象明确说明会隐式释放经由 `acquire` 获取的独占控制权；`capture_next_shortcut` 请求与捕获接口语义重写以对齐合成器实现（触发时机、seat/focus 校验、`busy`/`aborted` 失败条件及有效快捷键规则）。
 
 消费者应将全局对象重新绑定为 `treeland_shortcut_manager_v3`，在发送任何 bind 或 unbind 请求前先 `acquire`，并通过 `capture_next_shortcut` 创建捕获对象；旧 v2 XML 在迁移期间仍会安装，但不得用于新代码。

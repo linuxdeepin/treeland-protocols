@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<protocol name="treeland_window_overlap_checker_unstable_v1">
+<protocol name="treeland_region_watch_unstable_v1">
     <copyright><![CDATA[
 SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
 SPDX-License-Identifier: MIT
 ]]></copyright>
 
-    <description summary="window overlap monitoring for treeland">
+    <description summary="edge-anchored region overlap watch for treeland">
         Warning! This protocol is EXPERIMENTAL and under active development.
         It may change at any time, including in backward-incompatible ways,
         without incrementing the interface major version and without prior
@@ -26,12 +26,12 @@ SPDX-License-Identifier: MIT
         are to be interpreted as described in RFC 2119.
     </description>
 
-    <interface name="treeland_window_overlap_checker_manager_v1" version="1">
-        <description summary="factory for window overlap checkers">
-            A global that creates treeland_window_overlap_checker_v1
-            objects for privileged DDE clients. Each checker monitors
+    <interface name="treeland_region_watch_manager_v1" version="1">
+        <description summary="factory for region watchers">
+            A global that creates treeland_region_watch_v1
+            objects for privileged DDE clients. Each watcher monitors
             one region; clients monitoring several regions create
-            several checkers.
+            several watchers.
 
             The compositor must reject bind attempts from non-privileged
             clients.
@@ -39,24 +39,24 @@ SPDX-License-Identifier: MIT
 
         <request name="destroy" type="destructor">
             <description summary="destroy the manager">
-                Destroy the treeland_window_overlap_checker_manager_v1
-                object. Checkers created through this manager are not
+                Destroy the treeland_region_watch_manager_v1
+                object. Watchers created through this manager are not
                 affected.
             </description>
         </request>
 
-        <request name="get_window_overlap_checker">
-            <description summary="create a new overlap checker">
-                Create a new treeland_window_overlap_checker_v1 object
+        <request name="get_region_watch">
+            <description summary="create a new region watcher">
+                Create a new treeland_region_watch_v1 object
                 that monitors one region.
             </description>
-            <arg name="id" type="new_id" interface="treeland_window_overlap_checker_v1" summary="the new overlap checker object" />
+            <arg name="id" type="new_id" interface="treeland_region_watch_v1" summary="the new region watcher object" />
         </request>
     </interface>
 
-    <interface name="treeland_window_overlap_checker_v1" version="1">
-        <description summary="overlap monitor for an edge-anchored region">
-            A checker object monitors whether a rectangular region
+    <interface name="treeland_region_watch_v1" version="1">
+        <description summary="overlap watcher for an edge-anchored region">
+            A watcher object monitors whether a rectangular region
             anchored to an edge of an output overlaps with any xdg-shell
             toplevel window.
 
@@ -72,11 +72,11 @@ SPDX-License-Identifier: MIT
             matching enter or leave event; afterwards it should send
             these events only when the overlap state changes.
 
-            The checker is associated with the wl_output passed to the
+            The watcher is associated with the wl_output passed to the
             last set_region request. When that output is destroyed the
-            compositor sends the output_removed event; the checker then
+            compositor sends the output_removed event; the watcher then
             becomes inert: it has no monitored region and sends no
-            further enter or leave events. The checker object itself is
+            further enter or leave events. The watcher object itself is
             not destroyed by output removal; the client may call
             set_region again with another wl_output to resume
             monitoring, or call destroy to release it. The compositor
@@ -85,7 +85,7 @@ SPDX-License-Identifier: MIT
 
             The client may release the wl_output proxy passed to
             set_region at any time after the request returns; the
-            compositor holds its own reference and the checker remains
+            compositor holds its own reference and the watcher remains
             associated with that output until either the output is
             destroyed (triggering output_removed) or a subsequent
             set_region rebinds to a different output.
@@ -114,8 +114,8 @@ SPDX-License-Identifier: MIT
         </enum>
 
         <enum name="error">
-            <description summary="overlap checker errors">
-                Errors raised by the treeland_window_overlap_checker_v1
+            <description summary="region watcher errors">
+                Errors raised by the treeland_region_watch_v1
                 interface.
             </description>
             <entry name="invalid_anchor" value="0" summary="anchor is not one of the enum values" />
@@ -123,10 +123,10 @@ SPDX-License-Identifier: MIT
         </enum>
 
         <request name="destroy" type="destructor">
-            <description summary="destroy the overlap checker">
-                Destroy the treeland_window_overlap_checker_v1 object.
+            <description summary="destroy the region watcher">
+                Destroy the treeland_region_watch_v1 object.
                 The compositor stops monitoring the region registered
-                with this checker.
+                with this watcher.
             </description>
         </request>
 
@@ -140,7 +140,7 @@ SPDX-License-Identifier: MIT
                 height is not positive.
 
                 The output becomes the output associated with the
-                checker, replacing any previous one; it may be a
+                watcher, replacing any previous one; it may be a
                 different output from a previous call (rebinding), for
                 example after the previous output was removed.
 
@@ -174,10 +174,10 @@ SPDX-License-Identifier: MIT
             <description summary="the associated output has been destroyed">
                 Sent when the wl_output passed to the last set_region
                 request has been destroyed by the compositor. The
-                checker then becomes inert: it has no monitored region
+                watcher then becomes inert: it has no monitored region
                 and sends no further enter or leave events.
 
-                The checker object itself is not destroyed; the client
+                The watcher object itself is not destroyed; the client
                 may call set_region again with another wl_output to
                 resume monitoring, or call destroy to release it. The
                 compositor must not send this event more than once
