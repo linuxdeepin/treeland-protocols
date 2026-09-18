@@ -29,10 +29,11 @@
         geometry, and the compositor uses the latest set geometry for both
         the open and the close animation.
 
-        Optionally, the client may attach an image (a wl_buffer) to the
-        rectangle via set_source_buffer. When an image is set, the compositor
-        uses it as the source image for the transition instead of an empty
-        rectangle.
+        Optionally, the client may attach a live source surface to the
+        rectangle via set_source_surface. When a source surface is set, the
+        compositor uses its content as the source of the transition instead
+        of an empty rectangle, and renders it live while the transition is
+        playing.
 
         The client may temporarily disable the rectangle by setting a
         geometry of 0x0 size (zero width and zero height). While the
@@ -50,7 +51,9 @@
         2. A calls get_window_transition_rect on this manager, passing the
            token.
         3. A calls set_geometry on the resulting rect object to define the
-           transition rectangle (relative to A).
+           transition rectangle (relative to A), and optionally calls
+           set_source_surface on the rect object to attach a live source
+           surface for the transition.
         4. A calls commit on the xdg_activation_token_v1 to obtain the token
            string.
         5. A passes the token string to B, the target window.
@@ -63,13 +66,12 @@
            the latest set geometry when B is closed.
         9. When B is closed, the compositor plays the close animation from
            B's geometry back to the rectangle.
-         10. Once the compositor stops using the rectangle (e.g. because B
-             is destroyed), it sends the closed event on the rect object.
-             A destroys the rect object after receiving this event.
+        10. Once the compositor stops using the rectangle, it sends the
+            closed event on the rect object. A destroys the rect object
+            after receiving this event.
         11. If A destroys the rect object before B is closed (or if A's
             client disconnects, or if A is destroyed), the compositor falls
-            back to its default close animation and does not send the closed
-            event.
+            back to its default animation.
 
         Timing and responsibilities:
 
@@ -132,8 +134,8 @@
         <enum name="error">
             <entry name="invalid_geometry" value="0"
                    summary="the geometry cannot be handled by the compositor"/>
-            <entry name="invalid_buffer" value="1"
-                   summary="the source buffer could not be imported"/>
+            <entry name="invalid_surface" value="1"
+                   summary="the source surface cannot be used as a transition source"/>
         </enum>
 
         <request name="destroy" type="destructor">
@@ -164,40 +166,44 @@
             <arg name="height" type="int" summary="rectangle height"/>
         </request>
 
-        <request name="set_source_buffer">
-            <description summary="set the source image used by the transition">
-                Sets the source image used by the transition for this
-                rectangle. This request takes effect immediately.
+        <request name="set_source_surface">
+            <description summary="set the live source surface used by the transition">
+                Sets the surface whose content the compositor uses as the
+                source of the transition for this rectangle. The surface is
+                rendered live while the transition is playing; its content is
+                scaled into the rectangle set via set_geometry.
 
-                The compositor samples the buffer content when this request
-                is applied, then sends wl_buffer.release, after which the
-                client may reuse or destroy the buffer. The client must keep
-                the buffer alive and its content valid until that release is
-                received.
+                The surface must not already be in use for any other purpose,
+                and the compositor reserves it for use as a transition source
+                only: it is not displayed anywhere else, and the client must not
+                use it for any other purpose. A surface that has previously been
+                used as a transition source may be used again.
 
-                Passing null clears the source image. The buffer may be
-                replaced, including with null, by a later call.
+                The client should keep the surface alive, and keep valid
+                content on it, while it is set as the source.
 
-                A buffer that cannot be imported by the compositor raises
-                the invalid_buffer error.
+                Passing null clears the source surface. The client may
+                replace the source by passing another surface; a previously
+                set surface is no longer used as a source. Destroying the
+                rect object or the surface itself also ends its use as a
+                source.
+
+                A surface that cannot be used as a source, for example one
+                that is already in use for another purpose, or that belongs to
+                another client, raises the invalid_surface error.
             </description>
-            <arg name="buffer" type="object" interface="wl_buffer" allow-null="true"
-                 summary="the source image, or null to clear it"/>
+            <arg name="surface" type="object" interface="wl_surface" allow-null="true"
+                 summary="the live source surface, or null to clear it"/>
         </request>
 
         <event name="closed">
             <description summary="the rectangle is no longer usable">
-                Sent once the compositor no longer references this rectangle,
-                e.g. because the target window has been destroyed. From this
-                point the object is useless to the client and should be
-                destroyed.
+                Sent when the compositor is done with this rectangle. The
+                client must destroy the rectangle object after receiving this
+                event.
 
-                This is a notification only. This event is sent at most once
-                per rectangle object, and only if the rectangle object was
-                still alive when the compositor stopped using it. If the client
-                destroys the rectangle (or disconnects) before then, this event
-                is not sent. No further events are delivered on this object
-                after closed.
+                This is a notification only. No further events are delivered
+                on this object after closed.
             </description>
         </event>
     </interface>
