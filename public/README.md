@@ -4,7 +4,7 @@ For general application developers. Installed via `TREELAND_PROTOCOL_XML_FILES`.
 
 | File | Protocol | Interfaces | Purpose |
 |------|----------|-----------|---------|
-| `treeland-window-transition-unstable-v1.xml` | `treeland_window_transition_unstable_v1` | `treeland_window_transition_manager_v1`, `treeland_window_transition_rect_v1` | Window open/close transition relative to a rectangle, with optional source image |
+| `treeland-window-transition-unstable-v1.xml` | `treeland_window_transition_unstable_v1` | `treeland_window_transition_manager_v1`, `treeland_window_transition_rect_v1` | Window open/close transition relative to a rectangle, with an optional live source surface |
 | `treeland-snap-target-unstable-v1.xml` | `treeland_snap_target_unstable_v1` | `treeland_snap_target_v1` | Compositor-side snap region hints; an optional pidfd event for window targets can be enabled via the `event_type.pidfd` bit of `start` |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | Query and observe user-level appearance settings: cursor theme/size, fonts, icon theme, accent color, window opacity, color scheme, titlebar height, corner radius |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | Per-window server-side decoration (SSD) customization by applications: corner radius, shadow, border, titlebar visibility; requires xdg-decoration SSD |
