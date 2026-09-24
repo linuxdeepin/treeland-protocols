@@ -20,7 +20,7 @@
         rectangular area, and, when the window is closed, transitions back
         to that same rectangular area.
 
-        The rectangle is attached to an xdg-activation-v1 token object before
+        The rectangle is attached to an xdg-activation-v1 token string after
         the token is committed, so the compositor can associate the rectangle
         with the originating surface and use it as the animation source when
         the target window appears.
@@ -46,30 +46,29 @@
         enabled.
 
         The full flow is:
-        1. A, the originating surface, obtains an xdg_activation_token_v1
-           and calls set_surface to identify itself.
+        1. A, the originating surface, obtains an xdg_activation_token_v1,
+           calls set_surface to identify itself, and calls commit to obtain
+           the token string.
         2. A calls get_window_transition_rect on this manager, passing the
-           token.
+           token string.
         3. A calls set_geometry on the resulting rect object to define the
            transition rectangle (relative to A), and optionally calls
            set_source_surface on the rect object to attach a live source
            surface for the transition.
-        4. A calls commit on the xdg_activation_token_v1 to obtain the token
-           string.
-        5. A passes the token string to B, the target window.
-        6. B calls xdg_activation_v1.activate with the token and B's surface.
-        7. The compositor looks up the rectangle associated with the token,
+        4. A passes the token string to B, the target window.
+        5. B calls xdg_activation_v1.activate with the token and B's surface.
+        6. The compositor looks up the rectangle associated with the token,
            converts it to global coordinates using A's position, and plays
            the open animation from that rectangle to B's geometry.
-        8. While B is alive, A may call set_geometry again on the rect
+        7. While B is alive, A may call set_geometry again on the rect
            object to update the transition rectangle. The compositor uses
            the latest set geometry when B is closed.
-        9. When B is closed, the compositor plays the close animation from
+        8. When B is closed, the compositor plays the close animation from
            B's geometry back to the rectangle.
-        10. Once the compositor stops using the rectangle, it sends the
+        9. Once the compositor stops using the rectangle, it sends the
             closed event on the rect object. A destroys the rect object
             after receiving this event.
-        11. If A destroys the rect object before B is closed (or if A's
+        10. If A destroys the rect object before B is closed (or if A's
             client disconnects, or if A is destroyed), the compositor falls
             back to its default animation.
 
@@ -89,7 +88,7 @@
         <description summary="manager for window transition rectangles">
             This interface is a manager for creating window transition
             rectangle objects. A window transition rectangle is attached to
-            an xdg_activation_token_v1 object to request that the compositor
+            an xdg-activation-v1 token string to request that the compositor
             play a window transition from that rectangle when the token is
             used to activate a new window, and back to that rectangle when
             the window is closed.
@@ -102,11 +101,10 @@
         <request name="get_window_transition_rect">
             <description summary="create a window transition rectangle for a token">
                 Creates a new window transition rectangle object associated
-                with the given xdg_activation_token_v1 object. The rectangle
-                geometry must be set before the token itself is committed.
+                with the given activation token string.
             </description>
             <arg name="rect" type="new_id" interface="treeland_window_transition_rect_v1" summary="new window transition rectangle object"/>
-            <arg name="token" type="object" interface="xdg_activation_token_v1" summary="the activation token to attach the rectangle to"/>
+            <arg name="token" type="string" summary="the committed activation token string to attach the rectangle to"/>
         </request>
     </interface>
 
@@ -114,16 +112,15 @@
         <description summary="window transition rectangle">
             Represents a rectangle that the compositor uses as the
             reference area for window open and close animations. The
-            rectangle coordinates are relative to the surface set on the
-            associated xdg_activation_token_v1 via set_surface. The
+            rectangle coordinates are relative to the surface that was set
+            on the associated activation token via set_surface. The
             compositor combines the surface's position with the rectangle
             offset to determine the global animation area.
 
-            The rectangle geometry must be set before the associated
-            activation token is committed. The object remains live: the
-            client may call set_geometry again to update the rectangle, and
-            the compositor will use the latest set geometry for the close
-            animation when the target window is closed.
+            The object remains live: the client may call set_geometry again
+            to update the rectangle, and the compositor will use the latest
+            set geometry for the close animation when the target window is
+            closed.
 
             When the client destroys this object (or the client
             disconnects, or the originating surface is destroyed), the
