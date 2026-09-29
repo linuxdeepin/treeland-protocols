@@ -26,7 +26,6 @@
     1. Raises the surface above normal windows and their popup panels.
     2. Disables window open/close animations.
     3. Excludes the surface from the multitask view and window switcher.
-    4. Disables automatic positioning by the compositor's layout engine.
 
     Such a surface does not affect the snapping protocol; snapping
     behaves the same whether or not the surface exists. Surfaces
@@ -105,9 +104,6 @@
         Request the compositor to capture the current window positions and
         stacking order and begin tracking the cursor, sending snap region
         hints based on the captured layout.
-
-        The seat argument associates this snap session with a seat. How the
-        compositor uses the seat is compositor policy.
 
         This request may be called again after stop to restart snapping; a
         fresh capture of the window layout is taken on every start. start
@@ -207,9 +203,6 @@
         Snapping could not be started. The compositor
         will not send any more snap_region events. The client should call
         destroy to free the snap object.
-
-        This event is sent when another client's snap session is already
-        active (reason snap_busy).
       </description>
       <arg name="reason" type="uint"
            enum="failure_reason"
