@@ -25,12 +25,12 @@ The whole file is deprecated and moved to `deprecated/`. It is superseded by `tr
 Wire-level differences between v1 and v2:
 
 1. Only the surface role is carried over. The manager exposes just `get_shell_surface` with a new `already_shell_surface` error; the factory requests for the superseded interfaces (`get_window_overlap_checker`, `get_treeland_dde_active`, `get_treeland_multitaskview`, `get_treeland_window_picker`, `get_treeland_lockscreen`) and the `set_xwindow_position_relative` request are not carried over.
-2. The `role` enum is renumbered to 0-based: `overlay` changes from 1 to 0, and its semantics are stated precisely (above normal toplevels, below layer-shell surfaces).
+2. The `role` enum gains a `normal` value at 0 while `overlay` keeps its v1 value of 1; both semantics are stated precisely (`normal` is the regular window layer, `overlay` is above normal toplevels and below layer-shell surfaces).
 3. The three skip requests (`set_skip_switcher`, `set_skip_dock_preview`, `set_skip_muti_task_view`, the latter also fixing the "muti" typo) are merged into a single `set_skip_flags` request taking a `skip_flag` bitfield (`switcher` 0x1, `dock_preview` 0x2, `multitask_view` 0x4).
 4. The placement requests are reworked into two hints whose final position the compositor decides: `set_position_hint` suggests fixed coordinates relative to an output (null for the primary output), and `set_cursor_placement_hint` suggests a position relative to the cursor with an `int` y_offset (v1 used `uint`). The mutual exclusivity of the two requests (most recent wins) is now specified.
 5. The v2 globals must reject binds from non-privileged clients.
 
-Consumers should rebind as `treeland_dde_shell_manager_v2`, recreate shell surfaces through `get_shell_surface`, switch to `set_skip_flags`, and treat `overlay` as 0; window-picker consumers have no replacement and must drop the functionality. The old XML is kept installed during migration but must not be used in new code.
+Consumers should rebind as `treeland_dde_shell_manager_v2`, recreate shell surfaces through `get_shell_surface`, switch to `set_skip_flags`, and treat `overlay` as 1 (unchanged) while `normal` (0) restores the regular window layer; window-picker consumers have no replacement and must drop the functionality. The old XML is kept installed during migration but must not be used in new code.
 
 The manager request `set_xwindow_position_relative` and the `treeland_dde_active_v1` and `treeland_window_overlap_checker` interfaces (with their creating manager requests `get_treeland_dde_active` and `get_window_overlap_checker`) are deprecated and non-functional: they have no effect and no events are ever emitted (their `destroy` requests remain functional so clients can release the objects).
 
