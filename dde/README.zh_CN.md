@@ -17,7 +17,7 @@
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland 窗口定位：将 XWayland 窗口（按 X11 窗口 ID）移动到相对另一 surface 的位置，结果经 wl_callback 回报 |
 | `treeland-active-notify-unstable-v1.xml` | `treeland_active_notify_unstable_v1` | `treeland_active_notify_manager_v1`、`treeland_active_notify_v1` | Seat 活跃通知：订阅按 Seat 限定的指针按键/滚轮进入/离开活跃状态及拖拽/放下的生命周期事件 |
 | `treeland-region-watch-unstable-v1.xml` | `treeland_region_watch_unstable_v1` | `treeland_region_watch_manager_v1`、`treeland_region_watch_v1` | 沿输出边缘的区域重叠监控：注册锚定输出边缘的区域并订阅与 xdg-shell 顶层窗口重叠/解除重叠的 enter/leave 事件 |
-| `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`、`treeland_dde_shell_surface_v2` | DDE Shell surface 角色：将 wl_surface 转为在 wlr-layer-shell 层叠之下、工作区 overlay 层渲染的 shell surface，建议相对输出或光标的初始位置，并通过 skip 位域声明任务切换器/dock 预览/多任务视图的列表偏好 |
+| `treeland-dde-shell-unstable-v2.xml` | `treeland_dde_shell_unstable_v2` | `treeland_dde_shell_manager_v2`、`treeland_dde_shell_surface_v2` | DDE Shell surface 角色：将 wl_surface 转为在工作区 overlay 层（高于普通顶层窗口、低于 layer-shell surface）或普通窗口层渲染的 shell surface，建议相对输出或光标的初始位置，并通过 skip 位域声明任务切换器/dock 预览/多任务视图的列表偏好 |
 
 ## 破坏性变更
 
@@ -46,7 +46,7 @@ DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协
 - `treeland_dde_active_v1`（含其创建请求 `get_treeland_dde_active`）已不可用，由 `treeland-active-notify-unstable-v1.xml`（`treeland_active_notify_manager_v1` / `treeland_active_notify_v1`）取代：`get_active_notify` 创建按 Seat 限定的通知对象，其 `activity_changed` 事件携带 `reason` 与 `activity_state` 枚举（由 `active_in`/`active_out` 更名；鼠标跟踪左键状态，滚轮为逐事件脉冲），并新增携带 `drag_state` 枚举（started/dropped/cancelled）的 `drag_changed` 事件。
 - `treeland_window_overlap_checker`（含其创建请求 `get_window_overlap_checker`）已不可用，由 `treeland-region-watch-unstable-v1.xml`（`treeland_region_watch_manager_v1` / `treeland_region_watch_v1`）取代：watcher 接口补上 `_v1` 后缀，设区域请求由 `update` 更名为 `set_region`，含显式 `anchor` 枚举与 `invalid_anchor`/`invalid_size` 错误，并新增 `output_removed` 覆盖输出生命周期。
 - `treeland_multitaskview_v1` 和 `treeland_lockscreen_v1`（含其创建请求）由 `treeland-compositor-action-unstable-v1.xml`（`treeland_compositor_action_v1`）的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
-- `treeland_dde_shell_surface_v1`（含其创建请求 `get_shell_surface`）由 `treeland-dde-shell-unstable-v2.xml`（`treeland_dde_shell_manager_v2` / `treeland_dde_shell_surface_v2`）取代，后者位于 `dde/`；surface 角色得以保留，`role` 枚举改为 0 基编号，skip 请求合并为 `set_skip_flags` 位域。
+- `treeland_dde_shell_surface_v1`（含其创建请求 `get_shell_surface`）由 `treeland-dde-shell-unstable-v2.xml`（`treeland_dde_shell_manager_v2` / `treeland_dde_shell_surface_v2`）取代，后者位于 `dde/`；surface 角色得以保留，`role` 枚举新增 `normal`（0）并保留 `overlay`（1），skip 请求合并为 `set_skip_flags` 位域。
 
 ### 0.6.0
 

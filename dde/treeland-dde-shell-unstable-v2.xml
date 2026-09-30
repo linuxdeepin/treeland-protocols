@@ -71,9 +71,10 @@ SPDX-License-Identifier: MIT
     <interface name="treeland_dde_shell_surface_v2" version="1">
         <description summary="shell surface role">
             A shell surface object assigns the DDE shell surface role to a
-            wl_surface. A shell surface renders below the wlr-layer-shell
-            layer stack, at the overlay level of the workspace: above
-            normal toplevel windows but below layer-shell surfaces.
+            wl_surface. A shell surface renders either at the overlay level
+            of the workspace (above normal toplevel windows but below
+            layer-shell surfaces) or at the normal window layer, as
+            selected by the set_role request. The default role is overlay.
 
             The role carries no requests that map, commit, or configure
             buffer state; the client commits buffers with wl_surface
@@ -102,7 +103,8 @@ SPDX-License-Identifier: MIT
                 z depth. Multiple surfaces can share a single role, and
                 ordering within a single role is undefined.
             </description>
-            <entry name="overlay" value="0" summary="workspace overlay layer, above normal toplevels and below layer-shell surfaces" />
+            <entry name="normal" value="0" summary="normal window layer, below the overlay layer and participating in regular toplevel stacking" />
+            <entry name="overlay" value="1" summary="workspace overlay layer, above normal toplevels and below layer-shell surfaces" />
         </enum>
 
         <enum name="skip_flag" bitfield="true">
@@ -135,6 +137,10 @@ SPDX-License-Identifier: MIT
                 Assign the role identified by the role enum to this shell
                 surface, selecting the layer it renders in. The default
                 role before this request is overlay.
+
+                Assigning the normal role returns the surface to the
+                regular window layer, participating in normal toplevel
+                stacking again.
             </description>
             <arg name="role" type="uint" enum="role" summary="the rendering layer for this surface" />
         </request>
