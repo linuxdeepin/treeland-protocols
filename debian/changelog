@@ -1,3 +1,27 @@
+treeland-protocols (0.7.0) unstable; urgency=medium
+
+  * feat: add normal role to dde-shell surface role enum
+  * refactor(window-transition): attach rect to activation token string
+  * feat: add XKB settings to input manager
+  * feat(window-transition): use a live source surface for the
+    transition
+  * feat(protocol): add treeland-snap-target-unstable-v1 protocol
+  * refactor: rework dde-shell placement requests as position hints
+  * refactor: rename region-watch and move dde-shell-v2 to dde/
+  * refactor: rename active-notify events to notify style
+  * feat: add treeland-dde-shell unstable-v2 protocol
+  * feat: add treeland-compositor-action unstable-v1 protocol
+  * feat: add treeland-window-overlap-checker unstable-v1 protocol
+  * feat: add treeland-active-notify unstable-v1 protocol
+  * feat: drop alpha from accent color in appearance protocols
+  * feat(protocol): add treeland-window-transition-unstable-v1 protocol
+  * feat: add treeland-xwindow-control unstable-v1 protocol
+  * revert(remote-subsurface): drop place_above_all/place_below_all,
+    restore empty-string sentinel at v1
+  * feat(layer-shell-extension): add wl_surface error codes
+
+ -- rewine <luhongxu@deepin.org>  Sat, 10 Oct 2026 13:30:30 +0800
+
 treeland-protocols (0.6.0) unstable; urgency=medium
 
   * feat(layer-shell-extension): add treeland layer shell extension
