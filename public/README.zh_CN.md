@@ -8,6 +8,8 @@
 | `treeland-snap-target-unstable-v1.xml` | `treeland_snap_target_unstable_v1` | `treeland_snap_target_v1` | 合成器侧吸附区域提示；窗口目标的 pidfd 事件为可选项，需在 `start` 中置 `event_type.pidfd` 位启用 |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | 查询与订阅用户级外观设置：光标主题/大小、字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、圆角 |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | 逐窗口服务端装饰（SSD）定制：圆角、阴影、边框、标题栏可见性；需先经 xdg-decoration 申请 SSD |
+| `treeland-output-uuid-unstable-v1.xml` | `treeland_output_uuid_unstable_v1` | `treeland_output_uuid_manager_v1`、`treeland_output_uuid_v1`（frozen） | `wl_output` 的稳定不透明 uuid 身份；该 uuid 与 head 变体共享 |
+| `treeland-output-uuid-head-unstable-v1.xml` | `treeland_output_uuid_head_unstable_v1` | `treeland_output_uuid_head_manager_v1` | `treeland-output-uuid-unstable-v1` 的配套协议：从 `zwlr_output_head_v1`（wlr-output-management）获取同一个 `treeland_output_uuid_v1` 对象，涵盖无存活 `wl_output` 的禁用输出 |
 
 ## 破坏性变更
 
