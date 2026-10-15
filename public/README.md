@@ -8,6 +8,8 @@ For general application developers. Installed via `TREELAND_PROTOCOL_XML_FILES`.
 | `treeland-snap-target-unstable-v1.xml` | `treeland_snap_target_unstable_v1` | `treeland_snap_target_v1` | Compositor-side snap region hints; an optional pidfd event for window targets can be enabled via the `event_type.pidfd` bit of `start` |
 | `treeland-appearance-unstable-v1.xml` | `treeland_appearance_unstable_v1` | `treeland_appearance_v1` | Query and observe user-level appearance settings: cursor theme/size, fonts, icon theme, accent color, window opacity, color scheme, titlebar height, corner radius |
 | `treeland-decoration-unstable-v1.xml` | `treeland_decoration_unstable_v1` | `treeland_decoration_manager_v1`, `treeland_decoration_context_v1` | Per-window server-side decoration (SSD) customization by applications: corner radius, shadow, border, titlebar visibility; requires xdg-decoration SSD |
+| `treeland-output-uuid-unstable-v1.xml` | `treeland_output_uuid_unstable_v1` | `treeland_output_uuid_manager_v1`, `treeland_output_uuid_v1` (frozen) | Stable opaque uuid identity for `wl_output` objects; the uuid is shared with the head variant |
+| `treeland-output-uuid-head-unstable-v1.xml` | `treeland_output_uuid_head_unstable_v1` | `treeland_output_uuid_head_manager_v1` | Companion to `treeland-output-uuid-unstable-v1`: obtain the same `treeland_output_uuid_v1` object from a `zwlr_output_head_v1` (wlr-output-management), including disabled outputs with no live `wl_output` |
 ## Breaking changes
 
 Breaking changes are grouped by version. Under each version heading, one subsection per affected protocol explains what changed, what replaces it, and how existing consumers should adapt.
