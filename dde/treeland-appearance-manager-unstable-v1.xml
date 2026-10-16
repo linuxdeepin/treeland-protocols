@@ -118,14 +118,14 @@
 
         <request name="set_font_size">
             <description summary="set the font size">
-                Set the base font size in points. The compositor
-                applies the change immediately and broadcasts a font_size
-                event to all active appearance observers. A size of 0 or
-                exceeding compositor limits is clamped to the minimum or maximum
-                supported size.
+                Set the base font size. The value is in points multiplied by
+                10, so 105 means 10.5 points. The compositor applies the change
+                immediately and broadcasts a font_size event to all active
+                appearance observers. A size of 0 or exceeding compositor
+                limits is clamped to the minimum or maximum supported size.
             </description>
             <arg name="size" type="uint"
-                summary="font size in points" />
+                summary="font size in points multiplied by 10" />
         </request>
 
         <!-- Visual Appearance Settings -->
