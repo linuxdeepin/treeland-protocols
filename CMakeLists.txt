@@ -17,6 +17,8 @@ set(TREELAND_PROTOCOL_XML_FILES
   public/treeland-window-transition-unstable-v1.xml
   public/treeland-appearance-unstable-v1.xml
   public/treeland-decoration-unstable-v1.xml
+  public/treeland-output-uuid-unstable-v1.xml
+  public/treeland-output-uuid-head-unstable-v1.xml
 )
 
 # DDE component protocol XML files
