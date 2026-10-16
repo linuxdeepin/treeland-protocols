@@ -113,10 +113,10 @@
             <description summary="font size has changed">
                 Emitted when the base font size changes.
                 Also emitted immediately after binding to report the current
-                size in points.
+                size in points multiplied by 10.
             </description>
             <arg name="size" type="uint"
-                summary="current font size in points" />
+                summary="current font size in points multiplied by 10" />
         </event>
 
         <!-- Visual Appearance Settings Events -->
