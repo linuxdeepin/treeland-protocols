@@ -80,10 +80,13 @@ SPDX-License-Identifier: MIT
             buffer state; the client commits buffers with wl_surface
             semantics as usual.
 
-            On the server side the object is automatically destroyed when
-            the related wl_surface is destroyed. On the client side,
-            treeland_dde_shell_surface_v2.destroy() must be called before
-            destroying the wl_surface object.
+            On the client side,
+            treeland_dde_shell_surface_v2.destroy() should be called
+            before destroying the wl_surface object.
+
+            If the client destroys the wl_surface first, the shell surface
+            object is kept until the client sends destroy() or disconnects;
+            requests sent to it in the meantime are ignored.
 
             Positioning requests are mutually exclusive: set_position_hint
             suggests fixed coordinates relative to an output, while
