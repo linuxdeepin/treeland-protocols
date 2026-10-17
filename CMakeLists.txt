@@ -29,7 +29,9 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-shortcut-manager-unstable-v3.xml
   dde/treeland-compositor-action-unstable-v1.xml
   dde/treeland-appearance-manager-unstable-v1.xml
-  dde/treeland-virtual-output-manager-v1.xml
+  dde/treeland-output-group-manager-unstable-v1.xml
+  dde/treeland-output-uuid-unstable-v1.xml
+  dde/treeland-output-uuid-head-unstable-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml
   dde/treeland-layer-shell-extension-unstable-v1.xml
   dde/treeland-xwindow-control-unstable-v1.xml
@@ -68,6 +70,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-wallpaper-color-v1.xml
   deprecated/treeland-window-management-v1.xml
   deprecated/treeland-foreign-toplevel-manager-v1.xml
+  deprecated/treeland-virtual-output-manager-v1.xml
 )
 
 option(TREELAND_PROTOCOLS_INSTALL_DEPRECATED "Install deprecated protocol files" ON)

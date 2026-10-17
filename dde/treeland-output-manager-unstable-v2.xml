@@ -24,6 +24,14 @@
         2. Adjusting the color temperature and brightness of individual outputs
            via a double-buffered pending/commit model.
 
+        Outputs in this protocol are addressed by opaque uuid strings instead
+        of wl_output objects. Clients obtain the uuid of an output from the
+        treeland-output-uuid-unstable-v1 protocol. A uuid remains stable
+        across sessions and output reconnections, which lets clients and the
+        compositor persist per-output settings and restore them after a
+        restart. In the primary_output event an empty uuid means that no
+        primary output is currently designated.
+
         The terms "must", "must not", "should", and "may" in this document are
         to be interpreted as described in RFC 2119.
     </description>
@@ -38,8 +46,8 @@
             requests from them, while a binding is already active.
 
             On binding, the compositor immediately emits a primary_output event
-            carrying the currently designated primary output, or null if no
-            primary output has been designated.
+            carrying the uuid of the currently designated primary output, or
+            an empty uuid if no primary output has been designated.
         </description>
 
         <enum name="primary_output_failed_reason">
@@ -47,7 +55,15 @@
                 Reasons returned by the primary_output_failed event.
             </description>
             <entry name="invalid_output" value="0"
-                summary="the provided output is null, disabled, or no longer available" />
+                summary="no enabled output with the provided uuid is currently connected" />
+        </enum>
+
+        <enum name="error">
+            <description summary="fatal manager protocol errors">
+                Raised as fatal protocol errors on the manager object.
+            </description>
+            <entry name="invalid_uuid" value="0"
+                summary="the provided uuid is empty, or does not identify a connected output the compositor recognizes" />
         </enum>
 
         <request name="destroy" type="destructor">
@@ -62,37 +78,45 @@
 
         <request name="set_primary_output">
             <description summary="designate an output as the primary output">
-                Designate the given output as the primary output. The compositor
-                uses the primary output as a hint for panel placement, initial
-                window positioning, and other compositor-defined policies.
+                Designate the output identified by the given uuid as the
+                primary output. The compositor uses the primary output as a
+                hint for panel placement, initial window positioning, and
+                other compositor-defined policies.
 
-                The output must be a currently enabled, available wl_output.
-                If the output is disabled or no longer available, the compositor
-                rejects the request and emits a primary_output_failed event;
-                the primary output designation is unchanged.
+                The uuid must identify a currently connected, enabled output.
+                If no enabled output with this uuid is currently connected,
+                the compositor rejects the request and emits a
+                primary_output_failed event with the invalid_output reason;
+                the primary output designation is unchanged. An empty uuid is
+                a client error and is rejected with the invalid_uuid fatal
+                protocol error.
 
                 The compositor applies a successful change immediately and
                 confirms it by emitting a primary_output event carrying the
-                newly designated primary output.
+                uuid of the newly designated primary output.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                summary="an enabled output to designate as primary" />
+            <arg name="uuid" type="string"
+                summary="uuid of an enabled output to designate as primary" />
         </request>
 
         <request name="get_picture_control">
             <description summary="create a picture control object for an output">
-                Create a treeland_output_picture_control_v2 object bound to the
-                given output. The returned object allows the client to adjust
-                the color temperature and brightness of that output.
+                Create a treeland_output_picture_control_v2 object for the
+                output identified by the given uuid. The returned object
+                allows the client to adjust the color temperature and
+                brightness of that output.
 
-                For any live wl_output resource this request always succeeds
-                without a protocol error, regardless of the output state —
-                enabled, disabled, or no longer present in the configuration.
-                An invalid or destroyed object id, or an object of another
-                type, is still rejected by the core protocol
-                (wl_display.invalid_object). If the bound output is later
-                destroyed or not recognized by the compositor, subsequent
-                commits fail with the invalid_output result.
+                The uuid must identify a currently connected output, in any
+                state (enabled or disabled). An empty uuid, or a uuid that
+                does not identify a connected output the compositor
+                recognizes, is rejected with the invalid_uuid fatal error.
+                This check is deterministic at request time, so the compositor
+                raises it on the manager object and does not create the
+                picture control object.
+
+                For an output that was valid at creation but later becomes
+                unavailable, subsequent commits fail with the invalid_output
+                result.
 
                 Multiple picture control objects may exist for the same output at
                 the same time; each object reports value changes independently.
@@ -104,34 +128,35 @@
             </description>
             <arg name="id" type="new_id" interface="treeland_output_picture_control_v2"
                 summary="new picture control object for the given output" />
-            <arg name="output" type="object" interface="wl_output"
-                summary="the output to control" />
+            <arg name="uuid" type="string"
+                summary="uuid of the output to control" />
         </request>
 
         <event name="primary_output">
             <description summary="current primary output has changed">
-                Emitted by the compositor to report the current primary output.
-                This event is sent once immediately after the client binds this
-                interface, and again whenever the primary output designation
-                changes — whether in response to a set_primary_output request
-                or through a compositor-driven fallback.
+                Emitted by the compositor to report the uuid of the current
+                primary output. This event is sent once immediately after the
+                client binds this interface, and again whenever the primary
+                output designation changes — whether in response to a
+                set_primary_output request or through a compositor-driven
+                fallback.
 
                 When the designated primary output is disconnected or disabled,
                 the compositor automatically selects another available output as
-                the new primary and emits this event with it. When no output is
-                currently available, the event is emitted with a null output.
+                the new primary and emits this event with its uuid. When no
+                output is currently available, the event is emitted with an
+                empty uuid.
             </description>
-            <arg name="output" type="object" interface="wl_output"
-                allow-null="true"
-                summary="the currently designated primary output, or null when none is available" />
+            <arg name="uuid" type="string"
+                summary="uuid of the currently designated primary output, or empty when none is available" />
         </event>
 
         <event name="primary_output_failed">
             <description summary="a set_primary_output request was rejected">
                 Emitted when a set_primary_output request cannot be applied,
                 indicating that the primary output designation is unchanged.
-                The reason identifies why the request was rejected: the
-                provided output was disabled or no longer available.
+                The reason identifies why the request was rejected: no enabled
+                output with the provided uuid is currently connected.
             </description>
             <arg name="reason" type="uint" enum="primary_output_failed_reason"
                 summary="why the set_primary_output request was rejected" />
@@ -140,8 +165,9 @@
 
     <interface name="treeland_output_picture_control_v2" version="1">
         <description summary="per-output color temperature and brightness control">
-            Represents a picture control session bound to a specific output,
-            created by treeland_output_manager_v2.get_picture_control.
+            Represents a picture control session bound to the output
+            identified by its uuid, created by
+            treeland_output_manager_v2.get_picture_control.
 
             Color temperature and brightness are managed via a double-buffered
             pending/commit model. The client accumulates changes with
@@ -154,9 +180,10 @@
             events to report the current values of the output before the client
             has made any changes.
 
-            Clients should destroy this object when the associated wl_output
-            is destroyed; otherwise subsequent commits fail with the
-            invalid_output result.
+            Clients should destroy this object when the output identified
+            by its uuid is removed; otherwise subsequent commits fail with
+            the invalid_output result. (A uuid rejected at creation never
+            produces a picture control object; see get_picture_control.)
         </description>
 
         <enum name="error">
@@ -187,7 +214,7 @@
             <entry name="unsupported" value="2"
                 summary="the output does not support the requested adjustment, for example when its hardware cannot apply color temperature changes; settings remain unchanged" />
             <entry name="invalid_output" value="3"
-                summary="the associated output is destroyed or not recognized; settings remain unchanged" />
+                summary="the uuid does not identify a live enabled output; settings remain unchanged" />
         </enum>
 
         <request name="destroy" type="destructor">
@@ -254,8 +281,8 @@
                 time and never reaches a commit; a commit therefore only
                 fails because of the output: it does not support the requested
                 adjustment (unsupported, retrying the same settings is unlikely
-                to succeed), it has been destroyed or is no longer recognized
-                (invalid_output), or the commit could not be applied for a
+                to succeed), the uuid no longer identifies a live enabled
+                output (invalid_output), or the commit could not be applied for a
                 transient or unknown reason (failed). In every failure case the
                 applied settings remain unchanged.
             </description>
