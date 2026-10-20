@@ -11,7 +11,7 @@
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势及一次性快捷键捕获 |
 | `treeland-compositor-action-unstable-v1.xml` | `treeland_compositor_action_unstable_v1` | `treeland_compositor_action_v1` | 特权客户端一次性触发与当前窗口无关的合成器动作：工作区切换、显示桌面、多任务视图、屏幕缩放、FPS 覆盖层、锁屏、关机菜单、用户切换；窗口级与任务切换动作被有意排除，仅作为 `treeland_shortcut_manager_v3` 中的快捷键保留 |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
-| `treeland-virtual-output-manager-v1.xml` | `treeland_virtual_output_manager_v1` | `treeland_virtual_output_manager_v1`, `treeland_virtual_output_v1` | 虚拟（镜像）输出创建和管理 |
+| `treeland-output-group-manager-unstable-v1.xml` | `treeland_output_group_manager_unstable_v1` | `treeland_output_group_manager_v1`, `treeland_output_group_v1` | 输出镜像（复制模式）分组管理：指定一个源输出并镜像到一个或多个镜像输出，按 uuid 寻址，采用 registry 模式枚举 |
 | `treeland-wallpaper-manager-unstable-v1.xml` | `treeland_wallpaper_manager_unstable_v1` | `treeland_wallpaper_manager_v1`, `treeland_wallpaper_v1` | 逐输出壁纸配置，支持图片/视频来源 |
 | `treeland-layer-shell-extension-unstable-v1.xml` | `treeland_layer_shell_extension_unstable_v1` | `treeland_layer_shell_extension_manager_v1`, `treeland_layer_shell_extension_object_v1` | 合成器驱动的 layer-shell 表面交互式缩放（dock / 侧边栏 / 状态栏）：begin_resize 携带 seat+serial 与单次尺寸限制，及拒绝原因 |
 | `treeland-xwindow-control-unstable-v1.xml` | `treeland_xwindow_control_unstable_v1` | `treeland_xwindow_control_v1` | XWayland 窗口定位：将 XWayland 窗口（按 X11 窗口 ID）移动到相对另一 surface 的位置，结果经 wl_callback 回报 |
@@ -22,6 +22,25 @@
 ## 破坏性变更
 
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
+
+### 0.8.0
+
+#### `treeland-virtual-output-manager-v1.xml`
+
+被 `treeland-output-group-manager-unstable-v1.xml` 取代；旧 v1 文件原样移至 `deprecated/`。协议围绕基于 uuid 的输出身份、合成器分配的组名、持久化配置与 registry 模式枚举重新设计。线缆级差异：
+
+1. 协议与接口重命名：`treeland_virtual_output_manager_v1` → `treeland_output_group_manager_unstable_v1`，接口 `treeland_virtual_output_manager_v1` → `treeland_output_group_manager_v1`、`treeland_virtual_output_v1` → `treeland_output_group_v1`；接口版本重置为 1。
+2. 组改由合成器分配的名字寻址，而非客户端传入：`create_group` 只接收初始 `source` uuid（空表示无源），合成器通过新增的 `name` 事件告知它选定的名字，该事件在对象上的任何其他事件之前发送；新增 `get_group` 请求按该名字获取组对象。`create_virtual_output` 的 `name` 参数以及 `invalid_group_name`/`name_exists` 管理器错误被移除。
+3. 输出身份由名字字符串改为 uuid：`create_virtual_output` 的 `name`/`outputs` 参数、`virtual_output_list` 的 `names` 数组、`outputs` 事件的 `outputs` 数组均被移除。`set_source`、`add_output`、`remove_output` 以及 `state` 事件（组无可用源时源为空）均以 uuid 字符串引用输出。原先 `outputs[0] = 源，outputs[1..] = 镜像` 的位置约定，改为显式的源加有序镜像列表。
+4. 镜像 uuid 需经 `treeland-output-uuid-head-unstable-v1` 获取，而非 `treeland-output-uuid-unstable-v1`：复制模式生效期间合成器只为源输出暴露 `wl_output`，镜像输出无法通过基于 `wl_output` 的协议识别。
+5. 枚举改为 registry 推送模型：`get_virtual_output_list` 与 `virtual_output_list` 快照事件移除，`get_virtual_output` 由 `get_group` 取代。绑定 manager 时合成器为每个已存在的组发送一个携带组名的 `group_added` 事件，随后发送单个 `groups_done` 事件；任何客户端创建组时再次发送 `group_added`；组被解散时发送 `group_removed`（携带组名）。`group_added` 只携带组名而不携带 `new_id` 对象，客户端用 `get_group` 获取组对象。这消除了「先取列表再查找」的 TOCTOU 窗口。
+6. 增量镜像事件改为单个全量状态事件：`output_added`/`output_removed` 移除，单个 `state` 事件携带有效源 uuid、数量与按列表顺序拼接的定长 uuid；创建时与每次变更后各发送一次。每个组对象上新增 `done` 事件，标记初始状态批次（`name`、`state`、`done`）的结束。
+7. 变更改为排队 + 提交：`set_source`、`add_output`、`remove_output` 不再立即生效，而是排队变更，由新增的 `commit` 请求按队列顺序应用。失败的变更被跳过并发 `operation_failed` 事件，其余变更仍会应用；每次改变有效状态的 commit 之后发送一次 `state` 事件。排队不会预留输出：已在其他组排队的输出在该组 commit 之前不视为被占用，因此两个组排队同一输出时先 commit 者胜出，后者报 `output_in_use`。
+8. 配置持久化并与运行时有效态分离：合成器跨重启保存每个组的名字、配置的源与配置的镜像列表，并在启动时恢复，因此组在 bind 时以 `group_added` 重新出现，输出恢复后自动生效。单个 `state` 事件只报告运行时有效态——拔出或禁用的输出保留配置但从该事件中消失。当配置源不可用时，合成器将第一个可用镜像（配置列表顺序最靠前的）提升为有效源；提升是临时的（配置源恢复后重新夺回源角色）还是永久的（被选中的输出成为新的配置源），属合成器实现细节。要将被提升的镜像固化永久为源，客户端对其 uuid 调用 `set_source` 并提交；当该输出是当前有效源时该变更幂等成功。
+9. manager 上的失败均为非致命：组的 `error` 事件及 `invalid_group_name`（0）、`invalid_screen_number`（1）、`invalid_output`（2）错误码移除，manager 不再有致命 `error` 枚举。业务失败——`invalid_output`、`duplicate_output`、`output_in_use`、`not_in_group`、`invalid_name`——通过新增的 `operation_failed` 事件（code + uuid）上报，任何失败都不会终止连接。`create_group` 的 source 失败仍会创建组但源为空；`get_group` 名字无效仍会创建对象，但该对象是无效组对象，不接收 `name` 或 `state` 事件，除 `destroy` 外的所有请求均被拒绝。仅 `already_dissolved`——对已解散组发送除 `destroy` 以外的任何请求——仍为致命协议错误。
+10. 对象生命周期重新定义：`destroy` 仅释放该客户端的句柄，既不解散组也不发送 `group_removed`；单独的 `dissolve` 请求解散整个组（丢弃所有排队变更），向每个绑定该组的对象发送 `removed`，并在 manager 上发送 `group_removed`。每个组对象的初始状态以一个批次推送：`name`、`state`、`done`；`create_group` 的 source 失败时在 `done` 之前插入一次 `operation_failed`，而无效 `get_group` 对象只接收 `operation_failed` 与 `done`。
+
+消费者应将全局对象重新绑定为 `treeland_output_group_manager_v1`，用 `name` 事件（或 `get_group`）给出的合成器分配名字寻址组，从 `treeland-output-uuid-head-unstable-v1` 获取镜像 uuid，用 `set_source`/`add_output`/`remove_output` 排队变更并以 `commit` 应用，从 `state` 事件读取有效源与镜像列表（并在收到 `done` 后再基于初始状态行动），以 `dissolve` 而非销毁组对象来解散组；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
 
 ### 0.7.0
 

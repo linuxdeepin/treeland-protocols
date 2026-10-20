@@ -12,6 +12,11 @@
         and output reconnections, so clients and the compositor can persist
         per-output settings and restore them after a restart.
 
+        Uuids are fixed-length, exactly 36 bytes, and never contain the
+        NUL byte; the canonical form is a lowercase 8-4-4-4-12 hexadecimal
+        string with hyphens, for example
+        8dd6d52e-1f60-4649-9c2c-6fb7e055272e.
+
         The uuid is unique among the currently connected outputs: the
         compositor must ensure that no two connected outputs report the
         same uuid at the same time. The compositor assigns the uuid to each
