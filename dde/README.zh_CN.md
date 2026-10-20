@@ -7,7 +7,7 @@
 | `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | 重新设计的顶层窗口观察和 Dock 预览；修正了命名、成员顺序、destroy 位置和描述质量 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态与 XKB 键盘映射设置 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
-| `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制 |
+| `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制；输出按 uuid 寻址 |
 | `treeland-shortcut-manager-unstable-v3.xml` | `treeland_shortcut_manager_unstable_v3` | `treeland_shortcut_manager_v3`, `treeland_shortcut_capture_v3` | 全局键盘快捷键绑定，支持按键/触摸/多点触摸手势及一次性快捷键捕获 |
 | `treeland-compositor-action-unstable-v1.xml` | `treeland_compositor_action_unstable_v1` | `treeland_compositor_action_v1` | 特权客户端一次性触发与当前窗口无关的合成器动作：工作区切换、显示桌面、多任务视图、屏幕缩放、FPS 覆盖层、锁屏、关机菜单、用户切换；窗口级与任务切换动作被有意排除，仅作为 `treeland_shortcut_manager_v3` 中的快捷键保留 |
 | `treeland-appearance-manager-unstable-v1.xml` | `treeland_appearance_manager_unstable_v1` | `treeland_appearance_manager_v1` | 特权用户级外观配置：光标主题/大小、全局字体、图标主题、强调色、窗口不透明度、配色方案、标题栏高度、全局圆角 |
@@ -48,20 +48,20 @@ DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协
 - `treeland_multitaskview_v1` 和 `treeland_lockscreen_v1`（含其创建请求）由 `treeland-compositor-action-unstable-v1.xml`（`treeland_compositor_action_v1`）的对应动作取代（`toggle_multitask_view`/`open_multitask_view`/`close_multitask_view` 与 `lockscreen`/`shutdown_menu`/`show_user_switch`）。
 - `treeland_dde_shell_surface_v1`（含其创建请求 `get_shell_surface`）由 `treeland-dde-shell-unstable-v2.xml`（`treeland_dde_shell_manager_v2` / `treeland_dde_shell_surface_v2`）取代，后者位于 `dde/`；surface 角色得以保留，`role` 枚举新增 `normal`（0）并保留 `overlay`（1），skip 请求合并为 `set_skip_flags` 位域。
 
-### 0.6.0
-
 #### `treeland-output-manager-v1.xml`
 
-被 `treeland-output-manager-unstable-v2.xml` 取代；旧 v1 文件原样移至 `deprecated/`。v2 协议重命名了两个接口，规范了成员排序，并将主屏标识从输出名称改为 `wl_output` 对象。线缆级差异：
+被 `treeland-output-manager-unstable-v2.xml` 取代；旧 v1 文件原样移至 `deprecated/`。v2 协议重命名两个接口、规范成员排序，并改用来自新增 `treeland-output-uuid-unstable-v1` 协议的不透明 uuid 字符串寻址输出，替代输出名称或 `wl_output` 对象。线缆级差异：
 
-1. 接口重命名：`treeland_output_manager_v1` → `treeland_output_manager_v2`，`treeland_output_color_control_v1` → `treeland_output_picture_control_v2`；接口版本重置为 1，移除了 `since="2"` 标记。
+1. 接口重命名：`treeland_output_manager_v1` → `treeland_output_manager_v2`，`treeland_output_color_control_v1` → `treeland_output_picture_control_v2`；接口版本重置为 1。
 2. 两个接口的 `destroy` 移至首个请求，其余请求的操作码整体后移一位。
-3. `set_primary_output` 参数由输出名称 `string` 改为不可为 null 且已启用的 `wl_output` 对象；传已禁用或已销毁的输出将通过 `primary_output_failed` 事件拒绝而非协议错误。不再支持通过传 null 清除主屏指定。
-4. `primary_output` 事件参数由输出名称 `string` 改为 `wl_output` 对象（仅当无可用输出时为 null），绑定时立即发送一次，并确认每一次 `set_primary_output` 请求。当被指定的主屏被拔出或禁用时，合成器自动选择另一个可用输出作为新主屏并发送该事件。
-5. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为新增的 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`），线缆取值因此反转。
-6. picture control 的 `error` 枚举在重命名后的 `treeland_output_picture_control_v2` 接口上保留；其 `invalid_color_temperature`/`invalid_brightness` 项名称不变，但因接口版本重置，值由 1/2 重置为 0/1，`set_*` 越界即致命协议错误的行为不变。`commit_result` 因此只承载成功与输出相关的失败原因（不含范围校验项）；枚举移至 requests 之前，`primary_output_failed_reason` 枚举供新增的 `primary_output_failed` 事件使用。`get_picture_control` 接受任何状态的合法 `wl_output`——无效对象 ID 仍属核心协议错误；输出有效性在 commit 时通过 `result` 事件反馈。
+3. `set_primary_output` 参数改为 `string uuid`（替代输出名称或 `wl_output` 对象）；空 uuid 或无已连接已启用输出的 uuid 以非致命的 `primary_output_failed` 事件拒绝（原因 `invalid_output`），主屏指定保持不变。
+4. `primary_output` 事件携带 `string uuid`（无主屏时为空），替代输出名称或 `wl_output` 对象，绑定时发送一次，并确认每一次 `set_primary_output` 请求。
+5. `get_picture_control` 参数改为 `string uuid`；即使空 uuid 或当前未知的 uuid 也会创建对象（不抛致命协议错误），其 commit 在 uuid 标识到存活已启用输出之前均以 `commit_result.invalid_output` 失败。
+6. `result` 事件参数由普通 `uint` 标志（1 = 成功，0 = 失败）改为 `commit_result` 枚举（`success = 0`，`failed = 1`，`unsupported = 2`，`invalid_output = 3`），线缆取值反转。
 
-消费者应将全局对象重新绑定为 `treeland_output_manager_v2`，改传 `wl_output` 对象而非输出名称，并按 `commit_result` 枚举解释 `result` 值；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_output_manager_v2`，从 `treeland_output_uuid_manager_v1.get_uuid` 获取输出 uuid，改传 uuid 字符串而非输出名称或 `wl_output` 对象，并按 `commit_result` 枚举解释 `result` 值。
+
+### 0.6.0
 
 #### `treeland-personalization-manager-v1.xml`
 
