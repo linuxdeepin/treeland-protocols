@@ -17,12 +17,8 @@
         same uuid at the same time. The compositor assigns the uuid to each
         physical output device and persists the assignment, so a given
         device keeps the same uuid across sessions and across being
-        disconnected and reconnected. To restore the assignment the
-        compositor matches a connected output against the persistent
-        features of devices it has seen before, for example the make, model,
-        and serial reported in its EDID, the EDID hash, the MST path, or the
-        connector the device is attached to; a device that cannot be matched
-        to any previously seen device receives a new uuid. Clients must not
+        disconnected and reconnected. Once assigned, the uuid never changes
+        for the lifetime of the physical output device. Clients must not
         assume the uuid is derived from any particular device attribute.
 
         Clients obtain a uuid for a wl_output object via get_uuid on this
@@ -92,9 +88,8 @@
             obtained from treeland_output_uuid_manager_v1.get_uuid or from
             the companion treeland-output-uuid-head-unstable-v1 protocol.
             The compositor emits the uuid event once immediately after the
-            object is created, and again whenever the uuid of the output
-            changes, for example when the compositor cannot match the output
-            to any previously seen device and assigns it a new uuid.
+            object is created. The uuid never changes, so the event is not
+            emitted again while the object exists.
 
             The object is not tied to the lifetime of the wl_output global:
             when the output is unplugged and its wl_output global is
@@ -122,8 +117,9 @@
         <event name="uuid">
             <description summary="current uuid of the output">
                 Reports the current uuid of the output. It is emitted once
-                immediately after the object is created, and again whenever
-                the compositor determines a different uuid for the output.
+                immediately after the object is created and never again,
+                because the uuid never changes for the lifetime of the
+                output device.
             </description>
             <arg name="uuid" type="string"
                 summary="opaque uuid identifying the physical output" />
