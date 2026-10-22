@@ -1,3 +1,15 @@
+treeland-protocols (0.8.0) unstable; urgency=medium
+
+  * feat: add output-uuid protocols for stable output identity
+  * refactor(output-manager): switch treeland-output-manager-unstable-v2 to
+    uuid addressing
+  * docs: state output uuid is immutable and emitted once
+  * feat: add treeland-output-group-manager unstable-v1 protocol and
+    deprecate treeland-virtual-output-manager-v1
+  * docs: clarify font size unit is points * 10
+
+ -- rewine <luhongxu@deepin.org>  Thu, 22 Oct 2026 12:30:00 +0800
+
 treeland-protocols (0.7.0) unstable; urgency=medium
 
   * feat: add normal role to dde-shell surface role enum
