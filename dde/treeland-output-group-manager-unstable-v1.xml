@@ -268,19 +268,15 @@
             updates the effective runtime state without dissolving the
             group: an unavailable mirror is dropped from the mirror list,
             and when the configured source becomes unavailable the
-            compositor auto-promotes the first available mirror — the
-            earliest one in the configured mirror list order — to the
+            compositor auto-promotes one of the available mirrors to the
             effective source, reporting its uuid as the source and
             dropping it from the mirror list in the same state event.
-            Whether the promotion is temporary — the configured source
-            reclaims the role when it returns — or permanent — the
-            selected output becomes the new configured source — is a
-            compositor implementation detail. Clients observe only the
-            effective source and mirror list carried by each state event
-            and must not assume either behavior. To pin a particular output
-            as the permanent source, a client calls set_source with its
-            uuid and then commits; if that output is currently the
-            effective source the request succeeds idempotently.
+            Clients observe only the effective source and mirror list
+            carried by each state event and must not assume which mirror
+            is promoted or whether the promotion outlives the
+            disappearance of the configured source. To pin a particular
+            output as the source, a client calls set_source with its
+            uuid and then commits.
 
             The source uuid is empty only when the group has no available
             output at all: no configured source is available (or none is
@@ -337,9 +333,8 @@
                 configured source of the group, replacing any current
                 configured source. The change takes effect only when the
                 client sends commit. The previous configured source, if
-                any, becomes a mirror: it is appended to the end of the
-                mirror list, and when its output is available it keeps
-                participating in copy mode as an effective mirror.
+                any, becomes a mirror and keeps participating in copy mode
+                as an effective mirror while its output is available.
 
                 If the request cannot be applied at commit time, the
                 compositor emits an operation_failed event and leaves the
@@ -354,8 +349,8 @@
                 If the output is already the current effective source, the
                 request succeeds idempotently: the output becomes the
                 configured source, any previous configured source becomes a
-                mirror. This lets a client pin an auto-promoted mirror as
-                the permanent source.
+                mirror. This lets a client pin a particular output as the
+                source.
 
                 A later set_source replaces an earlier uncommitted one; the
                 compositor applies only the most recent source designation
