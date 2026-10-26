@@ -336,21 +336,24 @@
                 any, becomes a mirror and keeps participating in copy mode
                 as an effective mirror while its output is available.
 
+                If the output is already a member of this group, for
+                example a current mirror, it is directly promoted to the
+                source: the compositor pins it as the configured source
+                and re-resolves the mirror list, which now holds the
+                previous configured source if it is still available. No
+                remove_output is required beforehand. If the output is not
+                a member yet, it joins the group and becomes the source.
+
                 If the request cannot be applied at commit time, the
                 compositor emits an operation_failed event and leaves the
                 pending change unapplied: invalid_output if the uuid does
-                not identify a connected enabled output, duplicate_output
-                if the output is already in this group and is not the
-                current effective source (to make a current mirror the
-                configured source, remove it first with remove_output and
-                then call set_source), or output_in_use if the output
-                belongs to another group.
+                not identify a connected enabled output, or output_in_use
+                if the output is the source or a mirror of another group.
 
-                If the output is already the current effective source, the
-                request succeeds idempotently: the output becomes the
-                configured source, any previous configured source becomes a
-                mirror. This lets a client pin a particular output as the
-                source.
+                Setting the source again for the output that is already
+                the current effective source succeeds idempotently and pins
+                that output as the configured source. This lets a client
+                pin a particular output as the source.
 
                 A later set_source replaces an earlier uncommitted one; the
                 compositor applies only the most recent source designation
