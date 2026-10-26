@@ -4,7 +4,7 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 
 | File | Protocol | Interfaces | Purpose |
 |------|----------|-----------|---------|
-| `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | Redesigned toplevel observation and dock preview; fixes naming, member ordering, destroy placement, and description quality relative to v1 |
+| `treeland-foreign-toplevel-manager-unstable-v3.xml` | `treeland_foreign_toplevel_manager_unstable_v3` | `treeland_foreign_toplevel_manager_v3`, `treeland_foreign_toplevel_handle_v3`, `treeland_dock_preview_context_v3` | Toplevel observation and dock preview; the text tooltip is replaced by a client-drawn tooltip surface that the compositor frames and shows once its content is committed |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | Per-device input configuration: pointer acceleration, send-events mode, keyboard toggle state, and XKB keymap settings |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | Watch keyboard modifier (caps/num lock) state changes |
 | `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | Primary output designation, per-output color temperature and brightness control; outputs addressed by uuid |
@@ -24,6 +24,19 @@ For DDE desktop components. Installed via `TREELAND_PROTOCOL_DDE_XML_FILES`.
 Breaking changes are grouped by version. Under each version heading, one subsection per affected protocol explains what changed, what replaces it, and how existing consumers should adapt.
 
 ### 0.8.0
+
+#### `treeland-foreign-toplevel-manager-unstable-v2.xml`
+
+Superseded by `treeland-foreign-toplevel-manager-unstable-v3.xml`; the old v2 file moved to `deprecated/` unchanged. The protocol and its interfaces were renamed and the text tooltip was replaced by a client-drawn tooltip surface:
+
+1. Protocol and interfaces renamed: `treeland_foreign_toplevel_manager_unstable_v2` → `treeland_foreign_toplevel_manager_unstable_v3`, with interfaces `treeland_foreign_toplevel_manager_v3`, `treeland_foreign_toplevel_handle_v3`, and `treeland_dock_preview_context_v3`; interface versions reset to 1. The manager and handle requests and events are unchanged.
+2. `treeland_dock_preview_context_v3.show_tooltip(tooltip: string, x, y, direction)` is removed and replaced by `show_tooltip_surface(surface: wl_surface, x, y, direction)`. The compositor no longer renders tooltip text: it draws its popover frame exactly behind the given surface, uses the surface's committed logical size as the tooltip size, and the client is responsible for the content, its inner padding, and keeping the content inside the rounded corners.
+3. `show_tooltip_surface` assigns a compositor-side role to the surface, which is never released: a surface that was shown as a tooltip can only be shown as a tooltip again. The surface must be owned by the caller, must already have a committed buffer, and must not have another role; misuse of the ownership or role rules raises the new `treeland_dock_preview_context_v3` error `invalid_surface` (0), while a surface without content makes the request a no-op.
+4. There is no separate ready step: showing a surface that is already displayed, with the same or a new position, is allowed and needs no new commit, and commits after the tooltip is shown update its content. The compositor keeps the references it needs to displayed content, so the client may reuse or destroy buffers after `wl_buffer.release` as usual.
+5. `show` and `close` now cover the whole popover: `show` replaces a visible tooltip with the preview, and `close` hides both the preview and the tooltip. Previously the tooltip was documented as unaffected by `close` and as able to coexist with the preview.
+6. The tooltip surface receives no pointer or keyboard input, focus, or activation, and the compositor never destroys it: it only stops using it when the tooltip is replaced or closed.
+
+Consumers should rebind the global as `treeland_foreign_toplevel_manager_v3`, replace text tooltip calls with `wl_surface` content passed to `show_tooltip_surface` after committing it, and draw the tooltip content without their own background; the old v2 XML is kept installed during migration but must not be used in new code.
 
 #### `treeland-virtual-output-manager-v1.xml`
 

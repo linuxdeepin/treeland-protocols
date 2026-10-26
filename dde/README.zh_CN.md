@@ -4,7 +4,7 @@
 
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
-| `treeland-foreign-toplevel-manager-unstable-v2.xml` | `treeland_foreign_toplevel_manager_unstable_v2` | `treeland_foreign_toplevel_manager_v2`, `treeland_foreign_toplevel_handle_v2`, `treeland_dock_preview_context_v2` | 重新设计的顶层窗口观察和 Dock 预览；修正了命名、成员顺序、destroy 位置和描述质量 |
+| `treeland-foreign-toplevel-manager-unstable-v3.xml` | `treeland_foreign_toplevel_manager_unstable_v3` | `treeland_foreign_toplevel_manager_v3`, `treeland_foreign_toplevel_handle_v3`, `treeland_dock_preview_context_v3` | 顶层窗口观察和 Dock 预览；文本 tooltip 改为由客户端绘制的 tooltip surface，外框仍由合成器绘制，内容提交后即显示 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态与 XKB 键盘映射设置 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
 | `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制；输出按 uuid 寻址 |
@@ -24,6 +24,19 @@
 破坏性变更按版本分组。每个版本标题下，每个受影响协议有一个子节说明变更内容、替代方案以及现有消费者如何适配。
 
 ### 0.8.0
+
+#### `treeland-foreign-toplevel-manager-unstable-v2.xml`
+
+被 `treeland-foreign-toplevel-manager-unstable-v3.xml` 取代；旧 v2 文件原样移至 `deprecated/`。协议与接口重命名，文本 tooltip 改为由客户端绘制的 tooltip surface：
+
+1. 协议与接口重命名：`treeland_foreign_toplevel_manager_unstable_v2` → `treeland_foreign_toplevel_manager_unstable_v3`，接口为 `treeland_foreign_toplevel_manager_v3`、`treeland_foreign_toplevel_handle_v3`、`treeland_dock_preview_context_v3`；接口版本重置为 1。manager 与 handle 的请求和事件不变。
+2. `treeland_dock_preview_context_v3.show_tooltip(tooltip: string, x, y, direction)` 移除，由 `show_tooltip_surface(surface: wl_surface, x, y, direction)` 取代。合成器不再绘制 tooltip 文本：它把弹层外框紧贴绘制在给定 surface 之后，以该 surface 已提交的逻辑尺寸作为 tooltip 尺寸，内容、内部留白以及内容不越出圆角由客户端负责。
+3. `show_tooltip_surface` 给 surface 加上合成器侧 role，该 role 不再释放：一旦作为 tooltip 显示过，该 surface 之后只能再作为 tooltip 显示。surface 必须属于调用方、必须在请求时已有已提交的 buffer、且不得带有其它 role；违反归属或 role 规则时抛出 `treeland_dock_preview_context_v3` 新增的 `invalid_surface`（0）错误，而没有内容的 surface 使请求变成空操作。
+4. 不再有独立的就绪步骤：对已经在显示的 surface 再次 show（相同或新位置）是允许的，且不需要新的提交；tooltip 显示后的 commit 会更新其内容。合成器持有已显示内容所需的引用，客户端照常可以在 `wl_buffer.release` 后复用或销毁 buffer。
+5. `show` 与 `close` 现在覆盖整个弹层：`show` 会用预览替换可见的 tooltip，`close` 会同时隐藏预览与 tooltip。此前文档写明 tooltip 不受 `close` 影响，且可与预览并存。
+6. tooltip surface 不接收指针或键盘输入、不获焦点、不激活；合成器也从不销毁它，只在 tooltip 被替换或关闭时停止使用。
+
+消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v3`，用提交后通过 `show_tooltip_surface` 交出的 `wl_surface` 内容取代文本 tooltip 调用，并在绘制 tooltip 内容时不带自己的背景；旧 v2 XML 在迁移期间仍会安装，但不得用于新代码。
 
 #### `treeland-virtual-output-manager-v1.xml`
 
