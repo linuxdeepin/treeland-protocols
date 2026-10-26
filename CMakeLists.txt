@@ -24,7 +24,7 @@ set(TREELAND_PROTOCOL_XML_FILES
 # DDE component protocol XML files
 set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-dde-shell-unstable-v2.xml
-  dde/treeland-foreign-toplevel-manager-unstable-v2.xml
+  dde/treeland-foreign-toplevel-manager-unstable-v3.xml
   dde/treeland-input-manager-unstable-v1.xml
   dde/treeland-keyboard-state-notify-unstable-v1.xml
   dde/treeland-output-manager-unstable-v2.xml
@@ -70,6 +70,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-wallpaper-color-v1.xml
   deprecated/treeland-window-management-v1.xml
   deprecated/treeland-foreign-toplevel-manager-v1.xml
+  deprecated/treeland-foreign-toplevel-manager-unstable-v2.xml
   deprecated/treeland-virtual-output-manager-v1.xml
 )
 
