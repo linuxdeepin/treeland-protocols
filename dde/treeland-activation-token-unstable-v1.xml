@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_activation_token_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="activation token source for dde-application-manager">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol lets a single privileged client, the DDE application
+        manager, obtain an xdg-activation-v1 token for an application it is
+        about to launch. The compositor only checks that the caller is that
+        privileged client; deciding whether an application may be activated
+        is the client's responsibility.
+
+        A token obtained through this protocol is accepted by
+        xdg_activation_v1.activate() from any client and always results in
+        a real activation: it is never downgraded to an attention request,
+        even though it carries no serial and no originating surface.
+
+        The compositor must reject bind attempts from non-privileged
+        clients.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_activation_token_manager_v1" version="1">
+        <description summary="factory for activation tokens">
+            A global that mints xdg-activation-v1 tokens on behalf of a
+            privileged DDE client. Binding it is restricted: the compositor
+            must reject bind attempts from non-privileged clients.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroy the treeland_activation_token_manager_v1 object.
+                Tokens already delivered through this manager are not
+                affected.
+            </description>
+        </request>
+
+        <request name="request_token">
+            <description summary="create a new activation token object">
+                Create a treeland_activation_token_v1 object for the
+                application identified by app_id. The compositor mints the
+                token and delivers it with the token event on the new
+                object. app_id is advisory: the compositor does not use it
+                for any policy decision, only for logging and tracing.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_activation_token_v1" summary="the new token object" />
+            <arg name="app_id" type="string" summary="advisory app id of the application that will be activated" />
+        </request>
+    </interface>
+
+    <interface name="treeland_activation_token_v1" version="1">
+        <description summary="one-shot activation token">
+            A token object delivers exactly one token event and is then
+            inert. The token stays valid for a limited time and is consumed
+            by the first xdg_activation_v1.activate() request that uses it.
+
+            The client must destroy the object after receiving the token.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the token object">
+                Destroy the treeland_activation_token_v1 object. This does
+                not invalidate a token that was already delivered.
+            </description>
+        </request>
+
+        <event name="token">
+            <description summary="the minted activation token">
+                Sent once, in response to the request_token request that
+                created this object. The event is delivered as part of that
+                request's dispatch, so the client must add its listener
+                before the next wl_display_dispatch()/roundtrip().
+            </description>
+            <arg name="token" type="string" summary="the activation token string" />
+        </event>
+    </interface>
+</protocol>
