@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25.0)
 
-project(TreelandProtocols VERSION 0.8.0 LANGUAGES NONE)
+project(TreelandProtocols VERSION 0.9.0 LANGUAGES NONE)
 
 # https://gitlab.kitware.com/cmake/cmake/-/work_items/23461
 # Suppress GNUInstallDirs warning for LANGUAGES NONE projects
