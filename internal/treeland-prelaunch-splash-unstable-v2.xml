@@ -34,7 +34,21 @@
             a splash object from create_splash. The caller can destroy the object
             to dismiss the splash, and the compositor can send events (e.g. timeout)
             back to the caller through the object.
+
+            This interface is a singleton. Only one client may bind it at a
+            time within a given user session. If a second client attempts to
+            bind while a binding is already active, the compositor must
+            reject the attempt by sending a protocol error
+            (binding_rejected). The singleton binding is released when the
+            client destroys the manager object.
         </description>
+
+        <enum name="error">
+            <description summary="protocol errors for this interface">
+                Error codes sent as protocol errors via wl_display.error.
+            </description>
+            <entry name="binding_rejected" value="0" summary="the manager is already bound by another client" />
+        </enum>
 
         <request name="destroy" type="destructor">
             <description summary="destroy the manager"/>
