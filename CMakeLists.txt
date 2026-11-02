@@ -30,6 +30,7 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-output-manager-unstable-v2.xml
   dde/treeland-shortcut-manager-unstable-v3.xml
   dde/treeland-compositor-action-unstable-v1.xml
+  dde/treeland-compositor-state-unstable-v1.xml
   dde/treeland-appearance-manager-unstable-v1.xml
   dde/treeland-output-group-manager-unstable-v1.xml
   dde/treeland-wallpaper-manager-unstable-v1.xml

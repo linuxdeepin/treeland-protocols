@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_compositor_state_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2024 - 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="compositor state observation for treeland">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol allows a privileged DDE client such as the dock to
+        observe compositor state. It complements
+        treeland_compositor_action_v1: that interface requests actions,
+        whereas this protocol reports actual state independently of how
+        it was changed, including keyboard shortcuts, gestures, and other
+        clients. Sending an action request does not imply a state change.
+
+        The compositor must reject bind attempts from non-privileged
+        clients. State reported to a client belongs to that client's
+        desktop session.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_compositor_state_manager_v1" version="1">
+        <description summary="factory for compositor state subscriptions">
+            A global that creates compositor state subscriptions for
+            privileged DDE clients.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroy this manager object. Existing state subscriptions
+                are not affected.
+            </description>
+        </request>
+
+        <request name="get_state">
+            <description summary="subscribe to compositor state">
+                Create a state subscription. The compositor must send the
+                current value of every state defined for the bound object
+                version through the corresponding events when processing this
+                request, and subsequently send an event whenever a value
+                changes. No separate query is needed.
+
+                Each event is applied independently. There is no ordering
+                guarantee between different state kinds and no event
+                marking completion of an initial snapshot or update batch.
+                Creating multiple subscriptions is allowed; each receives
+                its own initial state and subsequent updates.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_compositor_state_v1"
+                 summary="the new state subscription" />
+        </request>
+    </interface>
+
+    <interface name="treeland_compositor_state_v1" version="1">
+        <description summary="compositor state subscription">
+            Observes current compositor state without changing it. The
+            compositor must report actual state rather than echo action
+            requests. Requests that leave state unchanged must not produce
+            duplicate notifications after the initial state has been sent.
+
+            Each state has a separate event with its own arguments. Events
+            may share parameter types and enums where their semantics match.
+
+            Clients may handle only the events they are interested in and
+            ignore the others. Ignoring an event does not prevent the
+            compositor from sending it.
+        </description>
+
+        <enum name="activation_state">
+            <entry name="inactive" value="0" summary="the mode is inactive" />
+            <entry name="active" value="1" summary="the mode is active" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the state subscription">
+                Destroy this object and stop observing state. This request
+                does not change compositor state.
+            </description>
+        </request>
+
+        <event name="multitask_view_active">
+            <description summary="whether the multitask view is active">
+                Sent when the subscription is created and whenever the
+                multitask view activation state changes.
+
+                This describes logical activation rather than animation
+                progress. An uncommitted gesture preview alone does not make
+                the view active.
+            </description>
+            <arg name="active" type="uint" enum="activation_state"
+                 summary="the multitask view activation state" />
+        </event>
+
+        <event name="current_workspace">
+            <description summary="current zero-based workspace index">
+                Sent when the subscription is created and whenever the
+                current workspace index changes. The index is the position
+                of the current workspace in the session's workspace list,
+                starting at 0; it is not a persistent workspace identifier.
+
+                The compositor must send an update if this index changes
+                because workspaces are added, removed, or reordered, even
+                if the current workspace retains its identity.
+            </description>
+            <arg name="index" type="uint" summary="the current zero-based workspace index" />
+        </event>
+
+        <event name="workspace_count">
+            <description summary="number of workspaces">
+                Sent when the subscription is created and whenever the
+                number of workspaces in the session changes.
+            </description>
+            <arg name="count" type="uint" summary="the number of workspaces" />
+        </event>
+
+        <event name="show_desktop">
+            <description summary="whether show-desktop mode is active">
+                Sent when the subscription is created and whenever
+                show-desktop mode changes. An empty workspace alone does not imply that
+                show-desktop mode is active.
+            </description>
+            <arg name="active" type="uint" enum="activation_state"
+                 summary="the show-desktop activation state" />
+        </event>
+    </interface>
+</protocol>
