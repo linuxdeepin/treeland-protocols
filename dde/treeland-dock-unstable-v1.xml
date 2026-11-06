@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="treeland_dock_unstable_v1">
+    <copyright><![CDATA[
+SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+SPDX-License-Identifier: MIT
+]]></copyright>
+
+    <description summary="compositor-managed dock visibility and reserved area">
+        Warning! This protocol is EXPERIMENTAL and under active development.
+        It may change at any time, including in backward-incompatible ways,
+        without incrementing the interface major version and without prior
+        notice. No compatibility guarantees of any kind are provided. Clients
+        and compositors must track the upstream definition in treeland-protocols
+        and must not rely on the current interface names, requests, events, or
+        semantics remaining stable across releases.
+
+        This protocol hands the overall show/hide behaviour of a dock to the
+        compositor. The dock surface stays an ordinary wlr-layer-shell surface
+        and keeps drawing its own content; what moves into the compositor is
+        the decision whether the dock is shown, the animation that carries it
+        in and out, and the area it reserves on the output.
+
+        The compositor owns these decisions because it is the only party that
+        can coordinate them with everything else it animates: toplevel
+        maximize and unmaximize, fullscreen exit, the multitask overview,
+        output reconfiguration, and its own window layout. A client that
+        animates the dock itself races all of that, and a client that unmaps
+        the dock pays a re-map and repaint cost on every reveal.
+
+        What the client reports is what the compositor cannot observe: the
+        user's visibility mode, temporary interaction holds (an open menu or
+        popup, an icon drag), forced visibility for conditions the compositor
+        cannot detect (the launcher), and which outputs arm the edge wake-up
+        strip. Everything else - pointer position, overlap of toplevels with the
+        dock strip, the fullscreen state of the active toplevel, the multitask
+        overview - is observed by the compositor directly.
+
+        The client keeps owning the output the dock lives on: it is the
+        client that decides to move the dock when the user touches another
+        output's edge, and the compositor only reports which output was
+        touched. This is why the output policy exists: the compositor must
+        know on which outputs to arm the wake-up strip, because the client
+        cannot create one of its own.
+
+        For a managed dock the compositor keeps the surface mapped at all
+        times and hides it by moving it out of the output instead of unmapping
+        it, so a reveal never waits for a new buffer. The client must not
+        animate the dock's own size, position, or visibility: no resizing the
+        surface toward the edge, no hiding the window, and no overlay strip of
+        its own for edge wake-up detection. The client's own content animation
+        inside the dock is unaffected.
+
+        A managed dock must already have the wlr-layer-shell role, and must be
+        anchored to exactly one edge along its thickness axis: top or bottom
+        for a horizontal dock, left or right for a vertical one. The two ends
+        along the dock's length axis are not constrained: a full-width
+        horizontal dock anchored to the bottom edge is anchored to bottom,
+        left and right, and is a valid managed dock. Neither the thickness nor
+        the length is part of this protocol: both are read from the layer
+        surface state.
+
+        The compositor must reject bind attempts from non-privileged clients.
+
+        The terms "must", "must not", "should", and "may" in this document
+        are to be interpreted as described in RFC 2119.
+    </description>
+
+    <interface name="treeland_dock_manager_v1" version="1">
+        <description summary="factory for managed docks">
+            A global that creates treeland_dock_v1 objects for privileged DDE
+            clients implementing a dock. The compositor must reject bind
+            attempts from non-privileged clients.
+
+            At most one dock may be managed per output, and a dock need not
+            exist on every output. A client with a single dock that moves
+            between outputs keeps one treeland_dock_v1 object for its whole
+            lifetime: the object follows the surface, and moving the surface
+            to another output does not require a new object.
+
+            A dock moves itself between outputs, so the compositor cannot
+            detect a conflicting dock at get_dock time. A managed dock whose
+            surface moves to an output that already has a managed dock is a
+            client error, and the compositor posts output_conflict on the dock
+            that moved there. That error is a protocol error like any other:
+            it terminates the client connection, it is not recoverable for the
+            dock alone, so a client must never let two managed docks meet on
+            one output.
+        </description>
+
+        <enum name="error">
+            <description summary="factory errors">
+                Errors raised by treeland_dock_manager_v1.
+            </description>
+            <entry name="already_dock_surface" value="0"
+                summary="the wl_surface already has a treeland_dock_v1 object" />
+            <entry name="invalid_surface" value="1"
+                summary="the wl_surface is invalid or does not have the layer-shell role" />
+            <entry name="invalid_mode" value="2"
+                summary="the initial visibility mode is not a known visibility_mode value" />
+            <entry name="invalid_output_policy" value="3"
+                summary="the initial output policy is not a known output_policy value" />
+        </enum>
+
+        <request name="get_dock">
+            <description summary="start managing a layer-shell surface as a dock">
+                Start managing the given layer surface as a dock, with the
+                given user visibility mode and output policy as the initial
+                values. Passing them here rather than defaulting avoids
+                reserving space and arming strips for a dock whose settings
+                are about to change.
+
+                The surface must already have the wlr-layer-shell role;
+                otherwise the compositor posts invalid_surface. Only one
+                treeland_dock_v1 object may be associated with a given
+                wl_surface; a second attempt is a protocol error
+                already_dock_surface. An unknown mode or policy value is a
+                protocol error invalid_mode or invalid_output_policy, since
+                there is no previous value to keep.
+
+                Immediately after this request the compositor sends the
+                current target visibility with the visibility event.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_dock_v1"
+                summary="the new dock object" />
+            <arg name="surface" type="object" interface="wl_surface"
+                summary="the layer-shell surface to manage as a dock" />
+            <arg name="mode" type="uint" enum="treeland_dock_v1.visibility_mode"
+                summary="the initial visibility mode" />
+            <arg name="policy" type="uint" enum="treeland_dock_v1.output_policy"
+                summary="the initial output policy" />
+        </request>
+
+        <request name="destroy" type="destructor">
+            <description summary="destroy the manager">
+                Destroy the treeland_dock_manager_v1 object. Managed docks
+                created through this manager are not affected.
+            </description>
+        </request>
+    </interface>
+
+    <interface name="treeland_dock_v1" version="1">
+        <description summary="compositor-managed dock">
+            The dock object hands the dock's overall visibility and reserved
+            area to the compositor.
+
+            The compositor derives the target visibility as follows.
+
+            1. Baseline from the mode: always_visible is shown; smart_hide is
+               shown; always_hidden is hidden.
+            2. Hide triggers: in always_visible the dock is hidden while the
+               compositor's active toplevel is fullscreen, on any output; in
+               smart_hide the dock is hidden while an xdg-shell toplevel
+               overlaps the strip along the dock's edge.
+            3. Holds cancel the hide triggers of step 2 only. If a step 2
+               trigger was the only reason the dock was hidden, cancelling it
+               reveals the dock, reported with reason interaction. A hold
+               never reveals a dock hidden by its mode in step 1: creating a
+               hold while the mode is always_hidden leaves the dock hidden.
+               When the last hold is destroyed the compositor re-evaluates
+               from step 1 with the same delays and the same priority as any
+               other trigger: it does not hide immediately and it does not
+               skip a wait the ordinary rules would apply.
+            4. Pointer contact with the wake-up strip reveals the dock in
+               every mode, including smart_hide while a toplevel overlaps the
+               strip, and produces an edge_wake event naming the output whose
+               edge was touched. When the touched output is not the one the
+               dock is on, the reveal waits for the client's move; see the
+               cross-output rule below. Once the pointer leaves the dock and
+               the strip, steps 1 to 3 decide again, after the ordinary delay.
+            5. The multitask overview overrides the result to shown. On exit
+               the compositor removes the override and re-evaluates from
+               step 1; it does not restore whatever was shown before the
+               overview opened, and it never changes the reported mode.
+            6. Forced visibility set with set_forced_visibility overrides the
+               result to shown, including over a fullscreen hide trigger.
+               Each reason is cleared independently, and clearing the last
+               one re-evaluates from step 1 with the ordinary delays.
+
+            Steps 1 to 3 are the only steps that hide: nothing else hides a
+            dock they leave shown. Steps 5 and 6 override the result to shown
+            and therefore also apply to a dock that steps 1 to 3 leave
+            hidden; apart from those overrides, only step 4 and the step 3
+            case reveal a dock that steps 1 to 3 leave hidden.
+
+            The compositor keeps the surface mapped and performs the reveal
+            and hide animation itself, including interrupting an animation in
+            flight in the opposite direction. Durations, easing, and the
+            delays between a trigger and the animation are compositor policy
+            and are not part of this protocol.
+
+            Reserved area: for a managed dock the compositor owns the space
+            reserved on the output and derives it from the visibility mode
+            alone, not from the current visibility: space is reserved in
+            always_visible and not otherwise, even while the dock is hidden by
+            a fullscreen toplevel. A fullscreen toplevel occupies the whole
+            output regardless of the dock. The reserved strip spans the entire
+            edge of the output and is as thick as the dock; the dock's own
+            length does not narrow it, so a shorter, centered dock reserves
+            the same strip as a full-width one. The client should leave the
+            layer-surface exclusive zone at 0; the compositor must ignore a
+            managed dock's layer-surface exclusive zone and reserve the strip
+            itself, exactly once.
+
+            The strip that is watched for overlap in smart_hide and for edge
+            wake-up in every mode is the same one: the entire edge of the
+            output, as thick as the dock. A managed dock does not need
+            treeland_region_watch_v1, and the client must not create its own
+            wake-up surface.
+
+            Wake-up strips are armed on every output the output policy allows
+            and are not armed on any other output: with primary_only the strip
+            is armed only on the compositor's primary output, with any_output
+            on every output. Contact with an armed strip produces an edge_wake
+            event and reveals the dock, subject to the cross-output rule below;
+            the client decides from that event whether to move the dock to the
+            reported output.
+
+            Edge wake-up across outputs: when the touched strip is on an
+            output other than the dock's own, the compositor must not begin the
+            reveal before the client moves the dock. It reveals the dock once
+            the surface is on the touched output, or after a compositor-chosen
+            timeout if the client never moves it. A reveal or hide animation
+            already in flight follows the surface to its new output and must
+            not leave a frame of the dock on the old one.
+
+            Changing the anchored edge: the client may change the edge its
+            surface is anchored to at any time, for example when the user
+            picks another dock position. The compositor re-derives the
+            geometry from the new layer surface state and may run a
+            transition that hides the dock along the old edge and reveals it
+            along the new one; the exact transition is compositor policy and
+            it does not by itself change the target visibility or produce a
+            visibility event. The client must not add an animation of its own
+            on top of it.
+
+            Unknown values passed to set_visibility_mode, set_output_policy,
+            or set_forced_visibility are ignored: the previous value stays in
+            effect and no error is raised, so that a newer client can talk to
+            an older compositor. The initial values passed to get_dock are
+            not covered by this rule and are rejected as protocol errors.
+
+            Lifecycle: the client must destroy its hold objects before
+            destroying the dock object, and must destroy both before
+            destroying the wl_surface they belong to. Destroying the dock
+            object destroys the holds created from it, so a client that
+            destroys the dock first must not send destroy on any of its holds
+            afterwards. If the wl_surface is destroyed first, the compositor
+            destroys the dock and all of its holds as a fallback for crashed
+            or misbehaving clients, and the client must not send any further
+            request on those objects afterwards.
+        </description>
+
+        <enum name="error">
+            <description summary="dock errors">
+                Errors raised by treeland_dock_v1.
+            </description>
+            <entry name="output_conflict" value="0"
+                summary="the surface moved to an output that already has a managed dock; reported as a protocol error that terminates the client connection" />
+        </enum>
+
+        <enum name="visibility_mode">
+            <description summary="user setting for when the dock is shown">
+                The user's dock visibility preference. The mode is the user's
+                setting and is distinct from the current visibility reported
+                by the visibility event.
+            </description>
+            <entry name="always_visible" value="0"
+                summary="the dock is shown and reserves space; it is hidden only while the active toplevel is fullscreen" />
+            <entry name="smart_hide" value="1"
+                summary="the dock is hidden while a toplevel overlaps the dock strip, and reserves no space" />
+            <entry name="always_hidden" value="2"
+                summary="the dock is hidden and reserves no space; it is revealed when the pointer touches its edge" />
+        </enum>
+
+        <enum name="output_policy">
+            <description summary="where the edge wake-up strip is armed">
+                The client's policy for which outputs arm the edge wake-up
+                strip, and therefore for the outputs the dock may be shown on.
+                It only selects the outputs whose edge wake-up strip is armed;
+                the compositor never moves the dock itself and the client
+                still owns the output the dock lives on. The policy says
+                nothing about where the dock may be right now: a dock that is
+                temporarily on another output keeps working and keeps its
+                reserved area, it simply cannot be woken from that output.
+            </description>
+            <entry name="primary_only" value="0"
+                summary="the edge wake-up strip is armed only on the compositor's primary output" />
+            <entry name="any_output" value="1"
+                summary="the edge wake-up strip is armed on every output" />
+        </enum>
+
+        <enum name="forced_visibility_reason">
+            <description summary="reason why the client forces the dock visible">
+                Reasons accepted by set_forced_visibility. Different reasons are
+                independent: each one is set and cleared on its own, and the
+                dock stays visible while at least one of them is set.
+            </description>
+            <entry name="launcher" value="0"
+                summary="the application launcher is shown; the compositor cannot observe it" />
+        </enum>
+
+        <enum name="visibility_reason">
+            <description summary="why the compositor settled on this visibility">
+                Why the compositor's target visibility is what the visibility
+                event reports. The reason describes the decision at the moment
+                the target changed; it is not kept up to date afterwards - a
+                hold being created or released for a dock that stays shown does
+                not produce a new event. It is informational and must not be
+                used by the client to decide visibility or to run a competing
+                animation.
+            </description>
+            <entry name="mode" value="0"
+                summary="the reported visibility mode alone decides it" />
+            <entry name="edge_wake" value="1"
+                summary="the pointer touched the dock edge and revealed the dock" />
+            <entry name="window_overlap" value="2"
+                summary="smart_hide: a toplevel overlaps the dock strip" />
+            <entry name="fullscreen" value="3"
+                summary="always_visible: the active toplevel is fullscreen" />
+            <entry name="interaction" value="4"
+                summary="a hold cancelled the hide trigger that was hiding the dock" />
+            <entry name="forced_visible" value="5"
+                summary="forced visible through set_forced_visibility" />
+            <entry name="multitask_view" value="6"
+                summary="the multitask overview is forcing the dock visible" />
+            <entry name="other" value="7"
+                summary="another compositor reason not covered by this enum" />
+        </enum>
+
+        <request name="destroy" type="destructor">
+            <description summary="stop managing the surface as a dock">
+                Stop managing the surface as a dock. The compositor stops
+                deciding its visibility, animation, and reserved area,
+                releases the reserved strip, stops arming wake-up strips for
+                it, and restores the surface to the position and size derived
+                from the layer-shell state alone, placed as visible. Holds
+                created from this object are destroyed with it.
+
+                The client regains control over the dock's presentation from
+                that point on, including its layer-surface exclusive zone: the
+                compositor no longer reserves anything for this surface, so a
+                client that wants reserved space again must set an exclusive
+                zone itself.
+            </description>
+        </request>
+
+        <request name="set_visibility_mode">
+            <description summary="report the user's visibility preference">
+                Report the user's current dock visibility preference. The
+                initial value comes from get_dock.
+
+                The compositor re-evaluates the dock's visibility when the
+                mode changes and applies the same delays and the same
+                animation it applies to any other trigger.
+            </description>
+            <arg name="mode" type="uint" enum="visibility_mode"
+                summary="the user's visibility preference" />
+        </request>
+
+        <request name="set_output_policy">
+            <description summary="report which outputs arm the edge wake-up strip">
+                Report the client's output policy. The initial value comes from
+                get_dock.
+
+                The compositor arms the edge wake-up strip on every output the
+                policy allows and removes it from the others; it does not move
+                the dock itself. When the policy becomes primary_only, moving
+                the dock back to the primary output is the client's job.
+            </description>
+            <arg name="policy" type="uint" enum="output_policy"
+                summary="which outputs arm the edge wake-up strip" />
+        </request>
+
+        <request name="get_hold">
+            <description summary="block automatic hiding for one interaction">
+                Create a hold: one object per interaction that must keep the
+                dock from hiding, for example an open menu, an open popup, or
+                an icon drag in progress.
+
+                A hold cancels the hide triggers and nothing else; it never
+                overrides the mode. The full rule is step 3 of the interface
+                description: a hold cancelling the only reason the dock was
+                hidden reveals it, while a hold created while the mode is
+                always_hidden does not, and the last hold being released
+                triggers a re-evaluation with the ordinary delays instead of an
+                immediate hide.
+
+                Holds are counted by object lifetime, so several interactions
+                can overlap without any counter bookkeeping in the client:
+                each hold is released by destroying it.
+            </description>
+            <arg name="id" type="new_id" interface="treeland_dock_hold_v1"
+                summary="the new hold" />
+        </request>
+
+        <request name="set_forced_visibility">
+            <description summary="report a condition that must show the dock">
+                Set or clear a reason that forces the dock visible regardless
+                of the visibility mode, of the hide triggers, and of holds.
+                This is not a hold: a hold prevents hiding, forced visibility
+                requires showing, and only the client can report the
+                conditions that need it - the compositor cannot observe the
+                launcher.
+
+                Each reason is set and cleared independently: sending visible
+                is 1 sets the reason, sending visible is 0 clears it. Sending
+                the value that already applies is allowed and has no further
+                effect. While a reason is set the dock is shown even in
+                always_hidden mode. The reserved area does not change because
+                of a forcing reason; it follows the mode, as described in the
+                interface description.
+            </description>
+            <arg name="reason" type="uint" enum="forced_visibility_reason"
+                summary="the condition being set or cleared" />
+            <arg name="visible" type="uint"
+                summary="1 to set the reason, 0 to clear it" />
+        </request>
+
+        <event name="visibility">
+            <description summary="the target visibility changed">
+                Sent once when the dock object is created, to report the
+                initial target visibility, and afterwards whenever that target
+                changes.
+
+                visible is the target the compositor is driving the dock
+                toward; it is not a report that an animation finished, and
+                there is no event for the end of an animation. The reason
+                argument is informational; see visibility_reason.
+
+                The event reports the result of the compositor's decision and
+                never asks the client to show or hide anything: the client
+                keeps the surface mapped and must not react by animating,
+                resizing, or hiding it.
+            </description>
+            <arg name="visible" type="uint"
+                summary="the target visibility, 1 for shown and 0 for hidden" />
+            <arg name="reason" type="uint" enum="visibility_reason"
+                summary="why the compositor settled on this visibility" />
+        </event>
+
+        <event name="edge_wake">
+            <description summary="the pointer touched the dock edge on an output">
+                Sent every time the pointer touches the wake-up strip on an
+                output where the strip is armed, whether or not the dock's
+                target visibility changes and whether or not the dock is
+                already on that output.
+
+                The event reports which output the user touched; moving the
+                dock there is the client's decision, taken according to its own
+                policy. The client may ignore an edge_wake whose output is the
+                output the dock is already on. The compositor sends nothing
+                further on this object because of that move: if the dock is
+                revealed by the contact, the accompanying change of target
+                visibility arrives as a separate visibility event with reason
+                edge_wake.
+            </description>
+            <arg name="output" type="object" interface="wl_output"
+                summary="the output whose edge the pointer touched" />
+        </event>
+    </interface>
+
+    <interface name="treeland_dock_hold_v1" version="1">
+        <description summary="a temporary block on automatic hiding">
+            One hold object per interaction that must keep the dock from
+            hiding. The hold is released by destroying it, and is destroyed by
+            the compositor if the dock object or its wl_surface is destroyed
+            first.
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="release this hold">
+                Release this hold. Releasing the last hold makes the compositor
+                re-evaluate the dock's visibility with the same delays and
+                priority as any other trigger; it does not hide the dock
+                immediately.
+            </description>
+        </request>
+    </interface>
+</protocol>
