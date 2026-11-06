@@ -27,7 +27,7 @@ SPDX-License-Identifier: MIT
         are to be interpreted as described in RFC 2119.
     </description>
 
-    <interface name="treeland_dde_shell_manager_v2" version="1">
+    <interface name="treeland_dde_shell_manager_v2" version="2">
         <description summary="factory for DDE shell surfaces">
             A global that creates treeland_dde_shell_surface_v2 objects for
             privileged DDE clients implementing parts of the shell user
@@ -68,13 +68,15 @@ SPDX-License-Identifier: MIT
         </request>
     </interface>
 
-    <interface name="treeland_dde_shell_surface_v2" version="1">
+    <interface name="treeland_dde_shell_surface_v2" version="2">
         <description summary="shell surface role">
             A shell surface object assigns the DDE shell surface role to a
-            wl_surface. A shell surface renders either at the overlay level
-            of the workspace (above normal toplevel windows but below
-            layer-shell surfaces) or at the normal window layer, as
-            selected by the set_role request. The default role is overlay.
+            wl_surface. The set_role request selects normal window
+            stacking, always-on-top stacking, or workspace overlay
+            stacking. Always-on-top surfaces render above normal windows
+            and below workspace overlay surfaces. Workspace overlay
+            surfaces render below layer-shell top and overlay surfaces.
+            The default role is overlay.
 
             The role carries no requests that map, commit, or configure
             buffer state; the client commits buffers with wl_surface
@@ -105,6 +107,8 @@ SPDX-License-Identifier: MIT
             </description>
             <entry name="normal" value="0" summary="normal window layer, below the overlay layer and participating in regular toplevel stacking" />
             <entry name="overlay" value="1" summary="workspace overlay layer, above normal toplevels and below layer-shell surfaces" />
+            <entry name="always_on_top" value="2" since="2"
+                summary="above normal windows and below workspace overlay surfaces" />
         </enum>
 
         <enum name="skip_flag" bitfield="true">
@@ -141,6 +145,12 @@ SPDX-License-Identifier: MIT
                 Assigning the normal role returns the surface to the
                 regular window layer, participating in normal toplevel
                 stacking again.
+
+                The always_on_top role enables window always-on-top;
+                selecting normal or overlay clears it. User changes to
+                always-on-top switch between normal and always_on_top.
+                Since version 2, effective role changes are reported
+                through role.
             </description>
             <arg name="role" type="uint" enum="role" summary="the rendering layer for this surface" />
         </request>
@@ -216,5 +226,17 @@ SPDX-License-Identifier: MIT
             </description>
             <arg name="accept" type="uint" summary="0 to refuse keyboard focus, 1 to accept it" />
         </request>
+
+        <event name="role" since="2">
+            <description summary="effective stacking role of this surface">
+                Sent after object creation to report the initial effective
+                role, and subsequently after each effective role change
+                caused by a client request, user action, or compositor
+                policy. The compositor need not send this event if the
+                effective role has not changed since the last notification.
+            </description>
+            <arg name="role" type="uint" enum="role"
+                summary="the effective stacking role" />
+        </event>
     </interface>
 </protocol>
