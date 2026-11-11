@@ -4,7 +4,7 @@
 
 | 文件 | 协议 | 接口 | 用途 |
 |------|----------|-----------|---------|
-| `treeland-foreign-toplevel-manager-unstable-v3.xml` | `treeland_foreign_toplevel_manager_unstable_v3` | `treeland_foreign_toplevel_manager_v3`, `treeland_foreign_toplevel_handle_v3`, `treeland_dock_preview_context_v3` | 顶层窗口观察和 Dock 预览；文本 tooltip 改为由客户端绘制的 tooltip surface，外框仍由合成器绘制，内容提交后即显示 |
+| `treeland-foreign-toplevel-manager-unstable-v3.xml` | `treeland_foreign_toplevel_manager_unstable_v3` | `treeland_foreign_toplevel_manager_v3`, `treeland_foreign_toplevel_handle_v3`, `treeland_dock_preview_context_v3` | 顶层窗口观察和 Dock 预览；文本 tooltip 改为由客户端绘制的 tooltip surface，外框仍由合成器绘制，内容提交后即显示；接口版本 2 新增 `show_list`，以纵向列表形态显示同一预览 |
 | `treeland-input-manager-unstable-v1.xml` | `treeland_input_manager_unstable_v1` | `treeland_input_manager_v1`, `treeland_pointer_device_configuration_v1`, `treeland_mouse_settings_v1`, `treeland_touchpad_settings_v1`, `treeland_keyboard_settings_v1` | 逐设备输入配置：指针加速、发送事件模式、键盘切换状态与 XKB 键盘映射设置 |
 | `treeland-keyboard-state-notify-unstable-v1.xml` | `treeland_keyboard_state_notify_unstable_v1` | `treeland_keyboard_state_notify_manager_v1`, `treeland_keyboard_state_watcher_v1` | 监听键盘修饰键（Caps/Num Lock）状态变化 |
 | `treeland-output-manager-unstable-v2.xml` | `treeland_output_manager_unstable_v2` | `treeland_output_manager_v2`, `treeland_output_picture_control_v2` | 指定主屏、逐输出色温和亮度控制；输出按 uuid 寻址 |
