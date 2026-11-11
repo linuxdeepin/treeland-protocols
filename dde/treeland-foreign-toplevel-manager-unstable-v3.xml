@@ -19,13 +19,13 @@
         compositor. It provides access to window metadata (title, app-id,
         state, parent, outputs), allows requests to maximize, minimize,
         activate, close, or fullscreen a toplevel, and supports a dock
-        preview context for thumbnail display and tooltip overlays.
+        preview context for thumbnail or list display and tooltip overlays.
 
         The terms "must", "must not", "should", "may", and "recommended"
         in this document are to be interpreted as described in RFC 2119.
     </description>
 
-    <interface name="treeland_foreign_toplevel_manager_v3" version="1">
+    <interface name="treeland_foreign_toplevel_manager_v3" version="2">
         <description summary="observe and manage toplevel windows">
             A singleton global that emits one treeland_foreign_toplevel_handle_v3
             object per mapped toplevel window. Clients bind this global to
@@ -460,7 +460,7 @@
         </event>
     </interface>
 
-    <interface name="treeland_dock_preview_context_v3" version="1">
+    <interface name="treeland_dock_preview_context_v3" version="2">
         <description summary="dock preview and tooltip context for a surface">
             Provides the dock or taskbar component with the ability to
             display a thumbnail preview of one or more toplevels and to
@@ -475,6 +475,11 @@
 
             The preview and the tooltip share one popover slot: showing
             either one replaces whatever the context displayed before.
+
+            Version 2 adds the show_list request, which shows the same
+            preview as show but asks for a vertical list of rows instead
+            of thumbnails. show keeps its thumbnail meaning in both
+            versions.
         </description>
 
         <enum name="error">
@@ -515,6 +520,10 @@
                 is positioned at (x, y) in the coordinate space of the
                 anchor surface supplied at context creation, on the side
                 indicated by direction.
+
+                This request always asks for the thumbnail presentation.
+                A client that wants the list presentation sends show_list
+                instead, which takes the same arguments.
 
                 The identifiers argument is a wl_array of uint32 identifier
                 values, each matching the identifier sent by the
@@ -607,6 +616,26 @@
                 surface; the client shows it again with another
                 show_tooltip_surface request.
             </description>
+        </request>
+
+        <request name="show_list" since="2">
+            <description summary="show a list preview of the given toplevels">
+                Behaves exactly like show, except that the compositor
+                presents the toplevels as a vertical list of rows, one row
+                per toplevel, instead of thumbnails side by side.
+
+                The arguments and the popup placement are the same as show,
+                and the two requests replace each other exactly like two
+                calls of show do.
+            </description>
+            <arg name="identifiers" type="array"
+                summary="array of uint32 toplevel identifiers to preview" />
+            <arg name="x"         type="int"
+                summary="x offset of the preview popup in anchor-surface-local coordinates" />
+            <arg name="y"         type="int"
+                summary="y offset of the preview popup in anchor-surface-local coordinates" />
+            <arg name="direction" type="uint" enum="direction"
+                summary="which side of the anchor surface the preview appears on" />
         </request>
 
         <event name="enter">
