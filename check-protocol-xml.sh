@@ -12,7 +12,7 @@ fi
 if [ $# -gt 0 ]; then
 	files="$@"
 else
-	files=$(find public dde internal wine deprecated -name '*.xml' -type f | sort)
+	files=$(find public dde wine deprecated -name '*.xml' -type f | sort)
 fi
 
 for f in $files; do

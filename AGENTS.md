@@ -7,7 +7,6 @@
 ├── AGENTS.md                   # this file
 ├── public/                     # protocols for general application developers
 ├── dde/                        # DDE component protocols
-├── internal/                   # Treeland-internal, not for general app developers
 ├── wine/                       # Wine compatibility layer protocols
 └── deprecated/                 # replaced by newer versions, installed by default
 ```
@@ -18,11 +17,13 @@
 |--------------|---------------------------------------|----------------------------------------|
 | `public/`    | General application developers        | `TREELAND_PROTOCOL_XML_FILES`          |
 | `dde/`       | DDE desktop components                | `TREELAND_PROTOCOL_DDE_XML_FILES`     |
-| `internal/`  | Treeland compositor internals only    | `TREELAND_PROTOCOL_INTERNAL_XML_FILES`|
 | `wine/`      | Wine compatibility layer              | `TREELAND_PROTOCOL_WINE_XML_FILES`     |
 | `deprecated/`| Superseded, installed by default     | `TREELAND_PROTOCOL_DEPRECATED_XML_FILES`|
 
 New protocol files must be added to the corresponding variable in `CMakeLists.txt`.
+
+Protocols whose only consumers are binaries inside the treeland repository do not
+belong here: they live in treeland's `src/protocols/` instead and are not installed.
 
 ## Naming conventions
 

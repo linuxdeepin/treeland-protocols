@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25.0)
 
-project(TreelandProtocols VERSION 0.9.0 LANGUAGES NONE)
+project(TreelandProtocols VERSION 0.10.0 LANGUAGES NONE)
 
 # https://gitlab.kitware.com/cmake/cmake/-/work_items/23461
 # Suppress GNUInstallDirs warning for LANGUAGES NONE projects
@@ -40,14 +40,6 @@ set(TREELAND_PROTOCOL_DDE_XML_FILES
   dde/treeland-activation-token-unstable-v1.xml
 )
 
-# Internal protocol XML files (Treeland-specific, not for general app developers)
-set(TREELAND_PROTOCOL_INTERNAL_XML_FILES
-  internal/treeland-app-id-resolver-unstable-v2.xml
-  internal/treeland-prelaunch-splash-unstable-v2.xml
-  internal/treeland-screensaver-unstable-v2.xml
-  internal/treeland-wallpaper-shell-unstable-v1.xml
-)
-
 # Wine-specific protocol XML files
 set(TREELAND_PROTOCOL_WINE_XML_FILES
   wine/treeland-remote-subsurface-unstable-v1.xml
@@ -78,7 +70,7 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
 option(TREELAND_PROTOCOLS_INSTALL_DEPRECATED "Install deprecated protocol files" ON)
 
 # Install protocol XML files
-install(FILES ${TREELAND_PROTOCOL_XML_FILES} ${TREELAND_PROTOCOL_DDE_XML_FILES} ${TREELAND_PROTOCOL_INTERNAL_XML_FILES} ${TREELAND_PROTOCOL_WINE_XML_FILES}
+install(FILES ${TREELAND_PROTOCOL_XML_FILES} ${TREELAND_PROTOCOL_DDE_XML_FILES} ${TREELAND_PROTOCOL_WINE_XML_FILES}
   DESTINATION ${CMAKE_INSTALL_DATADIR}/treeland-protocols
 )
 
