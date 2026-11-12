@@ -1,3 +1,12 @@
+treeland-protocols (0.10.0) unstable; urgency=medium
+
+  * remove the internal protocols (treeland-app-id-resolver-unstable-v2,
+    treeland-prelaunch-splash-unstable-v2, treeland-screensaver-unstable-v2,
+    treeland-wallpaper-shell-unstable-v1); their XML moved to the treeland
+    repository's src/protocols/ because only treeland binaries consume them
+
+ -- luhongxu <luhongxu@uniontech.com>  Thu, 12 Nov 2026 21:31:55 +0800
+
 treeland-protocols (0.9.0) unstable; urgency=medium
 
   * feat: add treeland-activation-token-unstable-v1 protocol
