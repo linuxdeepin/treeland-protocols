@@ -56,19 +56,16 @@ set(TREELAND_PROTOCOL_WINE_XML_FILES
 )
 
 # Deprecated protocol XML files (replaced by newer versions), limited to the
-# ones still needed by consumers of the installed package. Files whose
-# implementation was removed and that no consumer scans any more are kept in
-# deprecated/ for reference but not installed.
+# ones Treeland still implements. Files whose implementation was removed are
+# kept in deprecated/ for reference but not installed: clients still using them
+# must fail at build time instead of silently binding a global that no longer
+# exists.
 set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-capture-unstable-v1.xml
   deprecated/treeland-ddm-v1.xml
   deprecated/treeland-personalization-manager-v1.xml
   deprecated/treeland-dde-shell-v1.xml
   deprecated/treeland-wallpaper-color-v1.xml
-  # No longer implemented by Treeland, but dde-shell still generates client code
-  # from it (shell/CMakeLists.txt, panels/notification/osd/brightness/CMakeLists.txt).
-  # Drop once dde-shell has migrated to treeland-output-manager-unstable-v2.
-  deprecated/treeland-output-manager-v1.xml
 )
 
 option(TREELAND_PROTOCOLS_INSTALL_DEPRECATED "Install deprecated protocol files" ON)

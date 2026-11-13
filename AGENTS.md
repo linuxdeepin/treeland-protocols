@@ -9,7 +9,7 @@
 ├── dde/                        # DDE component protocols
 ├── internal/                   # Treeland-internal, not for general app developers
 ├── wine/                       # Wine compatibility layer protocols
-└── deprecated/                 # replaced by newer versions, installed while consumers still need them
+└── deprecated/                 # replaced by newer versions, installed while Treeland still implements them
 ```
 
 ## Protocol classification
@@ -20,7 +20,7 @@
 | `dde/`       | DDE desktop components                | `TREELAND_PROTOCOL_DDE_XML_FILES`     |
 | `internal/`  | Treeland compositor internals only    | `TREELAND_PROTOCOL_INTERNAL_XML_FILES`|
 | `wine/`      | Wine compatibility layer              | `TREELAND_PROTOCOL_WINE_XML_FILES`     |
-| `deprecated/`| Superseded, installed while still needed | `TREELAND_PROTOCOL_DEPRECATED_XML_FILES`|
+| `deprecated/`| Superseded, installed if still implemented | `TREELAND_PROTOCOL_DEPRECATED_XML_FILES`|
 
 New protocol files must be added to the corresponding variable in `CMakeLists.txt`.
 
@@ -122,6 +122,6 @@ When a protocol is superseded or no longer needed, follow these steps:
    ```
 
 The `deprecated/` directory has no README protocol table. A deprecated file is removed from
-`TREELAND_PROTOCOL_DEPRECATED_XML_FILES` once Treeland drops its implementation **and** no downstream
-build still scans it, so only the deprecated protocols still needed are installed
-(`TREELAND_PROTOCOLS_INSTALL_DEPRECATED` is `ON`).
+`TREELAND_PROTOCOL_DEPRECATED_XML_FILES` once Treeland drops its implementation, so that clients
+still using it fail at build time; only the deprecated protocols still served by Treeland are
+installed (`TREELAND_PROTOCOLS_INSTALL_DEPRECATED` is `ON`).
