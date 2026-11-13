@@ -68,7 +68,9 @@ SPDX-License-Identifier: MIT
             stacking. Always-on-top surfaces render above normal windows
             and below workspace overlay surfaces. Workspace overlay
             surfaces render below layer-shell top and overlay surfaces.
-            The default role is overlay.
+            The compositor chooses the initial effective role and reports
+            it through the role event; clients must not assume a specific
+            role until that event is received.
 
             The role carries no requests that map, commit, or configure
             buffer state; the client commits buffers with wl_surface
@@ -131,8 +133,8 @@ SPDX-License-Identifier: MIT
         <request name="set_role">
             <description summary="assign a rendering layer to this surface">
                 Assign the role identified by the role enum to this shell
-                surface, selecting the layer it renders in. The default
-                role before this request is overlay.
+                surface, selecting the layer it renders in. The initial
+                effective role is reported through the role event.
 
                 Assigning the normal role returns the surface to the
                 regular window layer, participating in normal toplevel
