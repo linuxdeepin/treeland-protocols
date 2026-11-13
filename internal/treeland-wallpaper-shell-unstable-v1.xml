@@ -6,13 +6,11 @@
     ]]></copyright>
 
     <description summary="wallpaper shell integration">
-        Warning! This protocol is EXPERIMENTAL and under active development.
-        It may change at any time, including in backward-incompatible ways,
-        without incrementing the interface major version and without prior
-        notice. No compatibility guarantees of any kind are provided. Clients
-        and compositors must track the upstream definition in treeland-protocols
-        and must not rely on the current interface names, requests, events, or
-        semantics remaining stable across releases.
+        Warning! The protocol described in this file is not fully
+        stable. Backward-incompatible changes should be avoided but
+        are not guaranteed; any backward-incompatible change must bump
+        the version number in the protocol and interface names and
+        reset the interface version.
     </description>
 
     <interface name="treeland_wallpaper_notifier_v1" version="1">
