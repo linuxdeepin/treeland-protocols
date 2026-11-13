@@ -2,14 +2,13 @@
 
 Wayland protocol extensions for treeland.
 
-## Experimental status
+## Stability
 
 All Treeland Wayland protocol extensions defined in this repository are
-**experimental**. They may change at any time, including in
-backward-incompatible ways, and no compatibility guarantees of any kind
-are provided. Consumers must track the upstream protocol definition and
-must not rely on current interface names, requests, events, or semantics
-remaining stable.
+not fully stable. Backward-incompatible changes should be avoided but are
+not guaranteed; any backward-incompatible change must bump the version
+number in the protocol and interface names and reset the interface
+version.
 
 ## Dependencies
 

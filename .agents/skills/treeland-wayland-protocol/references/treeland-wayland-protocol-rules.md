@@ -174,24 +174,21 @@ Before considering the XML finished, check:
 - all enum references resolve correctly (short format for same-interface, fully-qualified `interface.enum` for cross-interface)
 - nullable args are intentional
 - the file is registered in the correct `CMakeLists.txt` variable — see AGENTS.md
-- the protocol-level `<description>` contains the experimental disclaimer (see section 11)
+- the protocol-level `<description>` contains the stability disclaimer (see section 11)
 
-## 11. Experimental status disclaimer
+## 11. Stability disclaimer
 
-Every Treeland protocol XML must include the following experimental disclaimer in its **protocol-level** `<description>` (the `<description>` that is a direct child of `<protocol>`, not inside an `<interface>`):
+Every Treeland protocol XML must include the following disclaimer in its **protocol-level** `<description>` (the `<description>` that is a direct child of `<protocol>`, not inside an `<interface>`):
 
 ```
-Warning! This protocol is EXPERIMENTAL and under active development.
-It may change at any time, including in backward-incompatible ways,
-without incrementing the interface major version and without prior
-notice. No compatibility guarantees of any kind are provided. Clients
-and compositors must track the upstream definition in treeland-protocols
-and must not rely on the current interface names, requests, events, or
-semantics remaining stable across releases.
+Warning! The protocol described in this file is not fully
+stable. Backward-incompatible changes should be avoided but
+are not guaranteed; any backward-incompatible change must bump
+the version number in the protocol and interface names and
+reset the interface version.
 ```
 
 Rules:
 - the disclaimer must appear exactly once, in the protocol-level `<description>` only
 - do not duplicate the disclaimer inside `<interface>` descriptions
-- do not use the old "testing phase" wording that promises version-bump discipline — the current disclaimer explicitly states that no compatibility guarantees are provided
 - when creating a new protocol file from the template, the disclaimer is already present; keep it
