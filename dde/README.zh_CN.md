@@ -37,7 +37,7 @@
 5. `show` 与 `close` 现在覆盖整个弹层：`show` 会用预览替换可见的 tooltip，`close` 会同时隐藏预览与 tooltip。此前文档写明 tooltip 不受 `close` 影响，且可与预览并存。
 6. tooltip surface 不接收指针或键盘输入、不获焦点、不激活；合成器也从不销毁它，只在 tooltip 被替换或关闭时停止使用。
 
-消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v3`，用提交后通过 `show_tooltip_surface` 交出的 `wl_surface` 内容取代文本 tooltip 调用，并在绘制 tooltip 内容时不带自己的背景；旧 v2 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v3`，用提交后通过 `show_tooltip_surface` 交出的 `wl_surface` 内容取代文本 tooltip 调用，并在绘制 tooltip 内容时不带自己的背景；旧 v2 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。
 
 #### `treeland-virtual-output-manager-v1.xml`
 
@@ -54,7 +54,7 @@
 9. manager 上的失败均为非致命：组的 `error` 事件及 `invalid_group_name`（0）、`invalid_screen_number`（1）、`invalid_output`（2）错误码移除，manager 不再有致命 `error` 枚举。业务失败——`invalid_output`、`duplicate_output`、`output_in_use`、`not_in_group`、`invalid_name`——通过新增的 `operation_failed` 事件（code + uuid）上报，任何失败都不会终止连接。`create_group` 的 source 失败仍会创建组但源为空；`get_group` 名字无效仍会创建对象，但该对象是无效组对象，不接收 `name` 或 `state` 事件，除 `destroy` 外的所有请求均被拒绝。仅 `already_dissolved`——对已解散组发送除 `destroy` 以外的任何请求——仍为致命协议错误。
 10. 对象生命周期重新定义：`destroy` 仅释放该客户端的句柄，既不解散组也不发送 `group_removed`；单独的 `dissolve` 请求解散整个组（丢弃所有排队变更），向每个绑定该组的对象发送 `removed`，并在 manager 上发送 `group_removed`。每个组对象的初始状态以一个批次推送：`name`、`state`、`done`；`create_group` 的 source 失败时在 `done` 之前插入一次 `operation_failed`，而无效 `get_group` 对象只接收 `operation_failed` 与 `done`。
 
-消费者应将全局对象重新绑定为 `treeland_output_group_manager_v1`，用 `name` 事件（或 `get_group`）给出的合成器分配名字寻址组，从 `treeland-output-uuid-head-unstable-v1` 获取镜像 uuid，用 `set_source`/`add_output`/`remove_output` 排队变更并以 `commit` 应用，从 `state` 事件读取有效源与镜像列表（并在收到 `done` 后再基于初始状态行动），以 `dissolve` 而非销毁组对象来解散组；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_output_group_manager_v1`，用 `name` 事件（或 `get_group`）给出的合成器分配名字寻址组，从 `treeland-output-uuid-head-unstable-v1` 获取镜像 uuid，用 `set_source`/`add_output`/`remove_output` 排队变更并以 `commit` 应用，从 `state` 事件读取有效源与镜像列表（并在收到 `done` 后再基于初始状态行动），以 `dissolve` 而非销毁组对象来解散组；旧 v1 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。
 
 ### 0.7.0
 
@@ -70,7 +70,7 @@
 2. 状态观察无直接替代：新协议不携带任何事件，曾通过 `show_desktop_state`（含绑定时发送的初始状态）跟踪模式的客户端将失去该反馈，只能将触发视为尽力而为。
 3. 替代全局对象为特权接口：仅允许由合成器授权的 DDE 客户端绑定 `treeland_compositor_action_v1`，而 `treeland_show_desktop_v1` 可由常规 shell 客户端绑定。
 
-消费者应将全局对象重新绑定为 `treeland_compositor_action_v1` 并触发 `show_desktop` 动作；旧 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_compositor_action_v1` 并触发 `show_desktop` 动作；旧 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。
 
 #### `treeland-dde-shell-v1.xml`
 
@@ -131,7 +131,7 @@ DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协
 6. `set_desktop` 请求重命名为 `set_show_desktop_state`。
 7. 描述被修正和扩充。
 
-消费者应将全局对象重新绑定为 `treeland_show_desktop_v1`，发送 `set_show_desktop_state` 请求切换模式，监听 `show_desktop_state` 观察合成器驱动的变化；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_show_desktop_v1`，发送 `set_show_desktop_state` 请求切换模式，监听 `show_desktop_state` 观察合成器驱动的变化；旧 v1 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。
 
 #### `treeland-foreign-toplevel-manager-v1.xml`
 
@@ -147,7 +147,7 @@ DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协
 8. 管理器接口新增 `error` 枚举，含 `invalid_surface`，当传入 `get_dock_preview_context` 的 `relative_surface` 不是调用客户端拥有的有效 wl_surface 时触发。
 9. 描述被修正和扩充。
 
-消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v2`，从 `toplevel` 事件获取 `treeland_foreign_toplevel_handle_v2` 对象，并使用 `treeland_dock_preview_context_v2` 进行预览；旧 v1 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_foreign_toplevel_manager_v2`，从 `toplevel` 事件获取 `treeland_foreign_toplevel_handle_v2` 对象，并使用 `treeland_dock_preview_context_v2` 进行预览；旧 v1 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。
 #### `treeland-shortcut-manager-v2.xml`
 
 被 `treeland-shortcut-manager-unstable-v3.xml` 取代；旧 v2 文件原样移至 `deprecated/`。协议按 unstable 命名规范重命名，接口随新主版本重命名。与旧 `treeland_shortcut_manager_v2` 接口相比：
@@ -158,4 +158,4 @@ DDE-shell 协议中被 DDE 组件消费的接口拆分为 `dde/` 下的专用协
 4. 移除 commit 机制：`bind_key`、`bind_swipe_gesture`、`bind_hold_gesture` 立即生效，被拒绝的绑定通过新增的 `bind_failure` 事件逐个报告，`commit` 请求、`commit_success` 与 `commit_failure` 事件以及 `error.invalid_commit` 枚举项不复存在。`error.invalid_surface` 枚举项从 4 重编号为 3。与旧模型不同，单个绑定失败不再回滚同批次的其他绑定。
 5. 文档完善（无线缆变更）：销毁管理器对象明确说明会隐式释放经由 `acquire` 获取的独占控制权；`capture_next_shortcut` 请求与捕获接口语义重写以对齐合成器实现（触发时机、seat/focus 校验、`busy`/`aborted` 失败条件及有效快捷键规则）。
 
-消费者应将全局对象重新绑定为 `treeland_shortcut_manager_v3`，在发送任何 bind 或 unbind 请求前先 `acquire`，并通过 `capture_next_shortcut` 创建捕获对象；旧 v2 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应将全局对象重新绑定为 `treeland_shortcut_manager_v3`，在发送任何 bind 或 unbind 请求前先 `acquire`，并通过 `capture_next_shortcut` 创建捕获对象；旧 v2 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。

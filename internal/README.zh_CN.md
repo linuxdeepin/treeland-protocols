@@ -21,8 +21,8 @@ Treeland 合成器内部协议 — 不面向通用应用开发者。通过 `TREE
 
 #### `treeland-app-id-resolver-v1.xml`
 
-被 `treeland-app-id-resolver-unstable-v2.xml` 取代；旧 v1 文件移至 `deprecated/`。管理器和解析器接口重命名为 `treeland_app_id_resolver_manager_v2` / `treeland_app_id_resolver_v2`（接口版本重置为 1）。消费者应重新绑定全局对象为 `treeland_app_id_resolver_manager_v2`，将 `get_resolver` 目标接口替换为 `_v2`，并适配澄清后的请求/响应契约；旧 v1 XML 在迁移期间仍会安装，但绑定的是已弃用的接口名。
+被 `treeland-app-id-resolver-unstable-v2.xml` 取代；旧 v1 文件移至 `deprecated/`。管理器和解析器接口重命名为 `treeland_app_id_resolver_manager_v2` / `treeland_app_id_resolver_v2`（接口版本重置为 1）。消费者应重新绑定全局对象为 `treeland_app_id_resolver_manager_v2`，将 `get_resolver` 目标接口替换为 `_v2`，并适配澄清后的请求/响应契约；旧 v1 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议（它绑定的还是已弃用的接口名）。
 
 #### `treeland-screensaver-v1.xml`
 
-被 `treeland-screensaver-unstable-v2.xml` 取代；旧 v1 文件移至 `deprecated/`。接口重命名为 `treeland_screensaver_v2`（接口版本重置为 1），`destroy` 请求现在属于基础接口而非 `since="2"` 的新增。消费者应重新绑定为 `treeland_screensaver_v2` 并无条件调用 `destroy`；旧 v1 XML 在迁移期间仍会安装。
+被 `treeland-screensaver-unstable-v2.xml` 取代；旧 v1 文件移至 `deprecated/`。接口重命名为 `treeland_screensaver_v2`（接口版本重置为 1），`destroy` 请求现在属于基础接口而非 `since="2"` 的新增。消费者应重新绑定为 `treeland_screensaver_v2` 并无条件调用 `destroy`；旧 v1 XML 因 Treeland 已移除其实现而不再安装，仍从安装目录扫描它的消费者必须改用上述替代协议。

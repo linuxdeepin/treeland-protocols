@@ -55,24 +55,20 @@ set(TREELAND_PROTOCOL_WINE_XML_FILES
   wine/treeland-wine-window-state-unstable-v1.xml
 )
 
-# Deprecated protocol XML files (replaced by newer versions)
+# Deprecated protocol XML files (replaced by newer versions), limited to the
+# ones still needed by consumers of the installed package. Files whose
+# implementation was removed and that no consumer scans any more are kept in
+# deprecated/ for reference but not installed.
 set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
-  deprecated/treeland-app-id-resolver-v1.xml
   deprecated/treeland-capture-unstable-v1.xml
   deprecated/treeland-ddm-v1.xml
-  deprecated/treeland-output-manager-v1.xml
   deprecated/treeland-personalization-manager-v1.xml
-  deprecated/treeland-prelaunch-splash-v1.xml
-  deprecated/treeland-screensaver-v1.xml
   deprecated/treeland-dde-shell-v1.xml
-  deprecated/treeland-show-desktop-unstable-v1.xml
-  deprecated/treeland-shortcut-manager-v1.xml
-  deprecated/treeland-shortcut-manager-v2.xml
   deprecated/treeland-wallpaper-color-v1.xml
-  deprecated/treeland-window-management-v1.xml
-  deprecated/treeland-foreign-toplevel-manager-v1.xml
-  deprecated/treeland-foreign-toplevel-manager-unstable-v2.xml
-  deprecated/treeland-virtual-output-manager-v1.xml
+  # No longer implemented by Treeland, but dde-shell still generates client code
+  # from it (shell/CMakeLists.txt, panels/notification/osd/brightness/CMakeLists.txt).
+  # Drop once dde-shell has migrated to treeland-output-manager-unstable-v2.
+  deprecated/treeland-output-manager-v1.xml
 )
 
 option(TREELAND_PROTOCOLS_INSTALL_DEPRECATED "Install deprecated protocol files" ON)
