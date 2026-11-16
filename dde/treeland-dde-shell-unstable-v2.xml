@@ -53,6 +53,16 @@ SPDX-License-Identifier: MIT
                 wl_surface; the compositor raises already_shell_surface
                 for a second attempt.
 
+                The shell surface object must be created before the
+                wl_surface is assigned its rendering role (for example,
+                before the xdg_toplevel for the wl_surface). Requests that
+                affect initial mapping state — the role, the skip flags, and
+                keyboard-focus acceptance — only take effect when the surface
+                is mapped, so sending them after the surface is mapped is too
+                late: the window may briefly appear in the dock preview or
+                task switcher, or briefly receive keyboard focus, until the
+                surface is remapped.
+
                 Recommended for use with xdg_surface.
             </description>
             <arg name="id" type="new_id" interface="treeland_dde_shell_surface_v2" summary="the new shell surface object" />
