@@ -37,7 +37,7 @@ Superseded by `treeland-foreign-toplevel-manager-unstable-v3.xml`; the old v2 fi
 5. `show` and `close` now cover the whole popover: `show` replaces a visible tooltip with the preview, and `close` hides both the preview and the tooltip. Previously the tooltip was documented as unaffected by `close` and as able to coexist with the preview.
 6. The tooltip surface receives no pointer or keyboard input, focus, or activation, and the compositor never destroys it: it only stops using it when the tooltip is replaced or closed.
 
-Consumers should rebind the global as `treeland_foreign_toplevel_manager_v3`, replace text tooltip calls with `wl_surface` content passed to `show_tooltip_surface` after committing it, and draw the tooltip content without their own background; the old v2 XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_foreign_toplevel_manager_v3`, replace text tooltip calls with `wl_surface` content passed to `show_tooltip_surface` after committing it, and draw the tooltip content without their own background; the old v2 XML is no longer installed since Treeland dropped its implementation, so consumers still scanning it from the install directory must switch to the replacement above.
 
 #### `treeland-virtual-output-manager-v1.xml`
 
@@ -54,7 +54,7 @@ Superseded by `treeland-output-group-manager-unstable-v1.xml`; the old v1 file m
 9. Failures are all non-fatal on the manager: the per-group `error` event and the codes `invalid_group_name` (0), `invalid_screen_number` (1), and `invalid_output` (2) are removed, and the manager has no fatal `error` enum. Business failures — `invalid_output`, `duplicate_output`, `output_in_use`, `not_in_group`, `invalid_name` — are reported through the new `operation_failed` event (code + uuid), so no failure terminates the connection. A failed `create_group` source still creates the group with an empty source; an invalid `get_group` name still creates the object, but it is an invalid group object that receives no `name` or `state` event and rejects every request except `destroy`. Only `already_dissolved` — sending any request other than `destroy` on a dissolved group — remains a fatal protocol error.
 10. Object lifecycle redefined: `destroy` only releases that client's handle and neither dissolves the group nor emits `group_removed`; a separate `dissolve` request tears the group down, discarding any queued changes, emitting `removed` on every bound group object and `group_removed` on the manager. Initial state is pushed on every group object as one batch: `name`, then `state`, then `done`; a failed `create_group` source inserts an `operation_failed` before `done`, and an invalid `get_group` object receives only `operation_failed` then `done`.
 
-Consumers should rebind the global as `treeland_output_group_manager_v1`, address groups by the compositor-assigned name from the `name` event (or `get_group`), obtain mirror uuids from `treeland-output-uuid-head-unstable-v1`, queue changes with `set_source`/`add_output`/`remove_output` and apply them with `commit`, read the effective source and mirror list from the `state` event (and wait for `done` before acting on initial state), and dissolve groups with `dissolve` rather than by destroying a group object; the old v1 XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_output_group_manager_v1`, address groups by the compositor-assigned name from the `name` event (or `get_group`), obtain mirror uuids from `treeland-output-uuid-head-unstable-v1`, queue changes with `set_source`/`add_output`/`remove_output` and apply them with `commit`, read the effective source and mirror list from the `state` event (and wait for `done` before acting on initial state), and dissolve groups with `dissolve` rather than by destroying a group object; the old v1 XML is no longer installed since Treeland dropped its implementation, so consumers still scanning it from the install directory must switch to the replacement above.
 
 ### 0.7.0
 
@@ -70,7 +70,7 @@ Deprecated and moved to `deprecated/`; superseded by the `show_desktop` action o
 2. State observation has no direct replacement: the new protocol carries no events, so clients that tracked the mode via `show_desktop_state` (including the initial state sent on bind) lose that feedback and must treat triggering as best-effort.
 3. The replacement global is privileged: only the DDE clients allowed by the compositor may bind `treeland_compositor_action_v1`, whereas `treeland_show_desktop_v1` was bound by regular shell clients.
 
-Consumers should rebind the global as `treeland_compositor_action_v1` and trigger the `show_desktop` action; the old XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_compositor_action_v1` and trigger the `show_desktop` action; the old XML is no longer installed since Treeland dropped its implementation, so consumers still scanning it from the install directory must switch to the replacement above.
 
 #### `treeland-dde-shell-v1.xml`
 
@@ -131,7 +131,7 @@ Superseded by `treeland-show-desktop-unstable-v1.xml`; the old v1 file moved to 
 6. The `set_desktop` request was renamed to `set_show_desktop_state`.
 7. The description was corrected and expanded.
 
-Consumers should rebind the global as `treeland_show_desktop_v1`, send `set_show_desktop_state` to request a transition, and listen for `show_desktop_state` to observe compositor-driven changes; the old v1 XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_show_desktop_v1`, send `set_show_desktop_state` to request a transition, and listen for `show_desktop_state` to observe compositor-driven changes; the old v1 XML is no longer installed since Treeland dropped its implementation, so consumers still scanning it from the install directory must switch to the replacement above.
 
 #### `treeland-foreign-toplevel-manager-v1.xml`
 
@@ -147,7 +147,7 @@ Superseded by `treeland-foreign-toplevel-manager-unstable-v2.xml`; the old v1 fi
 8. A manager `error` enum was added with `invalid_surface`, raised when the `relative_surface` passed to `get_dock_preview_context` is not a valid wl_surface owned by the calling client.
 9. The description was corrected and expanded.
 
-Consumers should rebind the global as `treeland_foreign_toplevel_manager_v2`, obtain `treeland_foreign_toplevel_handle_v2` objects from the `toplevel` event, and use `treeland_dock_preview_context_v2` for previews; the old v1 XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_foreign_toplevel_manager_v2`, obtain `treeland_foreign_toplevel_handle_v2` objects from the `toplevel` event, and use `treeland_dock_preview_context_v2` for previews; the old v1 XML is no longer installed since Treeland dropped its implementation, so consumers still scanning it from the install directory must switch to the replacement above.
 #### `treeland-shortcut-manager-v2.xml`
 
 Superseded by `treeland-shortcut-manager-unstable-v3.xml`; the old v2 file moved to `deprecated/` unchanged. The protocol was renamed to follow the unstable naming convention, and the interfaces were renamed to match the new major version. Compared to the old `treeland_shortcut_manager_v2` interface:
@@ -158,4 +158,4 @@ Superseded by `treeland-shortcut-manager-unstable-v3.xml`; the old v2 file moved
 4. The commit mechanism was removed: `bind_key`, `bind_swipe_gesture`, and `bind_hold_gesture` take effect immediately, a rejected bind is reported per binding via the new `bind_failure` event, and the `commit` request, the `commit_success` and `commit_failure` events, and the `error.invalid_commit` entry no longer exist. The `error.invalid_surface` entry was renumbered from 4 to 3. Unlike the old model, one failing binding no longer rolls back the other bindings of the same batch.
 5. Documentation was refined (no wire change): destroying the manager object is documented to implicitly release the exclusive control acquired via `acquire`, and the `capture_next_shortcut` request and the capture interface semantics were rewritten to match the compositor implementation (trigger timing, seat/focus validation, the `busy`/`aborted` failure conditions, and the valid-shortcut rules).
 
-Consumers should rebind the global as `treeland_shortcut_manager_v3`, send `acquire` before any bind or unbind request, and create capture objects via `capture_next_shortcut`; the old v2 XML is kept installed during migration but must not be used in new code.
+Consumers should rebind the global as `treeland_shortcut_manager_v3`, send `acquire` before any bind or unbind request, and create capture objects via `capture_next_shortcut`; the old v2 XML is no longer installed since Treeland dropped its implementation, so consumers still scanning it from the install directory must switch to the replacement above.

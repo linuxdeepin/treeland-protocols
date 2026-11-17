@@ -55,24 +55,17 @@ set(TREELAND_PROTOCOL_WINE_XML_FILES
   wine/treeland-wine-window-state-unstable-v1.xml
 )
 
-# Deprecated protocol XML files (replaced by newer versions)
+# Deprecated protocol XML files (replaced by newer versions), limited to the
+# ones Treeland still implements. Files whose implementation was removed are
+# kept in deprecated/ for reference but not installed: clients still using them
+# must fail at build time instead of silently binding a global that no longer
+# exists.
 set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
-  deprecated/treeland-app-id-resolver-v1.xml
   deprecated/treeland-capture-unstable-v1.xml
   deprecated/treeland-ddm-v1.xml
-  deprecated/treeland-output-manager-v1.xml
   deprecated/treeland-personalization-manager-v1.xml
-  deprecated/treeland-prelaunch-splash-v1.xml
-  deprecated/treeland-screensaver-v1.xml
   deprecated/treeland-dde-shell-v1.xml
-  deprecated/treeland-show-desktop-unstable-v1.xml
-  deprecated/treeland-shortcut-manager-v1.xml
-  deprecated/treeland-shortcut-manager-v2.xml
   deprecated/treeland-wallpaper-color-v1.xml
-  deprecated/treeland-window-management-v1.xml
-  deprecated/treeland-foreign-toplevel-manager-v1.xml
-  deprecated/treeland-foreign-toplevel-manager-unstable-v2.xml
-  deprecated/treeland-virtual-output-manager-v1.xml
 )
 
 option(TREELAND_PROTOCOLS_INSTALL_DEPRECATED "Install deprecated protocol files" ON)
