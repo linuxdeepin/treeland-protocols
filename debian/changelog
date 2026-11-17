@@ -1,3 +1,14 @@
+treeland-protocols (0.9.1) unstable; urgency=medium
+
+  * docs: require shell surface before rendering role
+  * fix: report initial dde-shell role via role event
+  * docs: reword experimental disclaimer for all protocols
+  * feat: drop privileged client requirement for dde-shell
+  * feat: add a list layout to the dock preview context
+  * feat: add shell always-on-top role and role feedback
+
+ -- rewine <luhongxu@deepin.org>  Tue, 17 Nov 2026 13:13:04 +0800
+
 treeland-protocols (0.9.0) unstable; urgency=medium
 
   * feat: add treeland-activation-token-unstable-v1 protocol
