@@ -97,6 +97,10 @@
             model. The compositor applies each change as soon as it processes
             the request.
 
+            For numeric arguments, a value greater than or equal to 10000
+            requests the compositor default for that argument instead of a
+            client override; such values are not out-of-range.
+
             This object becomes inert when the underlying wl_surface is
             destroyed; requests on an inert context are silently ignored.
             The client should destroy this context before or immediately after
@@ -143,10 +147,12 @@
                 Override the compositor-drawn drop shadow for this surface.
 
                 When radius is 0 the shadow is disabled and all other
-                arguments are ignored. Color components are unsigned in
-                [0, 255]. The compositor applies this request according to its
-                own policy and may clamp an out-of-range radius to a supported
-                bound.
+                arguments are ignored. Color components are normally unsigned
+                in [0, 255]; if any component is greater than or equal to
+                10000, the default shadow color is used and the remaining
+                components are ignored. The compositor applies this request
+                according to its own policy and may clamp an out-of-range
+                radius to a supported bound.
             </description>
             <arg name="radius"   type="uint"
                 summary="shadow blur radius in pixels; 0 to disable shadow" />
@@ -165,10 +171,12 @@
                 Override the compositor-drawn border for this surface.
 
                 When width is 0 the border is disabled and the color
-                arguments are ignored. Color components are unsigned in
-                [0, 255]. The compositor applies this request according to its
-                own policy and may clamp an out-of-range width to a supported
-                bound.
+                arguments are ignored. Color components are normally unsigned
+                in [0, 255]; if any component is greater than or equal to
+                10000, the default border color is used and the remaining
+                components are ignored. The compositor applies this request
+                according to its own policy and may clamp an out-of-range
+                width to a supported bound.
             </description>
             <arg name="width" type="uint"
                 summary="border width in pixels; 0 to disable border" />
