@@ -64,7 +64,6 @@ set(TREELAND_PROTOCOL_DEPRECATED_XML_FILES
   deprecated/treeland-personalization-manager-v1.xml
   deprecated/treeland-prelaunch-splash-v1.xml
   deprecated/treeland-screensaver-v1.xml
-  deprecated/treeland-dde-shell-v1.xml
   deprecated/treeland-show-desktop-unstable-v1.xml
   deprecated/treeland-shortcut-manager-v1.xml
   deprecated/treeland-shortcut-manager-v2.xml

@@ -33,7 +33,7 @@ New protocol files must be added to the corresponding variable in `CMakeLists.tx
 ```
 
 - `unstable-vN` is the default suffix for new protocols.
-- Some protocols that were never published as unstable omit the suffix (e.g. `treeland-dde-shell-v1.xml`).
+- Some protocols that were never published as unstable omit the suffix (e.g. `treeland-ddm-v1.xml`).
 
 ### Protocol and interface naming
 
