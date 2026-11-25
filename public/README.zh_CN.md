@@ -33,9 +33,9 @@ v1 与 v2 的线缆级差异：
 4. 放置请求重构为两个提示（最终位置由合成器决定）：`set_position_hint` 建议相对输出（null 为主屏）的固定坐标，`set_cursor_placement_hint` 建议相对光标的位置（y_offset 为 `int`，v1 为 `uint`）。两请求的互斥关系（最近发送者生效）现已明确。
 5. v2 全局对象必须拒绝非特权客户端绑定。
 
-消费者应改绑为 `treeland_dde_shell_manager_v2`，通过 `get_shell_surface` 重建 shell surface，改用 `set_skip_flags`，并将 `overlay` 视为 1（不变），以 `normal`（0）还原普通窗口层；窗口选取消费者无替代，须移除该功能。旧 XML 在迁移期间仍会安装，但不得用于新代码。
+消费者应改绑为 `treeland_dde_shell_manager_v2`，通过 `get_shell_surface` 重建 shell surface，改用 `set_skip_flags`，并将 `overlay` 视为 1（不变），以 `normal`（0）还原普通窗口层；窗口选取消费者无替代，须移除该功能。该 XML 已从协议包中删除。
 
-管理器的 `set_xwindow_position_relative` 请求及 `treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口（含其创建请求 `get_treeland_dde_active`、`get_window_overlap_checker`）已废弃且不可用：请求无任何效果，也不会发出任何事件（`destroy` 请求仍然可用，客户端可借此释放对象）。
+管理器的 `set_xwindow_position_relative` 请求及 `treeland_dde_active_v1`、`treeland_window_overlap_checker` 接口（含其创建请求 `get_treeland_dde_active`、`get_window_overlap_checker`）早已退化为无操作；它们随该 XML 一并移除，这些对象已无法再被创建。
 
 二者由 `dde/` 下三个新的独立协议取代：
 - `treeland-xwindow-control-unstable-v1.xml`（`treeland_xwindow_control_v1`）：XWayland 窗口定位——`set_xwindow_position_relative` 请求，结果经 `wl_callback` 回报，线缆语义不变。

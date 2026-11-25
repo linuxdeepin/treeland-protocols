@@ -32,9 +32,9 @@ Wire-level differences between v1 and v2:
 4. The placement requests are reworked into two hints whose final position the compositor decides: `set_position_hint` suggests fixed coordinates relative to an output (null for the primary output), and `set_cursor_placement_hint` suggests a position relative to the cursor with an `int` y_offset (v1 used `uint`). The mutual exclusivity of the two requests (most recent wins) is now specified.
 5. The v2 globals must reject binds from non-privileged clients.
 
-Consumers should rebind as `treeland_dde_shell_manager_v2`, recreate shell surfaces through `get_shell_surface`, switch to `set_skip_flags`, and treat `overlay` as 1 (unchanged) while `normal` (0) restores the regular window layer; window-picker consumers have no replacement and must drop the functionality. The old XML is kept installed during migration but must not be used in new code.
+Consumers should rebind as `treeland_dde_shell_manager_v2`, recreate shell surfaces through `get_shell_surface`, switch to `set_skip_flags`, and treat `overlay` as 1 (unchanged) while `normal` (0) restores the regular window layer; window-picker consumers have no replacement and must drop the functionality. The old XML has been removed from the package.
 
-The manager request `set_xwindow_position_relative` and the `treeland_dde_active_v1` and `treeland_window_overlap_checker` interfaces (with their creating manager requests `get_treeland_dde_active` and `get_window_overlap_checker`) are deprecated and non-functional: they have no effect and no events are ever emitted (their `destroy` requests remain functional so clients can release the objects).
+The manager request `set_xwindow_position_relative` and the `treeland_dde_active_v1` and `treeland_window_overlap_checker` interfaces (with their creating manager requests `get_treeland_dde_active` and `get_window_overlap_checker`) had already been reduced to no-ops. They are removed together with this XML, so these objects can no longer be created at all.
 
 They are superseded by three new independent protocols in `dde/`:
 - `treeland-xwindow-control-unstable-v1.xml` (`treeland_xwindow_control_v1`): XWayland window placement — the `set_xwindow_position_relative` request with `wl_callback` result feedback, unchanged wire semantics.
