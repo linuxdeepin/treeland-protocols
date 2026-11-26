@@ -166,11 +166,17 @@
                 These correspond to the states with the same names defined
                 in the xdg-toplevel interface. Each flag is encoded as a
                 uint32 value in the array sent by the state event.
+
+                Note: the fullscreen flag is only set when the toplevel is
+                both fullscreen and holds keyboard focus. A fullscreen
+                toplevel that loses focus remains fullscreen but this flag
+                is cleared. Consumers that need to detect any fullscreen
+                window should not rely on this flag alone.
             </description>
             <entry name="maximized"  value="0" summary="the toplevel is maximized" />
             <entry name="minimized"  value="1" summary="the toplevel is minimized" />
             <entry name="activated"  value="2" summary="the toplevel has keyboard focus" />
-            <entry name="fullscreen" value="3" summary="the toplevel is fullscreen" />
+            <entry name="fullscreen" value="3" summary="the toplevel is fullscreen and holds keyboard focus" />
             <entry name="attention"  value="4" summary="the toplevel is requesting user attention" />
         </enum>
 
